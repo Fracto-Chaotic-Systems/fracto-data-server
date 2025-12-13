@@ -1,4 +1,5 @@
 import express from 'express'
+import chalk from "chalk";
 import {FRACTO_DATA_PORT} from "../../constants.js";
 
 import {handle_main_status} from "./handlers/status.js";
