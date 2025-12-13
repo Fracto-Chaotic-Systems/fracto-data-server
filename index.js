@@ -16,7 +16,7 @@ app.use((req, res, next) => {
 
 // Start the server and listen for incoming requests
 app.listen(FRACTO_DATA_PORT, () => {
-   console.log(chalk.green(`Server is running on http://localhost:${FRACTO_DATA_PORT}`));
+   console.log(chalk.green(`fracto-data-server is running on http://localhost:${FRACTO_DATA_PORT}`));
 });
 
 app.get('/', handle_main_status)
