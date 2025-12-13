@@ -1,5 +1,5 @@
 import express from 'express'
-import {FRACTO_DATA_PORT} from './config/server.js'
+import {FRACTO_DATA_PORT} from '../../constants.js'
 
 import {handle_main_status} from "./handlers/status.js";
 import {handle_tile} from "./handlers/tile.js";
