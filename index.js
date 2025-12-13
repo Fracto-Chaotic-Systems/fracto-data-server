@@ -1,10 +1,10 @@
 import express from 'express'
-import {FRACTO_DATA_PORT} from '../../constants.js'
 
 import {handle_main_status} from "./handlers/status.js";
 import {handle_tile} from "./handlers/tile.js";
 
 const app = express();
+const FRACTO_DATA_PORT = 3002;
 
 app.use((req, res, next) => {
    res.setHeader('Access-Control-Allow-Origin', '*'); // Allow all origins
