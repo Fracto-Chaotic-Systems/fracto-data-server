@@ -140,3 +140,6 @@ vite.config.ts.timestamp-*
 
 #App-specific
 config/*
+php/request
+php/response
+vectors
