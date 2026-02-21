@@ -1,3 +1,6 @@
+import {SEPARATOR} from "../index.js";
+import {csv_to_json} from "./utils.js";
+
 export const handle_put_radial_point = (req, res, db) => {
    const r_num = req.query.r_num
    const r_den = req.query.r_den
@@ -15,4 +18,14 @@ export const handle_put_radial_point = (req, res, db) => {
    const seed_im = req.query.seed_im
    const focal_re = req.query.focal_re
    const focal_im = req.query.focal_im
+}
+
+export const handle_radian_data = async (req, res) => {
+   const theta_num = req.query.theta_num
+   const theta_den = req.query.theta_den
+   const precision = req.query.precision
+   const filePath = `.${SEPARATOR}vectors${SEPARATOR}radian-${theta_den}-${theta_num}-${precision}.csv`
+   csv_to_json(filePath, results => {
+      res.json({file_contents: results})
+   })
 }

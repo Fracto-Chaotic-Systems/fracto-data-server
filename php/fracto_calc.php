@@ -1,5 +1,7 @@
 <?php
 
+ini_set('memory_limit', '-1');
+
 include ("bcextra.php");
 
 $theta_num = $argv[1];
@@ -8,7 +10,7 @@ $r_num = $argv[3];
 $r_den = $argv[4];
 
 $precision = $argv[5];
-$high_precision = round( 1.618 * $precision);
+$high_precision = round( 1.25 * $precision);
 
 bcscale($precision);
 echo("\n");
@@ -133,17 +135,16 @@ function stringify($complex) {
 function test_convergence(){
     global $MAX_ORBITAL;
     global $iterations;
-    global $Q;
     global $cardinality;
-    $all_Qs = [];
-    for ($i = 0; $i < $MAX_ORBITAL; $i++){
+    global $Q;
+    $first_Q = stringify($Q);
+    for ($i = 1; $i <= $MAX_ORBITAL; $i++){
         iterate_Q(1);
         $string_Q = stringify($Q);
-        if (array_key_exists($string_Q, $all_Qs)) {
-            $cardinality = $iterations - $all_Qs[$string_Q];
+        if ($first_Q === $string_Q) {
+            $cardinality = $i;
             return $cardinality;
         }
-        $all_Qs[$string_Q] = $iterations;
     }
     return 0;
 }
@@ -224,7 +225,7 @@ echo("total time $total_time_s sec\n");
 echo("$iterations_per_s iterations / sec\n");
 
 $vectors_dir = __DIR__ . "/../vectors";
-$vector_filename = "radian-$theta_den.csv";
+$vector_filename = "radian-$theta_den-$theta_num-$precision.csv";
 
 $vector_filepath = "$vectors_dir/$vector_filename";
 if (!file_exists($vector_filepath)){

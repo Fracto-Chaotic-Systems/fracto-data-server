@@ -142,4 +142,3 @@ vite.config.ts.timestamp-*
 config/*
 php/request
 php/response
-vectors 

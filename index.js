@@ -8,8 +8,12 @@ import {FRACTO_DATA_PORT} from "../../constants.js";
 import {handle_main_status} from "./handlers/status.js";
 import {handle_logs} from "./handlers/logs.js";
 import {db_connect} from "./mysql.js";
-import {handle_core_calc} from "./handlers/core_calc.js";
-import {handle_put_radial_point} from "./handlers/radial_points.js";
+import {
+   handle_put_radial_point,
+   handle_radian_data
+} from "./handlers/radial_points.js";
+import {handle_fracto_calc} from "./handlers/fracto_calc.js";
+import {handle_farey_sequence} from "./handlers/utils.js";
 
 export const SEPARATOR = path.sep;
 
@@ -33,6 +37,9 @@ app.listen(FRACTO_DATA_PORT, () => {
 app.get('/', handle_main_status)
 app.get('/logs', handle_logs)
 
-app.get('/core_calc', handle_core_calc)
+app.get('/fracto_calc', handle_fracto_calc)
 
+app.get('/utils/farey_sequence', handle_farey_sequence)
+
+app.get('/radian_data', handle_radian_data)
 app.put('/radial_point', handle_put_radial_point)
