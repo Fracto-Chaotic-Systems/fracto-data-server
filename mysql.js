@@ -1,12 +1,8 @@
 import mysql from 'mysql2';
+import config from '../../config/mysql.json' with {type: "json"};
 
 export const db_connect = () => {
-   const connection = mysql.createConnection({
-      host: 'localhost',         // Your MySQL host (default is localhost)
-      user: 'root',     // Your MySQL username (e.g., 'root')
-      password: '', // Your MySQL password
-      database: 'fracto' // The name of the database to use
-   });
+   const connection = mysql.createConnection(config);
    connection.connect((err) => {
       if (err) {
          console.error('Error connecting to MySQL database:', err.message);
