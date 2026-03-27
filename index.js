@@ -14,11 +14,11 @@ import {
 } from "./handlers/radial_points.js";
 import {handle_fracto_calc} from "./handlers/fracto_calc.js";
 import {handle_farey_sequence} from "./handlers/utils.js";
+import {handle_minibrots} from "./handlers/minibrots.js";
 
 export const SEPARATOR = path.sep;
 
 export const app = express();
-export const db = db_connect()
 
 app.use((req, res, next) => {
    res.setHeader('Access-Control-Allow-Origin', '*'); // Allow all origins
@@ -27,7 +27,8 @@ app.use((req, res, next) => {
    next();
 });
 
-execSync(`php .${SEPARATOR}php${SEPARATOR}startup.php`)
+// execSync(`php .${SEPARATOR}php${SEPARATOR}startup.php`)
+export const db_connection = db_connect()
 
 // Start the server and listen for incoming requests
 app.listen(FRACTO_DATA_PORT, () => {
@@ -40,6 +41,7 @@ app.get('/logs', handle_logs)
 app.get('/fracto_calc', handle_fracto_calc)
 
 app.get('/utils/farey_sequence', handle_farey_sequence)
-
 app.get('/radian_data', handle_radian_data)
 app.put('/radial_point', handle_put_radial_point)
+
+app.get('/minibrots', handle_minibrots)
