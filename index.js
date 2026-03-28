@@ -27,9 +27,6 @@ app.use((req, res, next) => {
    next();
 });
 
-// execSync(`php .${SEPARATOR}php${SEPARATOR}startup.php`)
-export const db_connection = db_connect()
-
 // Start the server and listen for incoming requests
 app.listen(FRACTO_DATA_PORT, () => {
    console.log(chalk.green(`fracto-data-server is running on http://localhost:${FRACTO_DATA_PORT}`));

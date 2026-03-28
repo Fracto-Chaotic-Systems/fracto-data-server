@@ -25,17 +25,21 @@ export const db_disconnect = (connection) => {
 
 export const select = (connection, query, cb) => {
    const limit = query.limit || 100;
+   const order = query.order || 'id desc';
+   const offset = query.offset || '0';
    const sqlQuery = `SELECT *
-                     FROM ${query.table} 
-                     LIMIT ${limit}`;
+                     FROM ${query.table}
+                     ORDER BY ${order}
+                     LIMIT ${limit}
+                     OFFSET ${offset};`;
    console.log('select', sqlQuery);
    connection.query(sqlQuery, (error, results) => {
       if (error) {
          console.error('Error executing query:', error.message);
-         cb ({error})
+         cb({error})
       } else {
-         console.log('Query Results:', results.length);
-         cb (results)
+         // console.log('Query Results:', results.length);
+         cb(results)
       }
    });
 }
