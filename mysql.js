@@ -43,3 +43,27 @@ export const select = (connection, query, cb) => {
       }
    });
 }
+
+export const insert = (connection, table, key_values, cb) => {
+   const field_names = Object.keys(key_values);
+   const fields = []
+   const values = []
+   field_names.forEach (field_name => {
+      const value = key_values[field_name];
+      fields.push(field_name);
+      values.push(value);
+   })
+   const sqlQuery = `INSERT into ${table}
+                    (${fields.join(',')})
+                VALUES (${values.join(',')})`
+   console.log('insert', sqlQuery);
+   connection.query(sqlQuery, (error, results) => {
+      if (error) {
+         console.error('Error executing query:', error.message);
+         cb({error})
+      } else {
+         // console.log('Query Results:', results.length);
+         cb(results)
+      }
+   });
+}

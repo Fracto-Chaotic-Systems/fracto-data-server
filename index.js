@@ -1,13 +1,11 @@
 import express from 'express'
 import chalk from "chalk";
 import path from "path";
-import {execSync} from 'child_process'
 
 import {FRACTO_DATA_PORT} from "../../constants.js";
 
 import {handle_main_status} from "./handlers/status.js";
 import {handle_logs} from "./handlers/logs.js";
-import {db_connect} from "./mysql.js";
 import {
    handle_put_radial_point,
    handle_radian_data
@@ -15,6 +13,7 @@ import {
 import {handle_fracto_calc} from "./handlers/fracto_calc.js";
 import {handle_farey_sequence} from "./handlers/utils.js";
 import {handle_minibrots} from "./handlers/minibrots.js";
+import {handle_asset} from "./handlers/handle_asset.js";
 
 export const SEPARATOR = path.sep;
 
@@ -42,3 +41,4 @@ app.get('/radian_data', handle_radian_data)
 app.put('/radial_point', handle_put_radial_point)
 
 app.get('/minibrots', handle_minibrots)
+app.get('/asset', handle_asset)
