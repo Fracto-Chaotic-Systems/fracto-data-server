@@ -27,10 +27,10 @@ export const select = (connection, query, cb) => {
    const limit = query.limit || 100;
    const order = query.order || 'id desc';
    const offset = query.offset || '0';
+   const where = query.where ? `where ${query.where}` : '';
    const sqlQuery = `SELECT *
-                     FROM ${query.table}
-                     ORDER BY ${order}
-                     LIMIT ${limit}
+                     FROM ${query.table} ${where}
+                     ORDER BY ${order} LIMIT ${limit}
                      OFFSET ${offset};`;
    console.log('select', sqlQuery);
    connection.query(sqlQuery, (error, results) => {
