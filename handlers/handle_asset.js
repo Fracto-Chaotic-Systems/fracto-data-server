@@ -1,7 +1,7 @@
 import {
    db_connect,
    db_disconnect,
-   insert
+   insert, select
 } from "../mysql.js";
 
 export const handle_asset = (req, res) => {
@@ -36,3 +36,26 @@ export const handle_asset = (req, res) => {
       res.status(500).json({error});
    }
 }
+
+export const handle_assets = (req, res) => {
+   const query = {
+      table: 'assets',
+      limit: 1000,
+      offset: 0,
+      order: 'id desc',
+      where: `width = 4800`
+   }
+   console.log('handle_assets', query)
+   try {
+      const connection = db_connect()
+      select(connection, query, (result) => {
+         console.log('assets yay 200');
+         res.status(200).json({result});
+         db_disconnect(connection);
+      })
+   } catch (error) {
+      console.log(error);
+      res.status(500).json({error});
+   }
+}
+
