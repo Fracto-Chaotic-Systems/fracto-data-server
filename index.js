@@ -14,6 +14,8 @@ import {handle_fracto_calc} from "./handlers/fracto_calc.js";
 import {handle_farey_sequence} from "./handlers/utils.js";
 import {handle_minibrots} from "./handlers/minibrots.js";
 import {handle_asset, handle_assets} from "./handlers/handle_asset.js";
+import {handle_backup} from "./handlers/handle_backup.js";
+import {handle_solve} from "./handlers/solve.js";
 
 export const SEPARATOR = path.sep;
 
@@ -43,3 +45,8 @@ app.put('/radial_point', handle_put_radial_point)
 app.get('/minibrots', handle_minibrots)
 app.get('/asset', handle_asset)
 app.get('/assets', handle_assets)
+
+app.get('/backup', handle_backup)
+
+app.get('/solve', handle_solve)
+
