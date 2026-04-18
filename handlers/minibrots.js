@@ -3,7 +3,7 @@ import {db_connect, db_disconnect, select} from "../mysql.js";
 export const handle_minibrots = (req, res) => {
    const query = {
       table: 'free_bailiwicks',
-      limit: 1000,
+      limit: 5000,
       offset: 0,
       order: 'magnitude desc',
       where: `is_node != 1`
