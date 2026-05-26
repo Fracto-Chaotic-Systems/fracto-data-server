@@ -6,9 +6,9 @@ export const db_connect = () => {
    connection.connect((err) => {
       if (err) {
          console.error('Error connecting to MySQL database:', err.message);
-         return;
+         // return;
       }
-      console.log('Connected to MySQL database!');
+      // console.log('Connected to MySQL database!');
    });
    return connection
 }
@@ -17,20 +17,20 @@ export const db_disconnect = (connection) => {
    connection.end((endErr) => {
       if (endErr) {
          console.error('Error closing connection:', endErr.message);
-         return;
+         // return;
       }
-      console.log('Connection closed.');
+      // console.log('Connection closed.');
    });
 }
 
 export const select = (connection, query, cb) => {
    const limit = query.limit || 100;
-   const order = query.order || 'id desc';
+   const order = query.order ? `ORDER BY ${query.order}` : '';
    const offset = query.offset || '0';
    const where = query.where ? `where ${query.where}` : '';
-   const sqlQuery = `SELECT *
+   const sqlQuery = `SELECT ${query.columns || '*'}
                      FROM ${query.table} ${where}
-                     ORDER BY ${order} LIMIT ${limit}
+                     ${order} LIMIT ${limit}
                      OFFSET ${offset};`;
    console.log('select', sqlQuery);
    connection.query(sqlQuery, (error, results) => {
@@ -56,7 +56,7 @@ export const insert = (connection, table, key_values, cb) => {
    const sqlQuery = `INSERT into ${table}
                     (${fields.join(',')})
                 VALUES (${values.join(',')})`
-   console.log('insert', sqlQuery);
+   // console.log('insert', sqlQuery);
    connection.query(sqlQuery, (error, results) => {
       if (error) {
          console.error('Error executing query:', error.message);

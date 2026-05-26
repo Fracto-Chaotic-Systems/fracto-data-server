@@ -19,6 +19,8 @@ import {handle_solve} from "./handlers/solve.js";
 import {handle_hyper_complex_buffer} from "./handlers/hyper-complex.js";
 import {handle_tiles} from "./handlers/handle_tiles.js";
 import {handle_orbital} from "./handlers/handle_orbital.js";
+import {handle_tile_coverage} from "./handlers/handle_coverage.js";
+import {handle_tile} from "./handlers/handle_tile.js";
 
 export const SEPARATOR = path.sep;
 
@@ -30,6 +32,9 @@ app.use((req, res, next) => {
    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Requested-With'); // Specify allowed headers
    next();
 });
+
+app.use(express.json()); // For application/json
+app.use(express.urlencoded({ extended: true })); // For application/x-www-form-urlencoded
 
 // Start the server and listen for incoming requests
 app.listen(FRACTO_DATA_PORT, () => {
@@ -48,8 +53,10 @@ app.put('/radial_point', handle_put_radial_point)
 app.get('/minibrots', handle_minibrots)
 app.get('/asset', handle_asset)
 app.get('/assets', handle_assets)
-app.get('/tiles', handle_tiles)
 
+app.get('/tiles', handle_tiles)
+app.get('/tile_coverage', handle_tile_coverage)
+app.put('/tile', handle_tile)
 app.get('/backup', handle_backup)
 
 app.get('/solve', handle_solve)
