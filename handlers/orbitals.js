@@ -89,7 +89,7 @@ export const derive_orbital = (focal_point, limit = 10) => {
 }
 
 const inverse_recurse = (negative_P, seed, point_path, scalar, iteration, max_depth) => {
-   if (iteration > max_depth || Math.abs(seed.re) > 1.4) {
+   if (iteration > max_depth) {
       const point_list = point_path
          .map(point => `${point.scalar > 0 ? 'plus' : 'minus'}: ${point.point_str}`)
       // console.log(point_list)

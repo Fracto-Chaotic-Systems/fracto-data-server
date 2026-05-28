@@ -20,7 +20,7 @@ import {handle_hyper_complex_buffer} from "./handlers/hyper-complex.js";
 import {handle_tiles} from "./handlers/handle_tiles.js";
 import {handle_orbital} from "./handlers/handle_orbital.js";
 import {handle_tile_coverage} from "./handlers/handle_coverage.js";
-import {handle_tile} from "./handlers/handle_tile.js";
+import {handle_tile, handle_tile_get} from "./handlers/handle_tile.js";
 
 export const SEPARATOR = path.sep;
 
@@ -56,6 +56,7 @@ app.get('/assets', handle_assets)
 
 app.get('/tiles', handle_tiles)
 app.get('/tile_coverage', handle_tile_coverage)
+app.get('/tile', handle_tile_get)
 app.put('/tile', handle_tile)
 app.get('/backup', handle_backup)
 
