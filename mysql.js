@@ -32,7 +32,7 @@ export const select = (connection, query, cb) => {
                      FROM ${query.table} ${where}
                      ${order} LIMIT ${limit}
                      OFFSET ${offset};`;
-   console.log('select', sqlQuery);
+   // console.log('select', sqlQuery);
    connection.query(sqlQuery, (error, results) => {
       if (error) {
          console.error('Error executing query:', error.message);

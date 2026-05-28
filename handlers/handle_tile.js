@@ -51,7 +51,7 @@ export const handle_tile_get = (req, res) => {
    try {
       const connection = db_connect()
       select(connection, query, (result) => {
-         console.log('tiles yay 200');
+         // console.log('tiles yay 200');
          res.status(200).json({result});
          db_disconnect(connection);
       })
