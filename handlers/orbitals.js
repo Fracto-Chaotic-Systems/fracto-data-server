@@ -88,7 +88,7 @@ export const derive_orbital = (focal_point, limit = 10) => {
    }
 }
 
-const inverse_recurse = (negative_P, seed, point_path, scalar, iteration, max_depth) => {
+const inverse_recurse = (Q, negative_P, seed, point_path, scalar, iteration, max_depth) => {
    if (iteration > max_depth) {
       const point_list = point_path
          .map(point => `${point.scalar > 0 ? 'plus' : 'minus'}: ${point.point_str}`)
@@ -111,23 +111,31 @@ const inverse_recurse = (negative_P, seed, point_path, scalar, iteration, max_de
    const seed_copy_1 = new Complex(new_seed.re, new_seed.im)
    const seed_copy_2 = new Complex(-new_seed.re, -new_seed.im)
 
+   const negative_Q = Q.scale(-1)
+   const Q_diff_seed_copy_1 = negative_Q.add(seed_copy_1)
+   const seed_1_offset = Q_diff_seed_copy_1.magnitude()
+   const Q_diff_seed_copy_2 = negative_Q.add(seed_copy_2)
+   const seed_2_offset = Q_diff_seed_copy_2.magnitude()
+
    const point_path_1 = copy_json(point_path)
    point_path_1.push({
       point_str: seed_copy_1.toString(),
       point: seed_copy_1,
+      offset: seed_1_offset,
       scalar, iteration,
    })
    const point_path_2 = copy_json(point_path)
    point_path_2.push({
       point_str: seed_copy_2.toString(),
       point: seed_copy_2,
+      offset: seed_2_offset,
       scalar, iteration,
    })
    return {
       minus: inverse_recurse(
-         negative_P, seed_copy_2, point_path_2, -1, iteration + 1, max_depth),
+         Q, negative_P, seed_copy_2, point_path_2, -1, iteration + 1, max_depth),
       plus: inverse_recurse(
-         negative_P, seed_copy_1, point_path_1, 1, iteration + 1, max_depth),
+         Q, negative_P, seed_copy_1, point_path_1, 1, iteration + 1, max_depth),
    }
 }
 
@@ -150,9 +158,9 @@ export const inverse_derivation = (focal_point, max_depth = 10) => {
 
    const all_paths = {
       plus: inverse_recurse(
-         negative_P, seed_copy_1, point_path_1, 1, 0, max_depth),
+         Q, negative_P, seed_copy_1, point_path_1, 1, 0, max_depth),
       minus: inverse_recurse(
-         negative_P, seed_copy_2, point_path_2, -1, 0, max_depth),
+         Q, negative_P, seed_copy_2, point_path_2, -1, 0, max_depth),
    }
    return {
       focal_point,
