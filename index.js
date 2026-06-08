@@ -18,7 +18,7 @@ import {handle_backup} from "./handlers/handle_backup.js";
 import {handle_solve} from "./handlers/solve.js";
 import {handle_hyper_complex_buffer} from "./handlers/hyper-complex.js";
 import {handle_tiles} from "./handlers/handle_tiles.js";
-import {handle_orbital} from "./handlers/handle_orbital.js";
+import {handle_orbital, handle_orbitals} from "./handlers/handle_orbital.js";
 import {handle_tile_coverage} from "./handlers/handle_coverage.js";
 import {handle_tile, handle_tile_get} from "./handlers/handle_tile.js";
 
@@ -62,6 +62,7 @@ app.get('/backup', handle_backup)
 
 app.get('/solve', handle_solve)
 app.get('/orbital', handle_orbital)
+app.get('/orbitals', handle_orbitals)
 
 app.get('/hyper_complex_buffer', handle_hyper_complex_buffer)
 

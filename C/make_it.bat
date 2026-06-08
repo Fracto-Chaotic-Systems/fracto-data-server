@@ -1,1 +1,0 @@
-gcc fracto_calc.c -o fracto_calc.exe
