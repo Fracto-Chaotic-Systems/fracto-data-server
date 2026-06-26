@@ -11,7 +11,7 @@ const prepare_derivation = (point) => {
 
 const format_result = (point_list, Q_minus, cardinality, iterations) => {
    const negative_Q_minus = Q_minus.scale(-1)
-   const mapped_list = point_list.map((point) => {
+   const mapped_list = point_list.map((point, step) => {
       const difference = point.add(negative_Q_minus)
       const offset = difference.magnitude()
       let scaled_difference = difference
@@ -19,6 +19,7 @@ const format_result = (point_list, Q_minus, cardinality, iterations) => {
          scaled_difference = difference.scale(10000000000000)
       }
       return {
+         step,
          offset: offset.toString(),
          point: {
             re: point.re.toString(),

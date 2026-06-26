@@ -18,10 +18,20 @@ import {handle_backup} from "./handlers/handle_backup.js";
 import {handle_solve} from "./handlers/solve.js";
 import {handle_hyper_complex_buffer} from "./handlers/hyper-complex.js";
 import {handle_tiles} from "./handlers/handle_tiles.js";
-import {handle_orbital, handle_orbitals} from "./handlers/handle_orbital.js";
+import {
+   handle_orbital,
+   handle_orbitals
+} from "./handlers/handle_orbital.js";
 import {handle_tile_coverage} from "./handlers/handle_coverage.js";
-import {handle_tile, handle_tile_get} from "./handlers/handle_tile.js";
-import {handle_lore_categories} from "./handlers/handle_lore.js";
+import {
+   handle_tile,
+   handle_tile_get
+} from "./handlers/handle_tile.js";
+import {
+   handle_lore_categories,
+   handle_lore_content,
+   handle_lore_storage
+} from "./handlers/handle_lore.js";
 
 export const SEPARATOR = path.sep;
 
@@ -35,7 +45,7 @@ app.use((req, res, next) => {
 });
 
 app.use(express.json()); // For application/json
-app.use(express.urlencoded({ extended: true })); // For application/x-www-form-urlencoded
+app.use(express.urlencoded({extended: true})); // For application/x-www-form-urlencoded
 
 // Start the server and listen for incoming requests
 app.listen(FRACTO_DATA_PORT, () => {
@@ -66,6 +76,8 @@ app.get('/orbital', handle_orbital)
 app.get('/orbitals', handle_orbitals)
 
 app.get('/lore_categories', handle_lore_categories)
+app.get('/lore_content', handle_lore_content)
+app.put('/lore_storage', handle_lore_storage)
 
 app.get('/hyper_complex_buffer', handle_hyper_complex_buffer)
 
