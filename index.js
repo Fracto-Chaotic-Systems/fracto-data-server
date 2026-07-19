@@ -12,7 +12,10 @@ import {
 } from "./handlers/radial_points.js";
 import {handle_fracto_calc} from "./handlers/fracto_calc.js";
 import {handle_farey_sequence} from "./handlers/utils.js";
-import {handle_minibrots} from "./handlers/minibrots.js";
+import {
+   handle_minibrot,
+   handle_minibrots
+} from "./handlers/minibrots.js";
 import {handle_asset, handle_assets} from "./handlers/handle_asset.js";
 import {handle_backup} from "./handlers/handle_backup.js";
 import {handle_solve} from "./handlers/solve.js";
@@ -62,6 +65,8 @@ app.get('/radian_data', handle_radian_data)
 app.put('/radial_point', handle_put_radial_point)
 
 app.get('/minibrots', handle_minibrots)
+app.put('/minibrot', handle_minibrot)
+
 app.get('/asset', handle_asset)
 app.get('/assets', handle_assets)
 

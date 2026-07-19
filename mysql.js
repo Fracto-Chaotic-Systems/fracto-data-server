@@ -56,7 +56,7 @@ export const insert = (connection, table, key_values, cb) => {
    const sqlQuery = `INSERT into ${table}
                     (${fields.join(',')})
                 VALUES (${values.join(',')})`
-   // console.log('insert', sqlQuery);
+   console.log('insert', sqlQuery);
    connection.query(sqlQuery, (error, results) => {
       if (error) {
          console.error('Error executing query:', error.message);
