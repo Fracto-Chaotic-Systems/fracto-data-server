@@ -1,14 +1,14 @@
 import {db_connect, db_disconnect, select, insert} from "../mysql.js";
 
 export const handle_minibrots = (req, res) => {
+   const is_node = req.query.is_node
    const query = {
       table: 'free_bailiwicks',
       limit: 5000,
       offset: 0,
       order: 'magnitude desc',
-      where: `is_node != 1`
+      where: `is_node = ${is_node}`
    }
-   console.log('handle_minibrots', query)
    try {
       const connection = db_connect()
       select(connection, query, (result) => {
