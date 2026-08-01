@@ -1,13 +1,14 @@
 import {db_connect, db_disconnect, select, insert} from "../mysql.js";
 
 export const handle_minibrots = (req, res) => {
-   const is_node = req.query.is_node
+   const is_node = req.query.is_node || '0'
+   const is_inline = req.query.is_inline || '0'
    const query = {
       table: 'free_bailiwicks',
       limit: 5000,
       offset: 0,
       order: 'magnitude desc',
-      where: `is_node = ${is_node}`
+      where: `is_node = ${is_node} && is_inline = ${is_inline}`
    }
    try {
       const connection = db_connect()

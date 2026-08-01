@@ -45,18 +45,18 @@ export const handle_lore_storage = (req, res) => {
       category,
       content_data,
       content_meta,
-      key,
+      category_key,
    } = req.body;
    try {
       const connection = db_connect()
       insert(connection,
          'lore_content',
          {
-            title: `"${title}"`,
-            category: `"${category}"`,
-            content_data: `"${JSON.stringify(content_data)}"`,
-            content_meta: `"${JSON.stringify(content_meta)}"`,
-            key: `"${key}"`,
+            title,
+            category,
+            content_data: JSON.stringify(content_data),
+            content_meta: JSON.stringify(content_meta),
+            category_key,
          },
          result => {
             // console.log('insert tile', short_code)
@@ -64,6 +64,27 @@ export const handle_lore_storage = (req, res) => {
             db_disconnect(connection);
          }
       )
+   } catch (error) {
+      console.log(error);
+      res.status(500).json({error});
+   }
+}
+
+export const handle_lore_content_list = (req, res) => {
+   const {category_id} = req.query
+   const query = {
+      table: 'lore_content',
+      order: 'title asc',
+      where: `category=${category_id}`,
+   }
+   console.log('handle_lore_content_list', query)
+   try {
+      const connection = db_connect()
+      select(connection, query, (result) => {
+         console.log(`lore_content yay 200 ${result.length} results`);
+         res.status(200).json({result});
+         db_disconnect(connection);
+      })
    } catch (error) {
       console.log(error);
       res.status(500).json({error});
