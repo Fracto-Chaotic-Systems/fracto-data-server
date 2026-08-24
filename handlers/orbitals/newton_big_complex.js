@@ -1,6 +1,4 @@
 import BigComplex from "../../../../sdk/math/Complex.js";
-import FractoFastCalc from "../../../../sdk/FractoFastCalc.js";
-import {i} from "mathjs";
 
 export const newton_big_complex = (point, limit) => {
    const P = new BigComplex(point.x, point.y);
