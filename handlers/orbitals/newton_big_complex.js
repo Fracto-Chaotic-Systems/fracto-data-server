@@ -1,4 +1,5 @@
 import BigComplex from "../../../../sdk/math/Complex.js";
+import FractoFastCalc from "../../../../sdk/FractoFastCalc.js";
 
 export const newton_big_complex = (point, limit) => {
    const P = new BigComplex(point.x, point.y);
@@ -6,7 +7,7 @@ export const newton_big_complex = (point, limit) => {
    let least_magnitude_N = 0
    let least_magnitude_point_list = []
    const start = performance.now();
-   for (let N = 3; N < 500; N++) {
+   for (let N = 3; N < 2500; N++) {
       let z0 = new BigComplex(0, 0);
       for (let i = 1; i <= limit; i++) {
          let current = new BigComplex(z0.re, z0.im)
@@ -54,7 +55,7 @@ export const newton_big_complex = (point, limit) => {
 }
 
 // TEST
-// const point = {x: 0.2713076884272603, y: 0.539277949284893}
+// const point = {x: -0.7498264222691475, y: 0.015174810956388776}
 //
 // const start1 = performance.now();
 // const result1 = newton_big_complex(point, 6)
