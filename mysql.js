@@ -2,7 +2,13 @@ import mysql from 'mysql2';
 import config from '../../config/mysql.json' with {type: "json"};
 
 export const db_connect = () => {
-   const connection = mysql.createConnection(config);
+   const connection = mysql.createConnection({
+      ...config,
+      host: process.env.FRACTO_MYSQL_HOST || config.host,
+      port: process.env.FRACTO_MYSQL_PORT
+         ? Number(process.env.FRACTO_MYSQL_PORT)
+         : config.port,
+   });
    connection.connect((err) => {
       if (err) {
          console.error('Error connecting to MySQL database:', err.message);
