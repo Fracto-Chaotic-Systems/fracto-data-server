@@ -5,6 +5,7 @@ import path from "path";
 import {FRACTO_DATA_PORT} from "../../constants.js";
 
 import {handle_main_status} from "./handlers/status.js";
+import {handle_health} from "./handlers/health.js";
 import {handle_logs} from "./handlers/logs.js";
 import {
     handle_put_radial_point,
@@ -57,6 +58,7 @@ app.listen(FRACTO_DATA_PORT, () => {
 });
 
 app.get('/', handle_main_status)
+app.get('/healthz', handle_health)
 app.get('/logs', handle_logs)
 
 app.get('/fracto_calc', handle_fracto_calc)
