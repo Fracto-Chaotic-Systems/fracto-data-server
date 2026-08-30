@@ -20,7 +20,7 @@ export const handle_tiles = (req, res) => {
          db_disconnect(connection);
       })
    } catch (error) {
-      console.log(error);
+      console.error(error);
       res.status(500).json({error});
    }
 }

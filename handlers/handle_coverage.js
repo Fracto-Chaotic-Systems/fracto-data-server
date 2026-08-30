@@ -17,6 +17,6 @@ export const handle_tile_coverage = (req, res) => {
          db_disconnect(connection);
       })
    } catch (e) {
-      console.log(e.message)
+      console.error(e.message)
    }
 }

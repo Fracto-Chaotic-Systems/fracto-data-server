@@ -110,7 +110,7 @@ export const handle_orbital = (req, res) => {
       const result = retro_derivation(point, limit)
       res.status(200).json({result});
    } catch (error) {
-      console.error(e.message)
+      console.error(error.message)
       res.status(500).json({error});
    }
 }

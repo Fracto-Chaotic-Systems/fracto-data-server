@@ -14,7 +14,7 @@ export const handle_lore_categories = (req, res) => {
          db_disconnect(connection);
       })
    } catch (error) {
-      console.log(error);
+      console.error(error);
       res.status(500).json({error});
    }
 }
@@ -37,7 +37,7 @@ export const handle_lore_content = (req, res) => {
          db_disconnect(connection);
       })
    } catch (error) {
-      console.log(error);
+      console.error(error);
       res.status(500).json({error});
    }
 }
@@ -83,7 +83,7 @@ export const handle_lore_storage = (req, res) => {
          )
       }
    } catch (error) {
-      console.log(error);
+      console.error(error);
       res.status(500).json({error});
    }
 }
@@ -104,7 +104,7 @@ export const handle_lore_content_list = (req, res) => {
          db_disconnect(connection);
       })
    } catch (error) {
-      console.log(error);
+      console.error(error);
       res.status(500).json({error});
    }
 }

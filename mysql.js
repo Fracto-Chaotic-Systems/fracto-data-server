@@ -37,7 +37,7 @@ export const select = (connection, query, cb) => {
    const sqlQuery = `SELECT ${query.columns || '*'}
                      FROM ${query.table} ${where} ${order} LIMIT ${limit}
                      OFFSET ${offset};`;
-   // console.log('select', sqlQuery);
+   console.log('select', sqlQuery);
    connection.query(sqlQuery, (error, results) => {
       if (error) {
          console.error('Error executing query:', error.message);
@@ -62,10 +62,16 @@ export const insert = async (connection, table, key_values, cb) => {
    })
    const sqlQuery = `INSERT into ${table} (${fields.join(',')})
                      VALUES (${placeholders.join(',')})`
-   console.log('insert', sqlQuery, values);
+   console.log('insert', sqlQuery);
    try {
-      const results = connection.query(sqlQuery, values)
-      cb(results)
+      connection.query(sqlQuery, values, (error, results) => {
+         if (error) {
+            console.error('Error executing query:', error.message);
+            cb({error})
+         } else {
+            cb(results)
+         }
+      })
    } catch (error) {
       console.error('Error executing query:', error.message);
       cb({error})
@@ -74,20 +80,21 @@ export const insert = async (connection, table, key_values, cb) => {
 
 export const update = async (connection, table, id, key_values, cb) => {
    const all_keys = Object.keys(key_values);
-   const all_pairs = all_keys.map(key => {
-      if (typeof key_values[key] === 'number') {
-         return `${key}=${key_values[key]}`;
-      } else {
-         return `${key}='${key_values[key]}'`;
-      }
-   }).join(',')
+   const values = all_keys.map(key => key_values[key])
+   const all_pairs = all_keys.map(key => `${key}=?`).join(',')
    const sqlQuery = `UPDATE ${table}
                      SET ${all_pairs}
-                     where id = ${id}`
+                     where id = ?`
    console.log('update', sqlQuery);
    try {
-      const results = connection.query(sqlQuery)
-      cb(results)
+      connection.query(sqlQuery, [...values, id], (error, results) => {
+         if (error) {
+            console.error('Error executing query:', error.message);
+            cb({error})
+         } else {
+            cb(results)
+         }
+      })
    } catch (error) {
       console.error('Error executing query:', error.message);
       cb({error})

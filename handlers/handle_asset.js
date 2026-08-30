@@ -32,7 +32,7 @@ export const handle_asset = (req, res) => {
          db_disconnect(connection);
       })
    } catch (error) {
-      console.log(error);
+      console.error(error);
       res.status(500).json({error});
    }
 }
@@ -54,7 +54,7 @@ export const handle_assets = (req, res) => {
          db_disconnect(connection);
       })
    } catch (error) {
-      console.log(error);
+      console.error(error);
       res.status(500).json({error});
    }
 }

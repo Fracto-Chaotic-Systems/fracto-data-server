@@ -33,7 +33,7 @@ export const handle_tile = (req, res) => {
          }
       )
    } catch (error) {
-      console.log(error);
+      console.error(error);
       res.status(500).json({error});
    }
 }
@@ -56,7 +56,7 @@ export const handle_tile_get = (req, res) => {
          db_disconnect(connection);
       })
    } catch (error) {
-      console.log(error);
+      console.error(error);
       res.status(500).json({error});
    }
 }
