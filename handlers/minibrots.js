@@ -13,7 +13,6 @@ export const handle_minibrots = (req, res) => {
    try {
       const connection = db_connect()
       select(connection, query, (result) => {
-         console.log('minibrots yay 200');
          res.status(200).json({result});
          db_disconnect(connection);
       })
