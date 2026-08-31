@@ -19,6 +19,7 @@ import {
 } from "./handlers/minibrots.js";
 import {handle_asset, handle_assets} from "./handlers/handle_asset.js";
 import {handle_backup} from "./handlers/handle_backup.js";
+import {handle_query} from "./handlers/handle_query.js";
 import {handle_solve} from "./handlers/solve.js";
 import {handle_hyper_complex_buffer} from "./handlers/hyper-complex.js";
 import {handle_tiles} from "./handlers/handle_tiles.js";
@@ -78,6 +79,7 @@ app.get('/tile_coverage', handle_tile_coverage)
 app.get('/tile', handle_tile_get)
 app.put('/tile', handle_tile)
 app.get('/backup', handle_backup)
+app.get('/query', handle_query)
 
 app.get('/solve', handle_solve)
 app.get('/orbital', handle_orbital)
