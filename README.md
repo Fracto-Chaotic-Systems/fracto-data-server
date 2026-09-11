@@ -100,7 +100,10 @@ These database records are separate from the tile server's compiled in-memory in
 ### Orbitals
 
 - `GET /orbital` calculates one orbital from `re`, `im`, and `limit`.
-- `GET /orbitals` calculates or retrieves multiple orbital results using the same parameters.
+- `GET /orbitals` calculates a pro-derived series from `FractoFastCalc.calc()`
+  (with `pattern` unique points plus a closing duplicate) using the same
+  parameters. Detector-driven Newton refinement is provided
+  separately by `/orbital_newton` and is not repeated by this endpoint.
 - `GET /circuitry?re=<re>&im=<im>` samples a smooth closed curve around the
   periodic orbit for the Mandelbrot parameter `c = re + im*i`. Optional
   `samples` controls the number of returned `{t, C:{re, im}}` values and

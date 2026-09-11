@@ -1,7 +1,5 @@
 import BigComplex from "../../../sdk/math/BigComplex.js";
 import FractoFastCalc from "../../../sdk/FractoFastCalc.js";
-import { newton_derived } from "./orbitals/newton_derived.js";
-import { newton_big_complex } from "./orbitals/newton_big_complex.js";
 
 const prepare_derivation = (point) => {
   const P = new BigComplex(point.x, point.y);
@@ -67,36 +65,29 @@ const retro_derivation = (point, limit) => {
   return format_result(point_list, Q_minus, 0, limit);
 };
 
-const pro_derivation = (point, limit) => {
-  const point_data = prepare_derivation(point);
-  const { P, Q_minus } = point_data;
-  const point_list = [];
-  let seed = new BigComplex(0, 0);
-  point_list.push(seed);
-  const all_points = {};
-  for (let i = 1; i <= limit; i++) {
-    const seed_squared = seed.mul(seed);
-    seed = seed_squared.add(P);
-    const seed_str = seed.toString();
-    if (all_points[seed_str] && i > 10) {
-      const cardinality = i - all_points[seed_str];
-      return format_result(point_list, Q_minus, cardinality, i);
-    }
-    all_points[seed_str] = i;
-    point_list.push(seed);
+/**
+ * Adapt FractoFastCalc's stable orbit to the point-series response shape.
+ * The calculator may include a repeated closing point. The returned list is
+ * normalized to the detected cardinality and then explicitly closed with a
+ * duplicate of its first point for chart rendering.
+ * @param {{x:number,y:number}} point Mandelbrot parameter.
+ * @returns {object} Fast-calculated orbital series.
+ */
+const fast_pro_derivation = (point) => {
+  const calculation = FractoFastCalc.calc(point.x, point.y);
+  const cardinality = Math.max(0, Number(calculation?.pattern) || 0);
+  const point_list = (calculation?.orbital_points || [])
+    .slice(0, cardinality)
+    .map((value) => new BigComplex(value.x, value.y));
+  if (point_list.length > 0) {
+    point_list.push(new BigComplex(point_list[0].re, point_list[0].im));
   }
-  return format_result(point_list, Q_minus, 0, limit);
-};
-
-const newton_derivation = (point, limit) => {
-  const newton_result = newton_big_complex(point, limit);
-  const point_data = prepare_derivation(point);
-  const { Q_minus } = point_data;
+  const { Q_minus } = prepare_derivation(point);
   return format_result(
-    newton_result.point_list,
+    point_list,
     Q_minus,
-    newton_result.cardinality,
-    limit,
+    cardinality,
+    calculation?.iteration || 0,
   );
 };
 
@@ -122,10 +113,8 @@ export const handle_orbitals = (req, res) => {
     const im = parseFloat(req.query.im);
     const limit = parseFloat(req.query.limit);
     const point = { x: re, y: im };
-    const retro_derived = retro_derivation(point, limit);
-    const pro_derived = pro_derivation(point, limit);
-    const newton_derived = newton_derivation(point, 5);
-    const result = { retro_derived, pro_derived, newton_derived };
+    const pro_derived = fast_pro_derivation(point);
+    const result = { pro_derived };
     res.status(200).json({ result });
   } catch (error) {
     console.error("handle_orbitals", error.message);
