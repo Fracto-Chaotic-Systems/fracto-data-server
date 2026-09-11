@@ -1,4 +1,5 @@
 import { discover_and_newton } from "./orbitals/detector_newton.js";
+import { performance } from "node:perf_hooks";
 
 /**
  * Discover a cardinality from critical-orbit returns and refine it with Newton.
@@ -20,6 +21,7 @@ export const handle_orbital_newton = (req, res) => {
     return res.status(400).json({ error: "re and im must be finite numbers" });
   }
   try {
+    const started = performance.now();
     const result = discover_and_newton(
       { re: req.query.re, im: req.query.im },
       {
@@ -29,7 +31,10 @@ export const handle_orbital_newton = (req, res) => {
         newton_mode: req.query.newton_mode,
       },
     );
-    return res.status(200).json(result);
+    return res.status(200).json({
+      ...result,
+      elapsed_ms: performance.now() - started,
+    });
   } catch (error) {
     console.error("handle_orbital_newton", error.message);
     return res.status(500).json({ error: error.message });

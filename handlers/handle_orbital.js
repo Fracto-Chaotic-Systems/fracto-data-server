@@ -1,5 +1,6 @@
 import BigComplex from "../../../sdk/math/BigComplex.js";
 import FractoFastCalc from "../../../sdk/FractoFastCalc.js";
+import { performance } from "node:perf_hooks";
 
 const prepare_derivation = (point) => {
   const P = new BigComplex(point.x, point.y);
@@ -74,6 +75,7 @@ const retro_derivation = (point, limit) => {
  * @returns {object} Fast-calculated orbital series.
  */
 const fast_pro_derivation = (point) => {
+  const started = performance.now();
   const calculation = FractoFastCalc.calc(point.x, point.y);
   const cardinality = Math.max(0, Number(calculation?.pattern) || 0);
   const point_list = (calculation?.orbital_points || [])
@@ -83,12 +85,13 @@ const fast_pro_derivation = (point) => {
     point_list.push(new BigComplex(point_list[0].re, point_list[0].im));
   }
   const { Q_minus } = prepare_derivation(point);
-  return format_result(
+  const result = format_result(
     point_list,
     Q_minus,
     cardinality,
     calculation?.iteration || 0,
   );
+  return { ...result, elapsed_ms: performance.now() - started };
 };
 
 export const handle_orbital = (req, res) => {
