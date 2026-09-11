@@ -2,7 +2,15 @@ import Complex from "../../../../sdk/math/Complex.js";
 import FractoFastCalc from "../../../../sdk/FractoFastCalc.js";
 import { copy_json } from "../../../../utils.js";
 
-export const newton_derived = (point, limit) => {
+/**
+ * Refine an orbital point with the derived Newton method.
+ *
+ * @param {{x:number,y:number}} point Mandelbrot parameter.
+ * @param {number} limit Maximum Newton iterations.
+ * @param {number} [known_cardinality] Evaluate only this cardinality when supplied.
+ * @returns {object} Newton result and convergence metadata.
+ */
+export const newton_derived = (point, limit, known_cardinality = null) => {
   let least_magnitude = 1000;
   let least_magnitude_N = 0;
   let least_magnitude_point_list = [];
@@ -10,7 +18,15 @@ export const newton_derived = (point, limit) => {
   // A tolerance below roughly 1e-16 cannot be reached reliably with a
   // JavaScript Number, so 1e-12 is a practical Newton convergence target.
   const tolerance_squared = 1e-256;
-  for (let N = 3; N < 5000; N++) {
+  const requested_cardinality = Number(known_cardinality);
+  const cardinality_supplied =
+    known_cardinality !== null &&
+    known_cardinality !== undefined &&
+    Number.isInteger(requested_cardinality);
+  const cardinalities = cardinality_supplied
+    ? [Math.max(3, requested_cardinality)]
+    : Array.from({ length: 4997 }, (_, index) => index + 3);
+  for (const N of cardinalities) {
     // Start at zero, to find the orbital point closest to the origin
     let z0_re = 0;
     let z0_im = 0;
@@ -132,6 +148,7 @@ export const newton_derived = (point, limit) => {
             time: `${end - start}ms`,
             least_magnitude: least_magnitude,
             least_magnitude_N: least_magnitude_N,
+            cardinality_supplied,
           };
         }
       }
@@ -149,6 +166,7 @@ export const newton_derived = (point, limit) => {
     time: `${end - start}ms`,
     least_magnitude: least_magnitude,
     least_magnitude_N: least_magnitude_N,
+    cardinality_supplied,
   };
 };
 

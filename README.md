@@ -80,7 +80,7 @@ Calculation endpoints can be CPU intensive. Validate numeric inputs and use cons
 
 ### Minibrots
 
-- `GET /minibrots` filters records with optional `is_node` and `is_inline` query parameters.
+- `GET /minibrots` filters records with optional `is_node` and `is_inline` query parameters. `limit` may request up to 20,000 records per category (the default is 5,000), which is useful for randomized detector benchmarks.
 - `PUT /minibrot` inserts or updates a minibrot using a JSON request body.
 
 ### Assets

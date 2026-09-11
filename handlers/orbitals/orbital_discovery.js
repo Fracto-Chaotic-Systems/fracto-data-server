@@ -2,9 +2,10 @@ import BigComplex from "../../../../sdk/math/BigComplex.js";
 import { analyze_polar_spectrum } from "./spectral_analysis.js";
 
 const DEFAULT_ITERATIONS = 4096;
-// The warm-up is intentionally a constant for now. It can become a request
-// parameter or adaptive policy after the stability benefit is measured.
+// The default warm-up remains fixed for predictable requests. Callers may use
+// a bounded override when comparing spectral stability at several horizons.
 const DEFAULT_WARMUP_ITERATIONS = 4096;
+const MAX_WARMUP_ITERATIONS = 262_144;
 const MAX_ITERATIONS = 1_000_000;
 const DEFAULT_SAMPLE_LIMIT = 512;
 const MAX_SAMPLE_LIMIT = 4096;
@@ -226,7 +227,7 @@ const discover_high_precision = (
  * resolution, the entire orbit is recomputed with BigComplex.
  *
  * @param {{re: number|string, im: number|string}} point Mandelbrot parameter.
- * @param {{iterations?: number, sample_limit?: number}} options Scout limits.
+ * @param {{iterations?: number, sample_limit?: number, warmup_iterations?: number}} options Scout limits.
  * @returns {object} Discovery metadata and bounded polar-orbit samples.
  */
 export const discover_orbital = (point, options = {}) => {
@@ -242,6 +243,10 @@ export const discover_orbital = (point, options = {}) => {
       Math.floor(Number(options.sample_limit) || DEFAULT_SAMPLE_LIMIT),
     ),
   );
+  const requested_warmup = Number(options.warmup_iterations);
+  const warmup_iterations = Number.isFinite(requested_warmup)
+    ? Math.min(MAX_WARMUP_ITERATIONS, Math.max(0, Math.floor(requested_warmup)))
+    : DEFAULT_WARMUP_ITERATIONS;
   const Q = calculate_fixed_point(native_point);
   const sample_stride = Math.max(1, Math.ceil(iterations / sample_limit));
   const samples = [];
@@ -253,7 +258,7 @@ export const discover_orbital = (point, options = {}) => {
 
   for (
     let warmup = 0;
-    warmup < DEFAULT_WARMUP_ITERATIONS;
+    warmup < warmup_iterations;
     warmup += 1
   ) {
     const precision_status = native_precision_status({ re: z_re, im: z_im }, Q);
@@ -286,7 +291,7 @@ export const discover_orbital = (point, options = {}) => {
       const polar = to_polar_sample({ re: z_re, im: z_im }, Q, previous_theta);
       previous_theta = polar.theta;
       samples.push({
-        iteration: DEFAULT_WARMUP_ITERATIONS + iteration,
+        iteration: warmup_iterations + iteration,
         ...polar,
       });
     }
@@ -308,7 +313,7 @@ export const discover_orbital = (point, options = {}) => {
       iterations,
       sample_limit,
       precision,
-      DEFAULT_WARMUP_ITERATIONS,
+      warmup_iterations,
     );
     // TODO: Keep this retry as a safety net until predictive precision sizing
     // and a final angular-error verification pass are implemented.
@@ -322,7 +327,7 @@ export const discover_orbital = (point, options = {}) => {
         iterations,
         sample_limit,
         precision,
-        DEFAULT_WARMUP_ITERATIONS,
+        warmup_iterations,
       );
     }
     return {
@@ -330,7 +335,7 @@ export const discover_orbital = (point, options = {}) => {
       point_input: { re: String(point.re), im: String(point.im) },
       Q,
       iterations,
-      warmup_iterations: DEFAULT_WARMUP_ITERATIONS,
+      warmup_iterations,
       sample_stride: high_precision_result.sample_stride,
       samples: high_precision_result.samples,
       escaped: false,
@@ -359,7 +364,7 @@ export const discover_orbital = (point, options = {}) => {
     point_input: { re: String(point.re), im: String(point.im) },
     Q,
     iterations,
-    warmup_iterations: DEFAULT_WARMUP_ITERATIONS,
+    warmup_iterations,
     sample_stride,
     samples,
     escaped,

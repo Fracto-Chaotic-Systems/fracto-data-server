@@ -1,4 +1,22 @@
+import { performance } from "node:perf_hooks";
 import { discover_orbital } from "./orbitals/orbital_discovery.js";
+import { sample_critical_orbit } from "./orbitals/orbit_sampling.js";
+import { detect_return_cardinality } from "./orbitals/return_detection.js";
+import {
+  analyze_multi_polar_spectrum,
+  ADAPTIVE_MULTI_ANALYSIS_CONFIGS,
+  DEFAULT_MULTI_ANALYSIS_CONFIGS,
+  merge_spectral_candidates,
+  score_consensus_candidates,
+} from "./orbitals/spectral_analysis.js";
+
+const WARMUP_STABILITY_ITERATIONS = [4096, 8192, 16384, 65536];
+const ADAPTIVE_MAX_ROUNDS = 2;
+const ADAPTIVE_TIME_BUDGET_MS = 2000;
+const ADAPTIVE_MIN_SCORE = 0.7;
+
+const is_truthy = (value) =>
+  ["1", "true", "yes"].includes(String(value).toLowerCase());
 
 /**
  * Return the polar spectrum used by the cardinality discovery scout.
@@ -9,7 +27,17 @@ import { discover_orbital } from "./orbitals/orbital_discovery.js";
  *
  * @param {import('express').Request} req Express request.
  * @param {import('express').Response} res Express response.
- * @returns {import('express').Response} JSON spectral response.
+ * @queryParam warmup_stability When true, include bounded comparisons at
+ *   several warm-up horizons in `spectrum.warmup_stability`.
+ * @queryParam multi_analysis When true, run the bounded multi-configuration
+ *   analysis over one shared orbit sample set.
+ * @queryParam adaptive_analysis When true, permit one larger-window retry
+ *   when the initial consensus does not meet the confidence gate.
+ * @queryParam detection_mode `returns` selects critical-orbit return
+ *   detection; the default `spectral` mode retains Fourier analysis.
+ * @returns {import('express').Response} JSON spectral response. With
+ *   `multi_analysis=true`, `spectrum.multi_analysis` contains each configured
+ *   pass and `spectrum.consensus_candidates` contains the ranked merged view.
  */
 export const handle_orbital_spectrum = (req, res) => {
   const re = Number(req.query.re);
@@ -18,16 +46,127 @@ export const handle_orbital_spectrum = (req, res) => {
     return res.status(400).json({ error: "re and im must be finite numbers" });
   }
   try {
-    const result = discover_orbital(
-      { re: req.query.re, im: req.query.im },
-      {
+    const point = { re: req.query.re, im: req.query.im };
+    if (req.query.detection_mode === "returns") {
+      const orbit = sample_critical_orbit(point, {
         iterations: req.query.iterations,
-        sample_limit: req.query.sample_limit,
-        analysis_start: req.query.analysis_start,
-        peak_count: req.query.peak_count,
-        max_period: req.query.max_period,
-      },
-    );
+      });
+      const detection = detect_return_cardinality(orbit.samples, {
+        minimum_return_repetitions: req.query.minimum_return_repetitions,
+      });
+      return res.status(200).json({
+        point: { re: String(req.query.re), im: String(req.query.im) },
+        detection_mode: "returns",
+        iterations: orbit.iterations,
+        escaped: orbit.escaped,
+        detection,
+      });
+    }
+    const include_multi_analysis = is_truthy(req.query.multi_analysis);
+    const include_adaptive_analysis = is_truthy(req.query.adaptive_analysis);
+    const discovery_options = {
+      iterations: req.query.iterations,
+      sample_limit: include_multi_analysis
+        ? 4096
+        : req.query.sample_limit,
+      analysis_start: req.query.analysis_start,
+      peak_count: req.query.peak_count,
+      max_period: req.query.max_period,
+      warmup_iterations: WARMUP_STABILITY_ITERATIONS[0],
+    };
+    const result = discover_orbital(point, discovery_options);
+    const include_warmup_stability = is_truthy(req.query.warmup_stability);
+    const warmup_stability = include_warmup_stability
+      ? WARMUP_STABILITY_ITERATIONS.map((warmup_iterations) => {
+          const run =
+            warmup_iterations === result.warmup_iterations
+              ? result
+              : discover_orbital(point, {
+                  ...discovery_options,
+                  warmup_iterations,
+                });
+          return {
+            warmup_iterations: run.warmup_iterations,
+            precision_mode: run.precision_mode,
+            precision_digits: run.precision_digits,
+            sample_stride: run.sample_stride,
+            precision_escalated: run.precision_escalated,
+            minimum_relative_separation: run.minimum_relative_separation,
+            spectrum: run.spectrum,
+          };
+        })
+      : null;
+    const analysis_diagnostics = [];
+    let multi_analysis = null;
+    let consensus_candidates = null;
+    if (include_multi_analysis) {
+      const adaptive_started = performance.now();
+      const run_round = (configs, round) => {
+        const runs = analyze_multi_polar_spectrum(
+          result.samples,
+          result.sample_stride,
+          configs,
+          discovery_options,
+        );
+        const merged = merge_spectral_candidates(runs);
+        const scored = score_consensus_candidates(merged, runs.length);
+        analysis_diagnostics.push({
+          round,
+          elapsed_ms: runs.reduce((sum, run) => sum + run.elapsed_ms, 0),
+          configurations: configs.length,
+          accepted_candidates: scored.length,
+          peak_count: runs.reduce(
+            (sum, run) => sum + (run.spectrum.peaks?.length || 0),
+            0,
+          ),
+        });
+        return { runs, scored };
+      };
+      let analysis_round = run_round(DEFAULT_MULTI_ANALYSIS_CONFIGS, 1);
+      multi_analysis = analysis_round.runs;
+      consensus_candidates = analysis_round.scored;
+      const confident = consensus_candidates.some(
+        (candidate) =>
+          candidate.confidence >= ADAPTIVE_MIN_SCORE &&
+          candidate.occurrence_count >= 4 &&
+          candidate.score_components.cardinality_consistency >= 0.5,
+      );
+      let stop_reason = confident ? "confidence_threshold_met" : "confidence_below_threshold";
+      if (
+        include_adaptive_analysis &&
+        !confident &&
+        analysis_diagnostics.length < ADAPTIVE_MAX_ROUNDS &&
+        performance.now() - adaptive_started < ADAPTIVE_TIME_BUDGET_MS
+      ) {
+        analysis_round = run_round(ADAPTIVE_MULTI_ANALYSIS_CONFIGS, 2);
+        multi_analysis = analysis_round.runs;
+        consensus_candidates = analysis_round.scored;
+        stop_reason = "adaptive_retry_complete";
+      } else if (include_adaptive_analysis && !confident) {
+        stop_reason = "adaptive_budget_exhausted";
+      }
+      analysis_diagnostics.push({
+        max_rounds: ADAPTIVE_MAX_ROUNDS,
+        time_budget_ms: ADAPTIVE_TIME_BUDGET_MS,
+        elapsed_ms: performance.now() - adaptive_started,
+        adaptive_requested: include_adaptive_analysis,
+        stop_reason,
+      });
+    }
+    let spectrum = result.spectrum;
+    if (include_warmup_stability || include_multi_analysis) {
+      spectrum = {
+        ...spectrum,
+        ...(include_warmup_stability ? { warmup_stability } : {}),
+        ...(include_multi_analysis ? { multi_analysis } : {}),
+        ...(include_multi_analysis
+          ? {
+              consensus_candidates,
+              analysis_diagnostics,
+            }
+          : {}),
+      };
+    }
     return res.status(200).json({
       point: result.point_input,
       precision_mode: result.precision_mode,
@@ -35,7 +174,7 @@ export const handle_orbital_spectrum = (req, res) => {
       iterations: result.iterations,
       warmup_iterations: result.warmup_iterations,
       sample_stride: result.sample_stride,
-      spectrum: result.spectrum,
+      spectrum,
     });
   } catch (error) {
     console.error("handle_orbital_spectrum", error.message);

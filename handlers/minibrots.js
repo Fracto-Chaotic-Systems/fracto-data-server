@@ -3,9 +3,13 @@ import { db_connect, db_disconnect, select, insert } from "../mysql.js";
 export const handle_minibrots = (req, res) => {
   const is_node = req.query.is_node || "0";
   const is_inline = req.query.is_inline || "0";
+  const requested_limit = Number.parseInt(req.query.limit, 10);
+  const limit = Number.isInteger(requested_limit)
+    ? Math.min(Math.max(requested_limit, 1), 20000)
+    : 5000;
   const query = {
     table: "free_bailiwicks",
-    limit: 5000,
+    limit,
     offset: 0,
     order: "magnitude desc",
     where: `is_node = ${is_node} && is_inline = ${is_inline}`,

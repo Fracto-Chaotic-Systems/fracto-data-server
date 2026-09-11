@@ -1,13 +1,29 @@
-import BigComplex from "../../../../sdk/math/Complex.js";
+import BigComplex from "../../../../sdk/math/BigComplex.js";
 import FractoFastCalc from "../../../../sdk/FractoFastCalc.js";
 
-export const newton_big_complex = (point, limit) => {
+/**
+ * Refine an orbital point with arbitrary-precision Newton iteration.
+ *
+ * @param {{x:number|string,y:number|string}} point Mandelbrot parameter.
+ * @param {number} limit Maximum Newton iterations.
+ * @param {number} [known_cardinality] Evaluate only this cardinality when supplied.
+ * @returns {object} Newton result and convergence metadata.
+ */
+export const newton_big_complex = (point, limit, known_cardinality = null) => {
   const P = new BigComplex(point.x, point.y);
   let least_magnitude = 1000;
   let least_magnitude_N = 0;
   let least_magnitude_point_list = [];
   const start = performance.now();
-  for (let N = 3; N < 2500; N++) {
+  const requested_cardinality = Number(known_cardinality);
+  const cardinality_supplied =
+    known_cardinality !== null &&
+    known_cardinality !== undefined &&
+    Number.isInteger(requested_cardinality);
+  const cardinalities = cardinality_supplied
+    ? [Math.max(3, requested_cardinality)]
+    : Array.from({ length: 2497 }, (_, index) => index + 3);
+  for (const N of cardinalities) {
     let z0 = new BigComplex(0, 0);
     for (let i = 1; i <= limit; i++) {
       let current = new BigComplex(z0.re, z0.im);
@@ -53,6 +69,7 @@ export const newton_big_complex = (point, limit) => {
     time: `${end - start}ms`,
     least_magnitude: least_magnitude,
     least_magnitude_N: least_magnitude_N,
+    cardinality_supplied,
   };
 };
 
