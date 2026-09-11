@@ -1,4 +1,5 @@
 import FractoFastCalc from "../../../sdk/FractoFastCalc.js";
+import { discover_and_newton } from "./orbitals/detector_newton.js";
 import { magnitude, normalize, scale, sub } from "./orbitals/orbitals_utils.js";
 import {
   optimize_polarity,
@@ -51,10 +52,38 @@ const get_cardioid_root = (focal_point) =>
  *
  * @param {number} re Real component of the focal point.
  * @param {number} im Imaginary component of the focal point.
- * @returns {{points: Array<{re: number, im: number}>|undefined, pattern: number|undefined}}
- *   Ordered orbit points and the calculator's detected pattern.
+ * @param {{iterations?: number, minimum_return_repetitions?: number, newton_limit?: number}} [options]
+ *   Detector/Newton controls.
+ * @returns {{points: Array<{re: number, im: number}>|undefined, pattern: number|undefined, source: string, detector?: object}}
+ *   Ordered orbit points, cardinality, and provenance metadata.
  */
-const get_orbital_points = (re, im) => {
+const get_orbital_points = (re, im, options = {}) => {
+  const detected = discover_and_newton(
+    { re, im },
+    {
+      iterations: options.iterations,
+      minimum_return_repetitions: options.minimum_return_repetitions,
+      newton_limit: options.newton_limit,
+      newton_mode: "big_complex",
+    },
+  );
+  const refined_points = detected.newton_big_complex?.point_list
+    ?.map((point) => ({ re: Number(point.re), im: Number(point.im) }))
+    .filter((point) => Number.isFinite(point.re) && Number.isFinite(point.im));
+  if (
+    detected.status === "cardinality_passed_to_newton" &&
+    refined_points?.length >= 2
+  ) {
+    return {
+      points: refined_points,
+      pattern: detected.detection.candidate_cardinality,
+      source: "detector_newton",
+      detector: detected,
+    };
+  }
+
+  // TODO: Remove this FractoFastCalc fallback once detector/Newton coverage
+  // is sufficient for all supported circuitry focal points.
   const calculation = FractoFastCalc.calc(re, im);
   const points = calculation?.orbital_points?.map((point) => ({
     re: point.x,
@@ -66,8 +95,35 @@ const get_orbital_points = (re, im) => {
   ) {
     points.pop();
   }
-  return { points, pattern: calculation?.pattern };
+  return {
+    points,
+    pattern: calculation?.pattern,
+    source: "fracto_fast_calc_fallback",
+    detector: detected,
+  };
 };
+
+/**
+ * Keep circuitry responses compact while exposing enough detector provenance
+ * to diagnose which point-generation path was used.
+ * @param {object|undefined} detector Detector/Newton workflow result.
+ * @returns {object|undefined} Compact detector summary.
+ */
+const summarize_detector = (detector) =>
+  detector
+    ? {
+        status: detector.status,
+        iterations: detector.iterations,
+        escaped: detector.escaped,
+        detection: {
+          status: detector.detection?.status,
+          candidate_cardinality: detector.detection?.candidate_cardinality,
+          matching_gaps: detector.detection?.matching_gaps,
+          confidence: detector.detection?.confidence,
+        },
+        newton: detector.newton_big_complex?.diagnostics || null,
+      }
+    : undefined;
 
 /**
  * Build a normal-length vector at each orbit point. Each vector follows the
@@ -101,10 +157,14 @@ const get_normals = (points, focal_point) => {
  * - `optimize_polarity` (optional boolean): exhaustively tests Hermite normal
  *   polarity patterns for small orbits and scores their smoothness.
  * - `interpolation` (optional): `hermite` (default) or `radial_sweep`.
+ * - `detector_iterations`, `minimum_return_repetitions`, `newton_limit`
+ *   (optional): controls the return detector and BigComplex Newton refinement
+ *   used to supply the fitted orbital points.
  *
- * Both modes use FractoFastCalc to find the orbit and return `{t, C}` samples,
- * the exact normalized `orbital_points` used to construct the curve, orbit
- * cardinality, sample count, Q, and interpolation metadata. Hermite mode also
+ * Both modes use detector/Newton-refined points when available and return
+ * `{t, C}` samples, the exact normalized `orbital_points` used to construct
+ * the curve, orbit cardinality, sample count, Q, and interpolation metadata.
+ * Hermite mode also
  * returns polarity optimization metadata. Radial-sweep mode uses Q as its
  * polar origin and intentionally ignores Hermite-only options.
  *
@@ -141,7 +201,11 @@ export const handle_circuitry = (req, res) => {
       supported: [INTERPOLATION_HERMITE, INTERPOLATION_RADIAL_SWEEP],
     });
   }
-  const orbit = get_orbital_points(re, im);
+  const orbit = get_orbital_points(re, im, {
+    iterations: req.query.detector_iterations,
+    minimum_return_repetitions: req.query.minimum_return_repetitions,
+    newton_limit: req.query.newton_limit,
+  });
   if (orbit?.pattern === 0) {
     return res.status(200).json({
       result: [],
@@ -158,6 +222,7 @@ export const handle_circuitry = (req, res) => {
       polarity_exhaustive: false,
       in_mandelbrot_set: false,
       orbit_status: "outside_mandelbrot_set",
+      point_source: orbit.source,
       message:
         "The requested focal point is outside the Mandelbrot set; no periodic orbit is available for circuitry rendering.",
     });
@@ -166,6 +231,8 @@ export const handle_circuitry = (req, res) => {
   if (!points || points.length < 2) {
     return res.status(422).json({
       error: "No periodic orbit found by FractoFastCalc",
+      point_source: orbit.source,
+      detector: summarize_detector(orbit.detector),
     });
   }
   const normals = get_normals(points, { re, im });
@@ -202,6 +269,8 @@ export const handle_circuitry = (req, res) => {
       polarity_score: null,
       polarity_metrics: null,
       polarity_exhaustive: false,
+      point_source: orbit.source,
+      detector: summarize_detector(orbit.detector),
     });
   }
   const optimized = optimize_polarity_pattern
@@ -226,5 +295,7 @@ export const handle_circuitry = (req, res) => {
     polarity_score: optimized.score,
     polarity_metrics: optimized.metrics,
     polarity_exhaustive: optimized.exhaustive,
+    point_source: orbit.source,
+    detector: summarize_detector(orbit.detector),
   });
 };
