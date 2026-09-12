@@ -1,4 +1,5 @@
 import FractoFastCalc from "../../../sdk/FractoFastCalc.js";
+import { performance } from "node:perf_hooks";
 import { discover_and_newton } from "./orbitals/detector_newton.js";
 import { magnitude, normalize, scale, sub } from "./orbitals/orbitals_utils.js";
 import {
@@ -181,6 +182,7 @@ const get_normals = (points, focal_point) => {
  * @returns {import('express').Response} JSON response sent to the client.
  */
 export const handle_circuitry = (req, res) => {
+  const detection_started = performance.now();
   const re = Number(req.query.re);
   const im = Number(req.query.im);
   const looped_points = [true, "true", 1, "1"].includes(
@@ -206,6 +208,7 @@ export const handle_circuitry = (req, res) => {
     minimum_return_repetitions: req.query.minimum_return_repetitions,
     newton_limit: req.query.newton_limit,
   });
+  const detector_elapsed_ms = performance.now() - detection_started;
   if (orbit?.pattern === 0) {
     return res.status(200).json({
       result: [],
@@ -223,6 +226,7 @@ export const handle_circuitry = (req, res) => {
       in_mandelbrot_set: false,
       orbit_status: "outside_mandelbrot_set",
       point_source: orbit.source,
+      detector_elapsed_ms,
       message:
         "The requested focal point is outside the Mandelbrot set; no periodic orbit is available for circuitry rendering.",
     });
@@ -233,6 +237,7 @@ export const handle_circuitry = (req, res) => {
       error: "No periodic orbit found by FractoFastCalc",
       point_source: orbit.source,
       detector: summarize_detector(orbit.detector),
+      detector_elapsed_ms,
     });
   }
   const normals = get_normals(points, { re, im });
@@ -271,6 +276,7 @@ export const handle_circuitry = (req, res) => {
       polarity_exhaustive: false,
       point_source: orbit.source,
       detector: summarize_detector(orbit.detector),
+      detector_elapsed_ms,
     });
   }
   const optimized = optimize_polarity_pattern
@@ -296,6 +302,7 @@ export const handle_circuitry = (req, res) => {
     polarity_metrics: optimized.metrics,
     polarity_exhaustive: optimized.exhaustive,
     point_source: orbit.source,
+    detector_elapsed_ms,
     detector: summarize_detector(orbit.detector),
   });
 };
