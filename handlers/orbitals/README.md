@@ -143,6 +143,14 @@ recurrence errors, and derivative-like comparisons all use the actual vector
 `z` and never use the cardioid fixed point `Q`. The separate spectral scout
 uses polar distance from `Q`; those two magnitudes must not be conflated.
 
+The experimental `detection_mode=pyramid` route runs a separate contender
+sieve. It samples `|z|` every contender cardinality, eliminates a contender
+when a meaningful derivative-pyramid layer changes sign, and reports the
+survivor list together with `elapsed_ms`, `eliminated_count`, and
+`insufficient_count`. `minimum_cycles`, `max_cardinality`, and `noise_factor`
+are query controls. This mode is for performance and accuracy experiments;
+it does not replace the recurrence detector or establish exact periodicity.
+
 `detector_newton.js` provides the detector-to-Newton adapter for the next
 workflow stage. It accepts `newton_mode` values `native`, `big_complex`, or
 `both`, passes the detected cardinality directly to the selected solver, and

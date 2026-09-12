@@ -1,6 +1,7 @@
 const DEFAULT_MINIMUM_REPETITIONS = 5;
 const MAX_MINIMUM_REPETITIONS = 64;
 const MINIMUM_RADIUS_GAP_RATIO = 10;
+const DERIVATIVE_PYRAMID_CYCLES = 10;
 
 const greatest_common_divisor = (left, right) => {
   let a = Math.abs(left);
@@ -11,6 +12,145 @@ const greatest_common_divisor = (left, right) => {
     b = remainder;
   }
   return a || 1;
+};
+
+/**
+ * Measure sign coherence in the finite-difference pyramid sampled every N
+ * iterations. Alternating signs between layers are expected; a sign change
+ * within one layer indicates a wavering candidate progression.
+ *
+ * @param {Array<object>} samples Critical-orbit samples.
+ * @param {number} gap Candidate cardinality.
+ * @param {Map<number, object>} sample_by_iteration Samples indexed by iteration.
+ * @returns {{coherence:number,layers:number,sign_changes:number,sample_count:number}} Pyramid diagnostics.
+ */
+const derivative_pyramid = (samples, gap, sample_by_iteration) => {
+  const values = [];
+  const first_iteration = samples[0]?.iteration;
+  if (!Number.isFinite(first_iteration)) {
+    return { coherence: 0, layers: 0, sign_changes: 0, sample_count: 0 };
+  }
+  for (let cycle = 0; cycle <= DERIVATIVE_PYRAMID_CYCLES; cycle += 1) {
+    const sample = sample_by_iteration.get(first_iteration + cycle * gap);
+    if (!sample) break;
+    values.push(sample.radius);
+  }
+  if (values.length < 3) {
+    return { coherence: 0, layers: 0, sign_changes: 0, sample_count: values.length };
+  }
+  let layer = values;
+  let coherent_layers = 0;
+  let sign_changes = 0;
+  while (layer.length > 1) {
+    const differences = layer.slice(1).map((value, index) => value - layer[index]);
+    const scale = Math.max(...differences.map((value) => Math.abs(value)), 0);
+    const epsilon = Math.max(scale * 1e-12, 1e-30);
+    const signs = differences
+      .filter((value) => Math.abs(value) > epsilon)
+      .map((value) => Math.sign(value));
+    if (signs.length > 0) {
+      const positive = signs.filter((sign) => sign > 0).length;
+      const negative = signs.length - positive;
+      if (positive === 0 || negative === 0) coherent_layers += 1;
+      sign_changes += Math.min(positive, negative);
+    }
+    layer = differences;
+  }
+  const layers = values.length - 1;
+  return {
+    coherence: coherent_layers / Math.max(1, layers),
+    layers,
+    sign_changes,
+    sample_count: values.length,
+  };
+};
+
+/**
+ * Sieve possible cardinalities by requiring sign consistency at every
+ * derivative-pyramid level. This is intentionally separate from the mature
+ * recurrence detector so its performance and false-elimination behavior can
+ * be measured independently.
+ *
+ * @param {Array<object>} samples Critical-orbit samples with origin radius.
+ * @param {{minimum_cycles?:number,max_cardinality?:number,noise_factor?:number}} [options]
+ *   Contender-sieve controls.
+ * @returns {object} Surviving contenders, elimination counts, and timing.
+ */
+export const detect_pyramid_contenders = (samples, options = {}) => {
+  const started = performance.now();
+  const minimum_cycles = Math.max(2, Math.floor(Number(options.minimum_cycles) || 10));
+  const max_cardinality = Math.min(
+    Math.floor((samples.length - 1) / minimum_cycles),
+    Math.max(3, Math.floor(Number(options.max_cardinality) || 4096)),
+  );
+  const noise_factor = Math.max(1, Number(options.noise_factor) || 64);
+  const sample_by_iteration = new Map(
+    samples.map((sample) => [sample.iteration, sample]),
+  );
+  const first_iteration = samples[0]?.iteration;
+  const survivors = [];
+  let eliminated = 0;
+  let insufficient = 0;
+  for (let cardinality = 3; cardinality <= max_cardinality; cardinality += 1) {
+    const values = [];
+    for (let cycle = 0; cycle <= minimum_cycles; cycle += 1) {
+      const sample = sample_by_iteration.get(first_iteration + cycle * cardinality);
+      if (!sample) break;
+      values.push(sample.radius);
+    }
+    if (values.length < minimum_cycles + 1) {
+      insufficient += 1;
+      continue;
+    }
+    let layer = values;
+    let coherent_layers = 0;
+    let sign_changes = 0;
+    let rejected = false;
+    while (layer.length > 1 && !rejected) {
+      const differences = layer.slice(1).map((value, index) => value - layer[index]);
+      const scale = Math.max(...differences.map((value) => Math.abs(value)), 0);
+      const epsilon = Math.max(
+        Number.EPSILON * noise_factor * Math.max(1, scale),
+        1e-30,
+      );
+      const signs = differences
+        .filter((value) => Math.abs(value) > epsilon)
+        .map((value) => Math.sign(value));
+      if (signs.length > 0) {
+        const positive = signs.filter((sign) => sign > 0).length;
+        const negative = signs.length - positive;
+        if (positive > 0 && negative > 0) {
+          sign_changes += Math.min(positive, negative);
+          rejected = true;
+        } else {
+          coherent_layers += 1;
+        }
+      }
+      layer = differences;
+    }
+    if (rejected) {
+      eliminated += 1;
+    } else {
+      survivors.push({
+        cardinality,
+        cycles: values.length - 1,
+        pyramid_layers: coherent_layers,
+        sign_changes,
+      });
+    }
+  }
+  return {
+    status: survivors.length ? "pyramid_contenders_found" : "pyramid_inconclusive",
+    minimum_cycles,
+    max_cardinality,
+    noise_factor,
+    contender_count: Math.max(0, max_cardinality - 2),
+    eliminated_count: eliminated,
+    insufficient_count: insufficient,
+    survivor_count: survivors.length,
+    survivors,
+    elapsed_ms: performance.now() - started,
+  };
 };
 
 /**
@@ -114,6 +254,7 @@ export const detect_return_cardinality = (samples, options = {}) => {
         gap,
         indexes,
         recurrence_error: errors[Math.floor(errors.length / 2)] ?? Infinity,
+        pyramid: derivative_pyramid(samples, gap, sample_by_iteration),
       };
     })
     .sort(
@@ -175,13 +316,22 @@ export const detect_return_cardinality = (samples, options = {}) => {
     recurrence_error: best.recurrence_error,
     recurrence_baseline_error: baseline_error,
     recurrence_quality,
+    pyramid_coherence: best.pyramid.coherence,
+    pyramid_layers: best.pyramid.layers,
+    pyramid_sign_changes: best.pyramid.sign_changes,
     confidence_margin,
-    ambiguous: recurrence_quality < 0.5 || confidence_margin < 0.1,
+    ambiguous:
+      recurrence_quality < 0.5 ||
+      confidence_margin < 0.1 ||
+      best.pyramid.coherence < 0.5,
     alternatives: ranked.slice(1, 6).map((candidate) => ({
       cardinality: candidate.gap,
       matching_gaps: candidate.indexes.length,
       recurrence_error: candidate.recurrence_error,
       harmonic: candidate.gap % cardinality === 0,
+      pyramid_coherence: candidate.pyramid.coherence,
+      pyramid_layers: candidate.pyramid.layers,
+      pyramid_sign_changes: candidate.pyramid.sign_changes,
     })),
     gap_gcd: best.indexes.reduce(
       (result, index) =>
@@ -200,7 +350,8 @@ export const detect_return_cardinality = (samples, options = {}) => {
     confidence:
       0.4 * recurrence_quality +
       0.3 * confidence_margin +
-      0.2 * radius_stability +
+      0.1 * radius_stability +
+      0.1 * best.pyramid.coherence +
       0.1 * Math.min(1, recurrence),
   };
 };

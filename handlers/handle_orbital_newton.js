@@ -5,6 +5,20 @@ const is_truthy = (value) =>
   ["1", "true", "yes"].includes(String(value).toLowerCase());
 const ADAPTIVE_MAX_ITERATIONS = 262144;
 
+const has_sufficient_detection = (result, horizon) => {
+  const detection = result?.detection;
+  const cardinality = detection?.candidate_cardinality;
+  return (
+    detection?.status === "return_pattern_detected" &&
+    Number.isInteger(cardinality) &&
+    horizon >= cardinality * 10 &&
+    detection.pyramid_coherence >= 0.9 &&
+    detection.recurrence_quality >= 0.9 &&
+    detection.confidence_margin >= 0.25 &&
+    detection.ambiguous !== true
+  );
+};
+
 /**
  * Discover a cardinality from critical-orbit returns and refine it with Newton.
  *
@@ -17,7 +31,8 @@ const ADAPTIVE_MAX_ITERATIONS = 262144;
  * @queryParam newton_limit Newton refinement iterations.
  * @queryParam newton_mode `native`, `big_complex`, or `both`.
  * @queryParam adaptive_detection When true, double detector iterations up to
- *   the configured maximum and retain the result from the largest horizon.
+ *   the configured maximum, stopping once recurrence and pyramid evidence are
+ *   sufficient.
  * @queryParam maximum_detection_iterations Adaptive detector cap, default 262144.
  * @returns {import('express').Response} Detector and Newton JSON response.
  */
@@ -46,23 +61,26 @@ export const handle_orbital_newton = (req, res) => {
       ? (() => {
           let horizon = base_iterations;
           let result = null;
-          while (horizon < maximum_iterations) {
+          const checked_horizons = [];
+          while (true) {
             result = discover_and_newton(point, {
               iterations: horizon,
               minimum_return_repetitions: req.query.minimum_return_repetitions,
               newton_limit: req.query.newton_limit,
               newton_mode: req.query.newton_mode,
             });
+            checked_horizons.push(horizon);
+            if (
+              has_sufficient_detection(result, horizon) ||
+              horizon >= maximum_iterations
+            ) {
+              break;
+            }
             horizon = Math.min(maximum_iterations, horizon * 2);
           }
           return {
-            result: discover_and_newton(point, {
-              iterations: horizon,
-              minimum_return_repetitions: req.query.minimum_return_repetitions,
-              newton_limit: req.query.newton_limit,
-              newton_mode: req.query.newton_mode,
-            }),
-            horizons: horizon,
+            result,
+            horizons: checked_horizons,
           };
         })()
       : { result: discover_and_newton(point, {
@@ -77,6 +95,7 @@ export const handle_orbital_newton = (req, res) => {
         ...(result.diagnostics || {}),
         adaptive_detection: true,
         maximum_detection_iterations: maximum_iterations,
+        checked_horizons: iterations.horizons,
       };
     }
     return res.status(200).json({

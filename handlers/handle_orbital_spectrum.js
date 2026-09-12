@@ -1,7 +1,10 @@
 import { performance } from "node:perf_hooks";
 import { discover_orbital } from "./orbitals/orbital_discovery.js";
 import { sample_critical_orbit } from "./orbitals/orbit_sampling.js";
-import { detect_return_cardinality } from "./orbitals/return_detection.js";
+import {
+  detect_pyramid_contenders,
+  detect_return_cardinality,
+} from "./orbitals/return_detection.js";
 import {
   analyze_multi_polar_spectrum,
   ADAPTIVE_MULTI_ANALYSIS_CONFIGS,
@@ -35,6 +38,7 @@ const is_truthy = (value) =>
  *   when the initial consensus does not meet the confidence gate.
  * @queryParam detection_mode `returns` selects critical-orbit return
  *   detection; the default `spectral` mode retains Fourier analysis.
+ *   `pyramid` runs the experimental derivative-pyramid contender sieve.
  * @returns {import('express').Response} JSON spectral response. With
  *   `multi_analysis=true`, `spectrum.multi_analysis` contains each configured
  *   pass and `spectrum.consensus_candidates` contains the ranked merged view.
@@ -60,6 +64,22 @@ export const handle_orbital_spectrum = (req, res) => {
         iterations: orbit.iterations,
         escaped: orbit.escaped,
         detection,
+      });
+    }
+    if (req.query.detection_mode === "pyramid") {
+      const orbit = sample_critical_orbit(point, {
+        iterations: req.query.iterations,
+      });
+      return res.status(200).json({
+        point: { re: String(req.query.re), im: String(req.query.im) },
+        detection_mode: "pyramid",
+        iterations: orbit.iterations,
+        escaped: orbit.escaped,
+        detection: detect_pyramid_contenders(orbit.samples, {
+          minimum_cycles: req.query.minimum_cycles,
+          max_cardinality: req.query.max_cardinality,
+          noise_factor: req.query.noise_factor,
+        }),
       });
     }
     const include_multi_analysis = is_truthy(req.query.multi_analysis);

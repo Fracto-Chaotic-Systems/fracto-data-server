@@ -49,3 +49,17 @@ test("orbital Newton endpoint rejects invalid coordinates", () => {
   assert.equal(response.code, 400);
   assert.match(response.body.error, /finite numbers/);
 });
+
+test("adaptive detection stops once the candidate evidence is sufficient", () => {
+  const response = invoke({
+    re: "0.112602264",
+    im: "0.5939821402",
+    adaptive_detection: "true",
+    maximum_detection_iterations: "262144",
+    newton_mode: "native",
+  });
+  assert.equal(response.code, 200);
+  assert.equal(response.body.detection.candidate_cardinality, 7);
+  assert.equal(response.body.detector_horizon_iterations, 4096);
+  assert.deepEqual(response.body.diagnostics.checked_horizons, [4096]);
+});
