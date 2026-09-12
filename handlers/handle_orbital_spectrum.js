@@ -2,6 +2,7 @@ import { performance } from "node:perf_hooks";
 import { discover_orbital } from "./orbitals/orbital_discovery.js";
 import { sample_critical_orbit } from "./orbitals/orbit_sampling.js";
 import {
+  DETECTION_MODE_PYRAMID_ONLY,
   detect_pyramid_contenders,
   detect_return_cardinality,
 } from "./orbitals/return_detection.js";
@@ -38,7 +39,24 @@ const is_truthy = (value) =>
  *   when the initial consensus does not meet the confidence gate.
  * @queryParam detection_mode `returns` selects critical-orbit return
  *   detection; the default `spectral` mode retains Fourier analysis.
- *   `pyramid` runs the experimental derivative-pyramid contender sieve.
+ *   `pyramid` is a backward-compatible alias for `pyramid_only`, which runs
+ *   only the derivative-pyramid contender sieve.
+ * @queryParam max_cardinality Upper cardinality contender bound.
+ * @queryParam minimum_cycles Required repeated samples per contender.
+ * @queryParam max_layers Maximum derivative-pyramid levels to evaluate.
+ * @queryParam near_zero_tolerance Absolute floor for near-zero differences.
+ * @queryParam precision_digits Initial precision policy, reserved for the
+ *   high-precision promotion stage.
+ * @queryParam max_precision_digits Maximum precision policy.
+ * @queryParam precision_escalation_factor Precision growth multiplier.
+ * @queryParam stop_on_confident When true, stop after a contender reaches
+ *   the configured evidence threshold; disabled by default for benchmarks.
+ * @queryParam confidence_threshold Minimum pyramid-layer fraction required
+ *   for early termination.
+ * @queryParam harmonic_score_tolerance Score difference allowed when labeling
+ *   a surviving multiple as a harmonic of a proper divisor.
+ * @queryParam period_validation_tolerance Full-complex recurrence tolerance
+ *   used to validate each surviving candidate period.
  * @returns {import('express').Response} JSON spectral response. With
  *   `multi_analysis=true`, `spectrum.multi_analysis` contains each configured
  *   pass and `spectrum.consensus_candidates` contains the ranked merged view.
@@ -66,19 +84,34 @@ export const handle_orbital_spectrum = (req, res) => {
         detection,
       });
     }
-    if (req.query.detection_mode === "pyramid") {
+    if (
+      req.query.detection_mode === "pyramid" ||
+      req.query.detection_mode === DETECTION_MODE_PYRAMID_ONLY
+    ) {
       const orbit = sample_critical_orbit(point, {
         iterations: req.query.iterations,
       });
       return res.status(200).json({
         point: { re: String(req.query.re), im: String(req.query.im) },
-        detection_mode: "pyramid",
+        detection_mode: DETECTION_MODE_PYRAMID_ONLY,
+        experimental: true,
+        experimental_warning:
+          "Derivative-pyramid detection is experimental and must not be used as the production detector.",
         iterations: orbit.iterations,
         escaped: orbit.escaped,
         detection: detect_pyramid_contenders(orbit.samples, {
           minimum_cycles: req.query.minimum_cycles,
           max_cardinality: req.query.max_cardinality,
+          max_layers: req.query.max_layers,
           noise_factor: req.query.noise_factor,
+          near_zero_tolerance: req.query.near_zero_tolerance,
+          precision_digits: req.query.precision_digits,
+          max_precision_digits: req.query.max_precision_digits,
+          precision_escalation_factor: req.query.precision_escalation_factor,
+          stop_on_confident: req.query.stop_on_confident,
+          confidence_threshold: req.query.confidence_threshold,
+          harmonic_score_tolerance: req.query.harmonic_score_tolerance,
+          period_validation_tolerance: req.query.period_validation_tolerance,
         }),
       });
     }
@@ -200,4 +233,23 @@ export const handle_orbital_spectrum = (req, res) => {
     console.error("handle_orbital_spectrum", error.message);
     return res.status(500).json({ error: error.message });
   }
+};
+
+/**
+ * Dedicated derivative-pyramid endpoint. This delegates to the shared
+ * spectrum handler with the detector mode fixed, keeping validation and
+ * configuration handling identical to `/orbital_spectrum`.
+ *
+ * @param {import('express').Request} req Express request.
+ * @param {import('express').Response} res Express response.
+ * @returns {import('express').Response} Pyramid-only JSON response.
+ */
+export const handle_orbital_pyramid = (req, res) => {
+  const pyramid_request = Object.create(req);
+  Object.defineProperty(pyramid_request, "query", {
+    value: { ...req.query, detection_mode: "pyramid_only" },
+    enumerable: true,
+    configurable: true,
+  });
+  return handle_orbital_spectrum(pyramid_request, res);
 };

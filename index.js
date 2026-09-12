@@ -23,7 +23,10 @@ import { handle_tiles } from "./handlers/handle_tiles.js";
 import { handle_orbital, handle_orbitals } from "./handlers/handle_orbital.js";
 import { handle_circuitry } from "./handlers/handle_circuitry.js";
 import { handle_orbital_discovery } from "./handlers/handle_orbital_discovery.js";
-import { handle_orbital_spectrum } from "./handlers/handle_orbital_spectrum.js";
+import {
+  handle_orbital_spectrum,
+  handle_orbital_pyramid,
+} from "./handlers/handle_orbital_spectrum.js";
 import { handle_orbital_newton } from "./handlers/handle_orbital_newton.js";
 import { handle_tile_coverage } from "./handlers/handle_coverage.js";
 import { handle_tile, handle_tile_get } from "./handlers/handle_tile.js";
@@ -92,6 +95,7 @@ app.get("/orbitals", handle_orbitals);
 app.get("/circuitry", handle_circuitry);
 app.get("/orbital_discovery", handle_orbital_discovery);
 app.get("/orbital_spectrum", handle_orbital_spectrum);
+app.get("/orbital_pyramid", handle_orbital_pyramid);
 app.get("/orbital_newton", handle_orbital_newton);
 
 app.get("/lore_categories", handle_lore_categories);
