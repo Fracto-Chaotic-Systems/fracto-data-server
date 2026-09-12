@@ -8,6 +8,7 @@ import {
   normalize_spectral_analysis_config,
   score_consensus_candidates,
 } from "../handlers/orbitals/spectral_analysis.js";
+import { discover_orbital } from "../handlers/orbitals/orbital_discovery.js";
 
 const make_samples = (count, stride = 1, frequency = 0.03) =>
   Array.from({ length: count }, (_, index) => ({
@@ -132,4 +133,16 @@ test("prefers a simple cardinality within spectral resolution", () => {
     result.peaks.some((peak) => peak.cardinality === 7),
     "expected the seven-point candidate despite a non-divisible window",
   );
+});
+
+test("preserves multi-cycle cardinality when scouting a short orbital", () => {
+  const result = discover_orbital(
+    { re: 0.112602264, im: 0.5939821402 },
+    { iterations: 4096, warmup_iterations: 0 },
+  );
+  const candidate = result.spectrum.peaks.find(
+    (peak) => peak.cardinality === 7,
+  );
+  assert.ok(candidate, "expected the seven-point candidate");
+  assert.equal(candidate.cycles, 2);
 });

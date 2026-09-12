@@ -22,3 +22,24 @@ test("does not accept a pattern before five repetitions", () => {
   const result = detect_return_cardinality(orbit.samples);
   assert.equal(result.status, "inconclusive");
 });
+
+test("recognizes a 28-cycle orbit with alternating radius minima", () => {
+  const orbit = sample_critical_orbit(
+    { re: -0.061056345, im: 0.6457252242 },
+    { iterations: 4096 },
+  );
+  const result = detect_return_cardinality(orbit.samples);
+  assert.equal(result.status, "return_pattern_detected");
+  assert.equal(result.candidate_cardinality, 28);
+});
+
+test("distinguishes a prime period from transient sub-gaps", () => {
+  const orbit = sample_critical_orbit(
+    { re: -0.0831368385, im: 0.6477333222 },
+    { iterations: 4096 },
+  );
+  const result = detect_return_cardinality(orbit.samples);
+  assert.equal(result.candidate_cardinality, 43);
+  assert.equal(result.ambiguous, false);
+  assert.ok(result.alternatives.some((candidate) => candidate.cardinality === 3));
+});

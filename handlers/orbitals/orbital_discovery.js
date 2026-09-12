@@ -7,7 +7,11 @@ const DEFAULT_ITERATIONS = 4096;
 const DEFAULT_WARMUP_ITERATIONS = 4096;
 const MAX_WARMUP_ITERATIONS = 262_144;
 const MAX_ITERATIONS = 1_000_000;
-const DEFAULT_SAMPLE_LIMIT = 512;
+// Keep the default scout cadence contiguous. Sampling every eighth point (the
+// old 512-sample limit for a 4096-iteration scout) aliases short orbitals and
+// can turn a 2/7 rotation into a spurious 1/28 signal. Callers that need a
+// bounded sample set can still provide an explicit `sample_limit`.
+const DEFAULT_SAMPLE_LIMIT = 4096;
 const MAX_SAMPLE_LIMIT = 4096;
 const NATIVE_PRECISION_GUARD = 64;
 const MIN_HIGH_PRECISION = 80;

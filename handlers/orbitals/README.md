@@ -138,6 +138,11 @@ candidate, matching minima, gap count, radius stability, and confidence. The
 mode does not call `FractoFastCalc`; that routine remains a reference oracle
 for known test fixtures only.
 
+This return-detector phase is intentionally origin-based: its `radius`,
+recurrence errors, and derivative-like comparisons all use the actual vector
+`z` and never use the cardioid fixed point `Q`. The separate spectral scout
+uses polar distance from `Q`; those two magnitudes must not be conflated.
+
 `detector_newton.js` provides the detector-to-Newton adapter for the next
 workflow stage. It accepts `newton_mode` values `native`, `big_complex`, or
 `both`, passes the detected cardinality directly to the selected solver, and

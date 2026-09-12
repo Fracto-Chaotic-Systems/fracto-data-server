@@ -7,7 +7,8 @@ const MAX_ITERATIONS = 1_000_000;
  * @param {{re:number|string, im:number|string}} point Mandelbrot parameter.
  * @param {{iterations?:number}} [options] Sampling limits.
  * @returns {{samples:Array<{iteration:number,re:number,im:number,radius:number}>, escaped:boolean, iterations:number}}
- *   Critical-orbit samples and termination metadata.
+ *   Critical-orbit samples and termination metadata. `radius` is the actual
+ *   vector magnitude `|z|` from the origin; it is not distance from Q.
  */
 export const sample_critical_orbit = (point, options = {}) => {
   const iterations = Math.min(
