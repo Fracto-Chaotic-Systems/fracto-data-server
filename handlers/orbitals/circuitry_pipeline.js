@@ -13,7 +13,10 @@ import {
   sample_curve,
   solve_coefficients,
 } from "./hermite.js";
-import { parameterize_radial_sweep } from "./radial_sweep.js";
+import {
+  get_radial_sweep_cycles,
+  parameterize_radial_sweep,
+} from "./radial_sweep.js";
 
 export const INTERPOLATION_HERMITE = "hermite";
 export const INTERPOLATION_RADIAL_SWEEP = "radial_sweep";
@@ -192,6 +195,7 @@ export const build_circuitry_pipeline = (focal_point, options = {}) => {
         orbital_points: points,
         cardinality: points.length,
         samples: radial_sample_count,
+        cycles: get_radial_sweep_cycles(points, cardioid_root),
         Q: cardioid_root,
         interpolation,
         looped_points: false,
@@ -287,6 +291,7 @@ export const build_circuitry_from_points = (points, Q, options = {}) => {
       orbital_points: points,
       cardinality: points.length,
       samples: result.length,
+      cycles: get_radial_sweep_cycles(points, Q),
       Q,
       interpolation: INTERPOLATION_RADIAL_SWEEP,
       looped_points: false,

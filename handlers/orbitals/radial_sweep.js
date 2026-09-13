@@ -27,6 +27,51 @@ const directed_sweep_delta = (from_angle, to_angle, direction) => {
 };
 
 /**
+ * Calculate the radial geometry shared by sampling and metadata reporting.
+ * @param {Array<{re:number,im:number}>} points Ordered orbital points.
+ * @param {{re:number,im:number}} origin Radial-sweep origin.
+ * @returns {{polar_points:Array<{angle:number,radius:number}>,direction:number,
+ *   sweep_positions:number[],period:number}|null} Sweep geometry.
+ */
+const get_sweep_geometry = (points, origin) => {
+  if (!Array.isArray(points) || points.length < 2 || !origin) {
+    return null;
+  }
+  const polar_points = points.map((point) => ({
+    angle: Math.atan2(point.im - origin.im, point.re - origin.re),
+    radius: magnitude(sub(point, origin)),
+  }));
+  const direction = get_rotation_direction(points, origin);
+  const sweep_positions = [0];
+  for (let index = 1; index < polar_points.length; index += 1) {
+    const delta = directed_sweep_delta(
+      polar_points[index - 1].angle,
+      polar_points[index].angle,
+      direction,
+    );
+    sweep_positions.push(sweep_positions[index - 1] + Math.max(delta, 1e-9));
+  }
+  const closing_delta = directed_sweep_delta(
+    polar_points[polar_points.length - 1].angle,
+    polar_points[0].angle,
+    direction,
+  );
+  const period = sweep_positions.at(-1) + Math.max(closing_delta, 1e-9);
+  return { polar_points, direction, sweep_positions, period };
+};
+
+/**
+ * Count complete angular revolutions represented by a radial sweep.
+ * @param {Array<{re:number,im:number}>} points Ordered orbital points.
+ * @param {{re:number,im:number}} origin Radial-sweep origin.
+ * @returns {number} Revolution count, or zero for invalid input.
+ */
+export const get_radial_sweep_cycles = (points, origin) => {
+  const geometry = get_sweep_geometry(points, origin);
+  return geometry ? geometry.period / FULL_TURN : 0;
+};
+
+/**
  * Sample an orbit by sweeping angle around the supplied radial origin and
  * interpolating the distance from that origin between orbital points.
  *
@@ -49,26 +94,11 @@ export const parameterize_radial_sweep = (
       ? samples_or_options
       : samples_or_options?.samples_per_interval ??
         DEFAULT_SAMPLES_PER_INTERVAL;
-  const polar_points = points.map((point) => ({
-    angle: Math.atan2(point.im - origin.im, point.re - origin.re),
-    radius: magnitude(sub(point, origin)),
-  }));
-  const direction = get_rotation_direction(points, origin);
-  const sweep_positions = [0];
-  for (let index = 1; index < polar_points.length; index += 1) {
-    const delta = directed_sweep_delta(
-      polar_points[index - 1].angle,
-      polar_points[index].angle,
-      direction,
-    );
-    sweep_positions.push(sweep_positions[index - 1] + Math.max(delta, 1e-9));
+  const geometry = get_sweep_geometry(points, origin);
+  if (!geometry) {
+    return [];
   }
-  const closing_delta = directed_sweep_delta(
-    polar_points[polar_points.length - 1].angle,
-    polar_points[0].angle,
-    direction,
-  );
-  const period = sweep_positions.at(-1) + Math.max(closing_delta, 1e-9);
+  const { polar_points, direction, sweep_positions, period } = geometry;
   const interval_count = Math.max(1, Math.floor(samples_per_interval));
   const sample_count = polar_points.length * interval_count + 1;
   return Array.from({ length: sample_count }, (_, index) => {

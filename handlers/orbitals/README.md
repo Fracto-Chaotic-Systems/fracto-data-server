@@ -187,6 +187,10 @@ performs only radial-sweep parameterization and reports `point_source:
 "caller_supplied"`; a client can then pass the returned curve samples and Q to
 the independent waveform stage without repeating earlier work.
 
+Radial-sweep results also include `cycles`, the unwrapped angular revolution
+count. Consumers should use this explicit metadata rather than inferring turns
+from the wrapped sample-angle endpoints.
+
 The data-server test suite includes stage tests and a handler-level integration
 test for `/circuitry`. The integration test checks the stable response contract
 for a successful radial result, an outside-set result, and invalid coordinates.
