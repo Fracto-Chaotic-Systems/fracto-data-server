@@ -69,12 +69,19 @@ const log_sql = (sql) => {
 };
 
 export const db_connect = () => {
+  const requested_timeout = Number(
+    process.env.FRACTO_MYSQL_CONNECT_TIMEOUT_MS || 5000,
+  );
   const connection = mysql.createConnection({
     ...config,
     host: process.env.FRACTO_MYSQL_HOST || config.host,
     port: process.env.FRACTO_MYSQL_PORT
       ? Number(process.env.FRACTO_MYSQL_PORT)
       : config.port,
+    connectTimeout:
+      Number.isFinite(requested_timeout) && requested_timeout > 0
+        ? requested_timeout
+        : 5000,
   });
   connection.connect((err) => {
     if (err) {

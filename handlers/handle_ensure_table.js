@@ -1,7 +1,7 @@
 import { db_connect, db_disconnect } from "../mysql.js";
 
 const TABLE_NAME_PATTERN = /^[A-Za-z][A-Za-z0-9_]*$/;
-const COLUMN_TYPE_PATTERN = /^(?:BIGINT|INT|VARCHAR\(\d+\)|TIMESTAMP|JSON)(?:\s+UNSIGNED)?$/i;
+const COLUMN_TYPE_PATTERN = /^(?:BIGINT|INT|TINYINT\(1\)|DOUBLE|VARCHAR\(\d+\)|TIMESTAMP|JSON)(?:\s+UNSIGNED)?$/i;
 
 /**
  * Ensure an application-owned table exists without exposing arbitrary SQL.
@@ -11,7 +11,7 @@ const COLUMN_TYPE_PATTERN = /^(?:BIGINT|INT|VARCHAR\(\d+\)|TIMESTAMP|JSON)(?:\s+
  * @param {import("express").Request} req Request body with table and columns.
  * @param {import("express").Response} res JSON result of the operation.
  */
-export const handle_ensure_table = (req, res) => {
+export const handle_ensure_table = async (req, res) => {
   const table = `${req.body?.table || ""}`;
   const columns = req.body?.columns;
   if (
@@ -32,6 +32,7 @@ export const handle_ensure_table = (req, res) => {
       column.nullable === false ? "NOT NULL" : "",
       column.auto_increment ? "AUTO_INCREMENT" : "",
       column.primary_key ? "PRIMARY KEY" : "",
+      column.unique ? "UNIQUE" : "",
       column.default_current_timestamp ? "DEFAULT CURRENT_TIMESTAMP" : "",
       column.on_update_current_timestamp ? "ON UPDATE CURRENT_TIMESTAMP" : "",
       /^-?\d+$/.test(`${column.default_value ?? ""}`)
@@ -45,13 +46,30 @@ export const handle_ensure_table = (req, res) => {
     return;
   }
   const connection = db_connect();
-  const sql = `CREATE TABLE IF NOT EXISTS \`${table}\` (${column_definitions.join(", ")})`;
-  connection.query(sql, (error) => {
-    db_disconnect(connection);
-    if (error) {
-      res.status(500).json({ error: error.message });
-      return;
+  const query = (sql) =>
+    new Promise((resolve, reject) => {
+      connection.query(sql, (error, result) =>
+        error ? reject(error) : resolve(result),
+      );
+    });
+  try {
+    const sql = `CREATE TABLE IF NOT EXISTS \`${table}\` (${column_definitions.join(", ")})`;
+    await query(sql);
+    const existing_columns = await query(`SHOW COLUMNS FROM \`${table}\``);
+    const existing_names = new Set(
+      existing_columns.map((column) => column.Field),
+    );
+    const migrations = [];
+    for (const [index, column] of columns.entries()) {
+      if (existing_names.has(column.name)) continue;
+      const definition = column_definitions[index];
+      await query(`ALTER TABLE \`${table}\` ADD COLUMN ${definition}`);
+      migrations.push(column.name);
     }
-    res.status(200).json({ table, initialized: true });
-  });
+    res.status(200).json({ table, initialized: true, migrations });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  } finally {
+    db_disconnect(connection);
+  }
 };
