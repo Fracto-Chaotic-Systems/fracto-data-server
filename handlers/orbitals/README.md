@@ -157,6 +157,40 @@ workflow stage. It accepts `newton_mode` values `native`, `big_complex`, or
 returns `cardinality_inconclusive` without invoking Newton when five matching
 returns have not been established.
 
+The standalone `newton_refinement.js` stage accepts a focal point and a
+caller-supplied cardinality. It can therefore be used without running the
+detector first when a cardinality is known from a table, experiment, or other
+detector. `detector_newton.js` delegates to this stage while retaining the
+existing combined workflow and response fields.
+
+`orbitals_utils.js` exposes `get_cardioid_root(focal_point)` as the independent
+Q calculation. Radial-sweep, Hermite, and waveform consumers may use a
+caller-supplied Q or calculate it once at their boundary; none needs to invoke
+cardinality detection to obtain it.
+
+`radial_sweep.js` exposes `parameterize_radial_sweep(points, Q, options)` as an
+independent curve stage. It requires only ordered canonical orbital points and
+the radial origin Q; `options.samples_per_interval` controls sampling density.
+The established `sample_radial_sweep(points, Q, count)` name remains as a
+compatibility alias for existing callers.
+
+`circuitry_pipeline.js` contains the complete orchestration stage used by
+`/circuitry`. `build_circuitry_pipeline(focal_point, options)` coordinates
+detection, Newton refinement, fallback point acquisition, Q calculation, and
+Hermite or radial-sweep interpolation without depending on Express. The HTTP
+handler is therefore limited to query validation, option normalization, and
+mapping the pipeline result to its existing status code and JSON response.
+
+The same module exposes `build_circuitry_from_points(points, Q, options)` for
+direct entry after detection or refinement has already happened. This path
+performs only radial-sweep parameterization and reports `point_source:
+"caller_supplied"`; a client can then pass the returned curve samples and Q to
+the independent waveform stage without repeating earlier work.
+
+The data-server test suite includes stage tests and a handler-level integration
+test for `/circuitry`. The integration test checks the stable response contract
+for a successful radial result, an outside-set result, and invalid coordinates.
+
 Each Newton result includes diagnostics identifying the arithmetic mode,
 supplied cardinality, nominal precision, least observed Newton-step magnitude,
 and whether the best result used the requested cardinality. The step magnitude

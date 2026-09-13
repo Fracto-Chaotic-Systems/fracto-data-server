@@ -1,150 +1,8 @@
-import FractoFastCalc from "../../../sdk/FractoFastCalc.js";
-import { performance } from "node:perf_hooks";
-import { discover_and_newton } from "./orbitals/detector_newton.js";
-import { magnitude, normalize, scale, sub } from "./orbitals/orbitals_utils.js";
 import {
-  optimize_polarity,
-  sample_curve,
-  solve_coefficients,
-} from "./orbitals/hermite.js";
-import { sample_radial_sweep } from "./orbitals/radial_sweep.js";
-
-const SAMPLES_PER_ORBITAL_INTERVAL = 50;
-const MAX_SAMPLE_COUNT = 65536;
-const INTERPOLATION_HERMITE = "hermite";
-const INTERPOLATION_RADIAL_SWEEP = "radial_sweep";
-
-/**
- * Calculate the principal complex square root used by the cardioid-root
- * construction.
- *
- * @param {{re: number, im: number}} point Complex input.
- * @returns {{re: number, im: number}} Principal complex square root.
- */
-const complex_sqrt = (point) => {
-  const size = magnitude(point);
-  const real_part = Math.sqrt(Math.max(0, (size + point.re) / 2));
-  const imaginary_part = Math.sqrt(Math.max(0, (size - point.re) / 2));
-  return {
-    re: real_part,
-    im: point.im < 0 ? -imaginary_part : imaginary_part,
-  };
-};
-
-/**
- * Calculate Q, the cardioid-root point used as the normal origin.
- *
- * @param {{re: number, im: number}} focal_point Mandelbrot focal point P.
- * @returns {{re: number, im: number}} Q = (1 - sqrt(1 - 4P)) / 2.
- */
-const get_cardioid_root = (focal_point) =>
-  scale(
-    sub(
-      { re: 1, im: 0 },
-      complex_sqrt(sub({ re: 1, im: 0 }, scale(focal_point, 4))),
-    ),
-    0.5,
-  );
-
-/**
- * Run the deep orbit calculation and normalize its point representation.
- * A repeated terminal point, when present, is removed so the orbit remains
- * cyclic without duplicating its starting point.
- *
- * @param {number} re Real component of the focal point.
- * @param {number} im Imaginary component of the focal point.
- * @param {{iterations?: number, minimum_return_repetitions?: number, newton_limit?: number}} [options]
- *   Detector/Newton controls.
- * @returns {{points: Array<{re: number, im: number}>|undefined, pattern: number|undefined, source: string, detector?: object}}
- *   Ordered orbit points, cardinality, and provenance metadata.
- */
-const get_orbital_points = (re, im, options = {}) => {
-  const detected = discover_and_newton(
-    { re, im },
-    {
-      iterations: options.iterations,
-      minimum_return_repetitions: options.minimum_return_repetitions,
-      newton_limit: options.newton_limit,
-      newton_mode: "big_complex",
-    },
-  );
-  const refined_points = detected.newton_big_complex?.point_list
-    ?.map((point) => ({ re: Number(point.re), im: Number(point.im) }))
-    .filter((point) => Number.isFinite(point.re) && Number.isFinite(point.im));
-  if (
-    detected.status === "cardinality_passed_to_newton" &&
-    refined_points?.length >= 2
-  ) {
-    return {
-      points: refined_points,
-      pattern: detected.detection.candidate_cardinality,
-      source: "detector_newton",
-      detector: detected,
-    };
-  }
-
-  // TODO: Remove this FractoFastCalc fallback once detector/Newton coverage
-  // is sufficient for all supported circuitry focal points.
-  const calculation = FractoFastCalc.calc(re, im);
-  const points = calculation?.orbital_points?.map((point) => ({
-    re: point.x,
-    im: point.y,
-  }));
-  if (
-    points?.length > 1 &&
-    magnitude(sub(points[points.length - 1], points[0])) <= 1e-12
-  ) {
-    points.pop();
-  }
-  return {
-    points,
-    pattern: calculation?.pattern,
-    source: "fracto_fast_calc_fallback",
-    detector: detected,
-  };
-};
-
-/**
- * Keep circuitry responses compact while exposing enough detector provenance
- * to diagnose which point-generation path was used.
- * @param {object|undefined} detector Detector/Newton workflow result.
- * @returns {object|undefined} Compact detector summary.
- */
-const summarize_detector = (detector) =>
-  detector
-    ? {
-        status: detector.status,
-        iterations: detector.iterations,
-        escaped: detector.escaped,
-        detection: {
-          status: detector.detection?.status,
-          candidate_cardinality: detector.detection?.candidate_cardinality,
-          matching_gaps: detector.detection?.matching_gaps,
-          confidence: detector.detection?.confidence,
-        },
-        newton: detector.newton_big_complex?.diagnostics || null,
-      }
-    : undefined;
-
-/**
- * Build a normal-length vector at each orbit point. Each vector follows the
- * ray from Q to the point and is scaled by the average adjacent edge length.
- *
- * @param {Array<{re: number, im: number}>} points Ordered orbit points.
- * @param {{re: number, im: number}} focal_point Focal point P.
- * @returns {Array<{re: number, im: number}>} Scaled normal vectors.
- */
-const get_normals = (points, focal_point) => {
-  const cardioid_root = get_cardioid_root(focal_point);
-  return points.map((point, index) => {
-    const previous = points[(index - 1 + points.length) % points.length];
-    const next = points[(index + 1) % points.length];
-    const incoming = sub(point, previous);
-    const outgoing = sub(next, point);
-    const velocity = (magnitude(incoming) + magnitude(outgoing)) / 2;
-    return scale(normalize(sub(point, cardioid_root)), velocity);
-  });
-};
+  build_circuitry_pipeline,
+  INTERPOLATION_HERMITE,
+  INTERPOLATION_RADIAL_SWEEP,
+} from "./orbitals/circuitry_pipeline.js";
 
 /**
  * Generate a parameterized smooth curve around a periodic Mandelbrot orbit.
@@ -182,7 +40,6 @@ const get_normals = (points, focal_point) => {
  * @returns {import('express').Response} JSON response sent to the client.
  */
 export const handle_circuitry = (req, res) => {
-  const detection_started = performance.now();
   const re = Number(req.query.re);
   const im = Number(req.query.im);
   const looped_points = [true, "true", 1, "1"].includes(
@@ -203,106 +60,18 @@ export const handle_circuitry = (req, res) => {
       supported: [INTERPOLATION_HERMITE, INTERPOLATION_RADIAL_SWEEP],
     });
   }
-  const orbit = get_orbital_points(re, im, {
-    iterations: req.query.detector_iterations,
-    minimum_return_repetitions: req.query.minimum_return_repetitions,
-    newton_limit: req.query.newton_limit,
-  });
-  const detector_elapsed_ms = performance.now() - detection_started;
-  if (orbit?.pattern === 0) {
-    return res.status(200).json({
-      result: [],
-      orbital_points: [],
-      cardinality: 0,
-      samples: 0,
-      Q: null,
+  const pipeline = build_circuitry_pipeline(
+    { re, im },
+    {
       interpolation,
-      looped_points: false,
-      optimize_polarity: false,
-      polarity_pattern: null,
-      polarity_score: null,
-      polarity_metrics: null,
-      polarity_exhaustive: false,
-      in_mandelbrot_set: false,
-      orbit_status: "outside_mandelbrot_set",
-      point_source: orbit.source,
-      detector_elapsed_ms,
-      message:
-        "The requested focal point is outside the Mandelbrot set; no periodic orbit is available for circuitry rendering.",
-    });
-  }
-  const points = orbit?.points;
-  if (!points || points.length < 2) {
-    return res.status(422).json({
-      error: "No periodic orbit found by FractoFastCalc",
-      point_source: orbit.source,
-      detector: summarize_detector(orbit.detector),
-      detector_elapsed_ms,
-    });
-  }
-  const normals = get_normals(points, { re, im });
-  const cardioid_root = get_cardioid_root({ re, im });
-  const default_sample_count = points.length * SAMPLES_PER_ORBITAL_INTERVAL + 1;
-  const sample_count = Math.min(
-    MAX_SAMPLE_COUNT,
-    Math.max(2, Number(req.query.samples) || default_sample_count),
+      looped_points,
+      optimize_polarity: optimize_polarity_pattern,
+      samples: req.query.samples,
+      detector_iterations: req.query.detector_iterations,
+      minimum_return_repetitions: req.query.minimum_return_repetitions,
+      newton_limit: req.query.newton_limit,
+    },
   );
-  if (interpolation === INTERPOLATION_RADIAL_SWEEP) {
-    const radial_samples_per_interval = Math.max(
-      1,
-      Math.min(
-        SAMPLES_PER_ORBITAL_INTERVAL,
-        Math.floor((MAX_SAMPLE_COUNT - 1) / points.length),
-      ),
-    );
-    const radial_sample_count =
-      points.length * radial_samples_per_interval + 1;
-    return res.status(200).json({
-      result: sample_radial_sweep(
-        points,
-        cardioid_root,
-        radial_samples_per_interval,
-      ),
-      orbital_points: points,
-      cardinality: points.length,
-      samples: radial_sample_count,
-      Q: cardioid_root,
-      interpolation,
-      looped_points: false,
-      optimize_polarity: false,
-      polarity_pattern: null,
-      polarity_score: null,
-      polarity_metrics: null,
-      polarity_exhaustive: false,
-      point_source: orbit.source,
-      detector: summarize_detector(orbit.detector),
-      detector_elapsed_ms,
-    });
-  }
-  const optimized = optimize_polarity_pattern
-    ? optimize_polarity(points, normals, looped_points, cardioid_root)
-    : {
-        coefficients: solve_coefficients(points, normals, looped_points),
-        pattern: null,
-        score: null,
-        metrics: null,
-        exhaustive: false,
-      };
-  return res.status(200).json({
-    result: sample_curve(optimized.coefficients, points.length, sample_count),
-    orbital_points: points,
-    cardinality: points.length,
-    samples: sample_count,
-    Q: cardioid_root,
-    interpolation,
-    looped_points,
-    optimize_polarity: optimize_polarity_pattern,
-    polarity_pattern: optimized.pattern,
-    polarity_score: optimized.score,
-    polarity_metrics: optimized.metrics,
-    polarity_exhaustive: optimized.exhaustive,
-    point_source: orbit.source,
-    detector_elapsed_ms,
-    detector: summarize_detector(orbit.detector),
-  });
+  const status_code = pipeline.status === "no_orbit" ? 422 : 200;
+  return res.status(status_code).json(pipeline.body);
 };

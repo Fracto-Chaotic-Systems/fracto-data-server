@@ -8,6 +8,7 @@
 import { get_rotation_direction, magnitude, sub } from "./orbitals_utils.js";
 
 const FULL_TURN = 2 * Math.PI;
+const DEFAULT_SAMPLES_PER_INTERVAL = 50;
 
 /**
  * Calculate the positive angular sweep from one point to the next in the
@@ -31,11 +32,23 @@ const directed_sweep_delta = (from_angle, to_angle, direction) => {
  *
  * @param {Array<{re: number, im: number}>} points Ordered orbital points.
  * @param {{re: number, im: number}} origin Center of the radial sweep.
- * @param {number} samples_per_interval Number of subdivisions between each
- *   adjacent pair of orbital points.
+ * @param {number|{samples_per_interval?:number}} samples_or_options Number of
+ *   subdivisions, or stage options containing `samples_per_interval`.
  * @returns {Array<{t: number, C: {re: number, im: number}}>} Sampled path.
  */
-export const sample_radial_sweep = (points, origin, samples_per_interval) => {
+export const parameterize_radial_sweep = (
+  points,
+  origin,
+  samples_or_options = {},
+) => {
+  if (!Array.isArray(points) || points.length < 2 || !origin) {
+    return [];
+  }
+  const samples_per_interval =
+    typeof samples_or_options === "number"
+      ? samples_or_options
+      : samples_or_options?.samples_per_interval ??
+        DEFAULT_SAMPLES_PER_INTERVAL;
   const polar_points = points.map((point) => ({
     angle: Math.atan2(point.im - origin.im, point.re - origin.re),
     radius: magnitude(sub(point, origin)),
@@ -104,3 +117,18 @@ export const sample_radial_sweep = (points, origin, samples_per_interval) => {
     };
   });
 };
+
+/**
+ * Backward-compatible name for the radial-sweep pipeline stage.
+ *
+ * @param {Array<{re:number,im:number}>} points Ordered orbital points.
+ * @param {{re:number,im:number}} origin Radial-sweep origin Q.
+ * @param {number|{samples_per_interval?:number}} samples_or_options Sampling
+ *   count or options object.
+ * @returns {Array<{t:number,C:{re:number,im:number}>}]} Sampled path.
+ */
+export const sample_radial_sweep = (
+  points,
+  origin,
+  samples_or_options = {},
+) => parameterize_radial_sweep(points, origin, samples_or_options);

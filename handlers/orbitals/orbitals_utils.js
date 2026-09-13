@@ -26,6 +26,39 @@ export const normalize = (point) => {
   return size === 0 ? { re: 0, im: 0 } : scale(point, 1 / size);
 };
 
+/**
+ * Calculate the principal complex square root used by the cardioid-root
+ * construction.
+ *
+ * @param {{re: number, im: number}} point Complex value.
+ * @returns {{re: number, im: number}} Principal complex square root.
+ */
+export const complex_sqrt = (point) => {
+  const size = magnitude(point);
+  const real_part = Math.sqrt(Math.max(0, (size + point.re) / 2));
+  const imaginary_part = Math.sqrt(Math.max(0, (size - point.re) / 2));
+  return {
+    re: real_part,
+    im: point.im < 0 ? -imaginary_part : imaginary_part,
+  };
+};
+
+/**
+ * Calculate Q, the cardioid-root point used as the radial-sweep origin and
+ * Hermite normal origin.
+ *
+ * @param {{re: number, im: number}} focal_point Mandelbrot focal point P.
+ * @returns {{re: number, im: number}} Q = (1 - sqrt(1 - 4P)) / 2.
+ */
+export const get_cardioid_root = (focal_point) =>
+  scale(
+    sub(
+      { re: 1, im: 0 },
+      complex_sqrt(sub({ re: 1, im: 0 }, scale(focal_point, 4))),
+    ),
+    0.5,
+  );
+
 /** @param {number} angle Angle in radians. @returns {number} Equivalent angle in [-pi, pi). */
 const wrap_angle = (angle) => {
   const full_turn = 2 * Math.PI;
