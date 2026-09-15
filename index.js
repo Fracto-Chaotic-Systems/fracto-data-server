@@ -16,6 +16,7 @@ import { handle_farey_sequence } from "./handlers/utils.js";
 import { handle_minibrot, handle_minibrots } from "./handlers/minibrots.js";
 import { handle_asset, handle_assets } from "./handlers/handle_asset.js";
 import { handle_video } from "./handlers/handle_video.js";
+import { handle_video_update } from "./handlers/handle_video_update.js";
 import { handle_backup } from "./handlers/handle_backup.js";
 import { handle_query } from "./handlers/handle_query.js";
 import { handle_ensure_table } from "./handlers/handle_ensure_table.js";
@@ -84,6 +85,7 @@ app.put("/minibrot", handle_minibrot);
 app.get("/asset", handle_asset);
 app.get("/assets", handle_assets);
 app.post("/video", handle_video);
+app.put("/video/:id", handle_video_update);
 
 app.get("/tiles", handle_tiles);
 app.get("/tile_coverage", handle_tile_coverage);
