@@ -7,6 +7,7 @@ const TABLES = new Set([
   "lore_files",
   "tiles",
   "videos",
+  "automation",
 ]);
 
 export const handle_query = (req, res) => {
