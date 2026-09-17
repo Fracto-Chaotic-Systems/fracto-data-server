@@ -172,7 +172,7 @@ table-ensure interface.
 | `id` | `BIGINT UNSIGNED` | no | auto-increment | Stable automation-job identifier and primary key. |
 | `title` | `VARCHAR(255)` | no | none | User-visible name of the job definition. |
 | `automation_type` | `VARCHAR(100)` | no | none | Server/job namespace, such as `tiles` or `assets`. Records must be queried with this discriminator. |
-| `state` | `VARCHAR(16)` | no | `draft` | Lifecycle state of the job; see the state table below. |
+| `state` | `VARCHAR(16)` | no | `ready` | Lifecycle state of the job; see the state table below. |
 | `created_at` | `TIMESTAMP` | no | current timestamp | Time the record was created. |
 | `updated_at` | `TIMESTAMP` | no | current timestamp | Time the record was last modified; updated automatically by MySQL. |
 | `run_start` | `DATETIME` | yes | `NULL` | Time execution began; remains null for jobs that have not run. |

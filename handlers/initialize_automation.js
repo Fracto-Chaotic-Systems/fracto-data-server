@@ -9,7 +9,7 @@ export const AUTOMATION_TABLE_DEFINITION = {
     "`id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY",
     "`title` VARCHAR(255) NOT NULL",
     "`automation_type` VARCHAR(100) NOT NULL",
-    "`state` VARCHAR(16) NOT NULL DEFAULT 'draft'",
+    "`state` VARCHAR(16) NOT NULL DEFAULT 'ready'",
     "`run_start` DATETIME",
     "`run_stop` DATETIME",
     "`created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP",
@@ -46,6 +46,9 @@ export const initialize_automation_table = () => {
           );
         }
       }
+      await query(
+        "ALTER TABLE `automation` ALTER COLUMN `state` SET DEFAULT 'ready'",
+      );
       console.log(chalk.green("automation table is ready"));
     } finally {
       db_disconnect(connection);
