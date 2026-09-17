@@ -1,7 +1,7 @@
 import { db_connect, db_disconnect } from "../mysql.js";
 
 const TABLE_NAME_PATTERN = /^[A-Za-z][A-Za-z0-9_]*$/;
-const COLUMN_TYPE_PATTERN = /^(?:BIGINT|INT|TINYINT\(1\)|DOUBLE|VARCHAR\(\d+\)|TIMESTAMP|JSON)(?:\s+UNSIGNED)?$/i;
+const COLUMN_TYPE_PATTERN = /^(?:BIGINT|INT|TINYINT\(1\)|DOUBLE|VARCHAR\(\d+\)|TIMESTAMP|DATETIME|JSON)(?:\s+UNSIGNED)?$/i;
 
 /**
  * Ensure an application-owned table exists without exposing arbitrary SQL.
@@ -37,6 +37,9 @@ export const handle_ensure_table = async (req, res) => {
       column.on_update_current_timestamp ? "ON UPDATE CURRENT_TIMESTAMP" : "",
       /^-?\d+$/.test(`${column.default_value ?? ""}`)
         ? `DEFAULT ${column.default_value}`
+        : typeof column.default_value === "string" &&
+            /^[A-Za-z][A-Za-z0-9_-]*$/.test(column.default_value)
+          ? `DEFAULT '${column.default_value}'`
         : "",
     ].filter(Boolean);
     return `\`${name}\` ${type}${clauses.length ? ` ${clauses.join(" ")}` : ""}`;
