@@ -20,7 +20,11 @@ import { handle_video_update } from "./handlers/handle_video_update.js";
 import { handle_backup } from "./handlers/handle_backup.js";
 import { handle_query } from "./handlers/handle_query.js";
 import { handle_ensure_table } from "./handlers/handle_ensure_table.js";
-import { handle_automation } from "./handlers/handle_automation.js";
+import {
+  handle_automation,
+  handle_automation_create,
+} from "./handlers/handle_automation.js";
+import { initialize_automation_table } from "./handlers/initialize_automation.js";
 import { handle_solve } from "./handlers/solve.js";
 import { handle_hyper_complex_buffer } from "./handlers/hyper-complex.js";
 import { handle_tiles } from "./handlers/handle_tiles.js";
@@ -62,6 +66,12 @@ app.use(express.json()); // For application/json
 app.use(express.urlencoded({ extended: true })); // For application/x-www-form-urlencoded
 
 // Start the server and listen for incoming requests
+await initialize_automation_table().catch((error) => {
+  console.error(
+    chalk.red(`automation table initialization failed: ${error.message}`),
+  );
+});
+
 app.listen(FRACTO_DATA_PORT, () => {
   console.log(
     chalk.green(
@@ -96,6 +106,7 @@ app.get("/backup", handle_backup);
 app.get("/query", handle_query);
 app.post("/ensure_table", handle_ensure_table);
 app.get("/automation", handle_automation);
+app.post("/automation", handle_automation_create);
 
 app.get("/solve", handle_solve);
 app.get("/orbital", handle_orbital);

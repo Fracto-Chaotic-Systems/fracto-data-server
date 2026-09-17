@@ -1,6 +1,14 @@
-import { db_connect, db_disconnect, select } from "../mysql.js";
+import { db_connect, db_disconnect, insert, select } from "../mysql.js";
 
 const AUTOMATION_TYPE_PATTERN = /^[A-Za-z][A-Za-z0-9_-]*$/;
+const AUTOMATION_STATES = new Set([
+  "draft",
+  "ready",
+  "running",
+  "paused",
+  "failed",
+  "complete",
+]);
 
 /**
  * Return automation jobs belonging to one server namespace.
@@ -35,3 +43,46 @@ export const handle_automation = (req, res) => {
   );
 };
 
+/**
+ * Create an automation job owned by a server namespace.
+ *
+ * @param {import("express").Request} req Body with title, automation_type,
+ * tasks, and optional state.
+ * @param {import("express").Response} res Created automation record id.
+ */
+export const handle_automation_create = (req, res) => {
+  const body = req.body || {};
+  const title = `${body.title || ""}`.trim();
+  const automation_type = `${body.automation_type || ""}`.trim();
+  const state = `${body.state || "draft"}`.trim();
+  if (
+    !title ||
+    !AUTOMATION_TYPE_PATTERN.test(automation_type) ||
+    !AUTOMATION_STATES.has(state) ||
+    !Array.isArray(body.tasks)
+  ) {
+    res.status(400).json({
+      error: "title, automation_type, and tasks are required",
+    });
+    return;
+  }
+  const connection = db_connect();
+  insert(
+    connection,
+    "automation",
+    {
+      title,
+      automation_type,
+      state,
+      tasks: JSON.stringify(body.tasks),
+    },
+    (result) => {
+      db_disconnect(connection);
+      if (result?.error) {
+        res.status(500).json({ error: result.error.message });
+        return;
+      }
+      res.status(201).json({ id: result.insertId, result });
+    },
+  );
+};
