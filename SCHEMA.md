@@ -164,8 +164,9 @@ work. It is not a Tiles-only table: the Tiles server, Asset server, and future
 servers use the same physical table while separating their records with the
 `automation_type` namespace. Each server owns the meaning of its own task
 documents and is responsible for validating them before execution. The data
-server owns the MySQL connection and applies the schema through its common
-table-ensure interface.
+server owns the MySQL connection, creates the table during startup, and applies
+additive schema migrations. Feature servers use the data server's automation
+endpoints for reads, inserts, and state changes.
 
 | Field | MySQL type | Null | Default | Description |
 | --- | --- | --- | --- | --- |
@@ -177,7 +178,8 @@ table-ensure interface.
 | `updated_at` | `TIMESTAMP` | no | current timestamp | Time the record was last modified; updated automatically by MySQL. |
 | `run_start` | `DATETIME` | yes | `NULL` | Time execution began; remains null for jobs that have not run. |
 | `run_stop` | `DATETIME` | yes | `NULL` | Time execution stopped; used when a run is paused or complete, and may also be set for a failed run. |
-| `tasks` | `JSON` | no | none | Server-owned ordered task definition. Its shape is determined by `automation_type`. |
+| `tasks` | `JSON` | no | none | Server-owned ordered task definition. Its shape is determined by `automation_type`; for Tiles it is an array of task objects. |
+| `checkpoint` | `JSON` | yes | `NULL` | Latest versioned engine checkpoint, written at successful operation boundaries so a paused or interrupted job can resume safely. |
 
 ### Automation states
 
@@ -198,19 +200,57 @@ non-executable and preserve the record rather than deleting or rewriting it.
 `run_start` and `run_stop` describe the latest run; a future execution-history
 table may be introduced if per-run history is required.
 
+The optional `checkpoint` field is an engine-owned envelope, not a replacement
+for the server-specific `tasks` document. It contains the checkpoint version,
+job identity, task and operation indexes, completed-operation count, and
+normalized progress. Consumers must validate its version and rebuild the
+operation registry before restoring it. A checkpoint captured while running is
+restored as paused because an in-flight operation cannot safely be reconstructed.
+
+The Tiles server claims work through an atomic data-server transaction. The
+oldest `ready` record (ordered by `created_at ASC, id ASC`) is locked, changed
+to `running`, assigned `run_start = CURRENT_TIMESTAMP`, and returned to the
+requesting client before the transaction is committed. This prevents two
+automation clients from receiving the same job. A claim request returns
+`{ "job": null }` when no matching ready job exists.
+
 ### `tasks` JSON contract
 
-`tasks` is required JSON, but its internal shape is intentionally server
-specific. Every task producer must store a version or capability marker in
-the document before introducing a breaking shape change, and every consumer
-must normalize missing optional properties to documented defaults. A minimal
-Tiles record may therefore look like:
+`tasks` is required JSON, but its internal shape is server specific. Every task
+producer must store a version or capability marker before introducing a
+breaking shape change, and every consumer must normalize missing optional
+properties to documented defaults.
+
+#### Tiles task contract
+
+For `automation_type = "tiles"`, `tasks` is an ordered array. Tasks are added
+in manager mode and saved together as one `ready` job:
+
+| Property | Type | Description |
+| --- | --- | --- |
+| `generate_code` | string | Coverage operation: `redo`, `can_do`, `blank`, or `interior`. `redo` corresponds to the coverage table's `tile count` operation. |
+| `level` | integer | Tile level targeted by the operation. |
+| `short_codes` | string[] | Ordered tile shortcodes included in the operation. |
+| `focal_point` | object | Current frame focal point captured at save time, with numeric `x` and `y` properties. |
+| `scope` | number | Current frame scope captured at save time. |
+
+Task order is preserved. No application-level shortcode count limit is
+imposed; the UI emits an informational warning at each additional
+10,000-shortcode boundary because large JSON updates can take longer to
+serialize and persist.
+
+Example:
 
 ```json
-{
-  "version": 1,
-  "tasks": []
-}
+[
+  {
+    "generate_code": "can_do",
+    "level": 12,
+    "short_codes": ["0210302.gz"],
+    "focal_point": { "x": -0.75, "y": 0.0001 },
+    "scope": 2.5
+  }
+]
 ```
 
 The table itself does not enforce task semantics, ordering, or execution

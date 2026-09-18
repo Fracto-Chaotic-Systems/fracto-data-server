@@ -26,6 +26,7 @@ import {
 } from "./handlers/handle_automation.js";
 import { initialize_automation_table } from "./handlers/initialize_automation.js";
 import { handle_claim_automation } from "./handlers/claim_automation.js";
+import { handle_automation_update } from "./handlers/handle_automation_update.js";
 import { handle_solve } from "./handlers/solve.js";
 import { handle_hyper_complex_buffer } from "./handlers/hyper-complex.js";
 import { handle_tiles } from "./handlers/handle_tiles.js";
@@ -109,6 +110,7 @@ app.post("/ensure_table", handle_ensure_table);
 app.get("/automation", handle_automation);
 app.post("/automation", handle_automation_create);
 app.post("/automation/claim", handle_claim_automation);
+app.put("/automation/:id", handle_automation_update);
 
 app.get("/solve", handle_solve);
 app.get("/orbital", handle_orbital);
