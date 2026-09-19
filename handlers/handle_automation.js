@@ -18,7 +18,10 @@ const AUTOMATION_STATES = new Set([
  */
 export const handle_automation = (req, res) => {
   const automation_type = `${req.query.automation_type || ""}`;
-  const order = req.query.order === "asc" ? "created_at ASC" : "updated_at DESC";
+  const order =
+    req.query.order === "asc"
+      ? "created_at ASC, id ASC"
+      : "updated_at DESC, id DESC";
   const requested_state = `${req.query.state || ""}`.trim();
   const limit = Math.min(Math.max(Number(req.query.limit) || 1000, 1), 1000);
   if (!AUTOMATION_TYPE_PATTERN.test(automation_type)) {

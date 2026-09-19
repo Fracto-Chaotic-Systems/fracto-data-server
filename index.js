@@ -64,7 +64,10 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use(express.json()); // For application/json
+// Automation jobs may contain thousands of shortcodes. Keep this configurable
+// for installations with larger or stricter request-size requirements.
+const json_body_limit = process.env.FRACTO_JSON_BODY_LIMIT || "25mb";
+app.use(express.json({ limit: json_body_limit })); // For application/json
 app.use(express.urlencoded({ extended: true })); // For application/x-www-form-urlencoded
 
 // Start the server and listen for incoming requests

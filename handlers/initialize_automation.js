@@ -50,6 +50,18 @@ export const initialize_automation_table = () => {
       await query(
         "ALTER TABLE `automation` ALTER COLUMN `state` SET DEFAULT 'ready'",
       );
+      const indexes = await query("SHOW INDEX FROM `automation`");
+      const index_names = new Set(indexes.map((index) => index.Key_name));
+      if (!index_names.has("idx_automation_type_state_created_id")) {
+        await query(
+          "ALTER TABLE `automation` ADD INDEX `idx_automation_type_state_created_id` (`automation_type`, `state`, `created_at`, `id`)",
+        );
+        console.log(
+          chalk.yellow(
+            "automation schema migration applied; added index: idx_automation_type_state_created_id",
+          ),
+        );
+      }
       console.log(chalk.green("automation table is ready"));
     } finally {
       db_disconnect(connection);

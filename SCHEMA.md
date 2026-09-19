@@ -168,6 +168,11 @@ server owns the MySQL connection, creates the table during startup, and applies
 additive schema migrations. Feature servers use the data server's automation
 endpoints for reads, inserts, and state changes.
 
+The data server maintains the composite index
+`(automation_type, state, created_at, id)`. It supports oldest-ready-job
+queries without sorting the potentially large `tasks` JSON document, while the
+`id` suffix makes ordering deterministic when timestamps tie.
+
 | Field | MySQL type | Null | Default | Description |
 | --- | --- | --- | --- | --- |
 | `id` | `BIGINT UNSIGNED` | no | auto-increment | Stable automation-job identifier and primary key. |

@@ -9,6 +9,18 @@ const AUTOMATION_STATES = new Set([
   "complete",
 ]);
 
+/** Convert an API timestamp to the format accepted by MySQL DATETIME. */
+const normalize_mysql_datetime = (value) => {
+  if (value === null || value === "") {
+    return null;
+  }
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return null;
+  }
+  return date.toISOString().slice(0, 19).replace("T", " ");
+};
+
 /**
  * Update execution state and checkpoint data for an automation job.
  *
@@ -53,7 +65,11 @@ export const handle_automation_update = (req, res) => {
     }
   }
   if (body.run_stop !== undefined) {
-    values.run_stop = body.run_stop || null;
+    values.run_stop = normalize_mysql_datetime(body.run_stop);
+    if (body.run_stop && !values.run_stop) {
+      res.status(400).json({ error: "run_stop must be a valid datetime" });
+      return;
+    }
   }
   if (!Object.keys(values).length) {
     res.status(400).json({ error: "No automation fields supplied for update" });
@@ -70,4 +86,3 @@ export const handle_automation_update = (req, res) => {
     res.status(200).json({ id, result });
   });
 };
-
