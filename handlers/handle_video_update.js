@@ -1,5 +1,16 @@
 import { db_connect, db_disconnect, update } from "../mysql.js";
 
+const RENDER_STATES = new Set([
+  "idle",
+  "queued",
+  "running",
+  "encoding",
+  "completed",
+  "frames_ready",
+  "failed",
+  "cancelled",
+]);
+
 /**
  * Update a video project delegated by the asset server.
  *
@@ -45,6 +56,51 @@ export const handle_video_update = (req, res) => {
   }
   if (body.archived !== undefined) {
     values.archived = Boolean(body.archived);
+  }
+  if (body.render_state !== undefined) {
+    const render_state = `${body.render_state}`;
+    if (!RENDER_STATES.has(render_state)) {
+      res.status(400).json({ error: "Invalid render state" });
+      return;
+    }
+    values.render_state = render_state;
+  }
+  if (body.render_progress !== undefined) {
+    const render_progress = Number(body.render_progress);
+    if (
+      !Number.isInteger(render_progress) ||
+      render_progress < 0 ||
+      render_progress > 100
+    ) {
+      res
+        .status(400)
+        .json({ error: "render_progress must be an integer from 0 to 100" });
+      return;
+    }
+    values.render_progress = render_progress;
+  }
+  if (body.render_error !== undefined) {
+    values.render_error =
+      body.render_error === null ? null : `${body.render_error}`;
+  }
+  for (const field of ["render_started_at", "render_completed_at"]) {
+    if (body[field] !== undefined) {
+      values[field] = body[field] === null ? null : `${body[field]}`;
+    }
+  }
+  if (body.render_output_uri !== undefined) {
+    values.render_output_uri =
+      body.render_output_uri === null ? null : `${body.render_output_uri}`;
+  }
+  if (body.render_frame_count !== undefined) {
+    const render_frame_count = Number(body.render_frame_count);
+    if (!Number.isInteger(render_frame_count) || render_frame_count < 0) {
+      res
+        .status(400)
+        .json({ error: "render_frame_count must be a non-negative integer" });
+      return;
+    }
+    values.render_frame_count = render_frame_count;
   }
   if (!Object.keys(values).length) {
     res.status(400).json({ error: "No video fields supplied for update" });

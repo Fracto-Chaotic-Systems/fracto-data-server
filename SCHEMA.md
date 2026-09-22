@@ -34,6 +34,42 @@ is updated in the corresponding table or JSON section.
 | `script` | JSON object | Ordered motion and frame instructions. |
 | `meta_version` | integer | Version of the `meta` document, when independently versioned. |
 | `script_version` | integer | Version of the `script` document, when independently versioned. |
+| `render_state` | `VARCHAR(16)` | `idle`, `queued`, `running`, `frames_ready`, `encoding`, `completed`, `failed`, or `cancelled`; defaults to `idle`. |
+| `render_progress` | `INT UNSIGNED` | Integer percentage from 0 to 100; defaults to `0`. |
+| `render_error` | `VARCHAR(4096)` nullable | Most recent render failure message, or `null`. |
+| `render_started_at` | `DATETIME` nullable | Time frame production began, or `null` before execution. |
+| `render_completed_at` | `DATETIME` nullable | Time rendering stopped, completed, or was cancelled, or `null`. |
+| `render_output_uri` | `VARCHAR(1024)` nullable | Frame workspace while `frames_ready`, final server-side output location after successful assembly, or `null`. |
+| `render_frame_count` | `INT UNSIGNED` nullable | Number of frames requested/generated for the render, or `null` before planning. |
+
+The render lifecycle is owned by the asset server and persisted on the video
+record. A render request moves a video from
+`idle`, `failed`, `cancelled`, or `completed` to `queued`. A queued or running
+render cannot be started again until it is cancelled or reaches a terminal
+state. After Stage 2, `frames_ready` means that numbered PNG frames are
+available. Stage 3 changes the state to `encoding` while ffmpeg assembles the
+frames, then to `completed` only after the output file has been verified. The
+separate `POST /video/:id/render/assemble` action retries assembly after a
+restart without regenerating frames. Cancellation is idempotent for terminal states and records
+`render_state = cancelled`. Retry is allowed only from `failed` or `cancelled`.
+`frames_ready` means numbered PNG frames are available for the Stage 3 encoder
+but no final video exists yet. `render_output_uri` points to the frame
+workspace in this state and to the completed video file after `completed`.
+
+### Render lifecycle schema history
+
+- Initial video schema: no render lifecycle columns.
+- Stage 1: added `render_state`, `render_progress`, `render_error`,
+  `render_started_at`, `render_completed_at`, `render_output_uri`, and
+  `render_frame_count`. Asset-server startup adds missing columns through the
+  data server's idempotent table-initialization endpoint; existing records use
+  the defaults above.
+- Stage 2: added the `frames_ready` state for completed PNG frame production.
+- Stage 3: added the `encoding` state and ffmpeg assembly; successful output
+  changes the state to `completed` and removes the temporary frame workspace.
+- Stage 4: completed output is served through the asset server's guarded
+  `/video/:id/render/output` route; consumers must use that route rather than
+  treating `render_output_uri` as a public filesystem path.
 
 The existing `assets` table is also checked during asset-server startup. Its
 schema is owned by the asset server and is initialized through the data server
