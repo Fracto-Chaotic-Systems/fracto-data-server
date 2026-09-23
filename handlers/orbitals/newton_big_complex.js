@@ -1,5 +1,5 @@
-import BigComplex from "../../../../sdk/math/BigComplex.js";
-import FractoFastCalc from "../../../../sdk/FractoFastCalc.js";
+import BigComplex from "@fracto/sdk/math/BigComplex.js";
+import FractoFastCalc from "@fracto/sdk/FractoFastCalc.js";
 
 /**
  * Refine an orbital point with arbitrary-precision Newton iteration.

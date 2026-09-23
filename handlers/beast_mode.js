@@ -1,4 +1,4 @@
-import Complex from "../../../sdk/math/Complex.js";
+import Complex from "@fracto/sdk/math/Complex.js";
 import { COEFF_5_REGULAR } from "./beast_mode_data.js";
 
 const DIVISIONS = 250;

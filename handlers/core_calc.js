@@ -1,6 +1,6 @@
 import Decimal from "decimal.js";
-import BigComplex from "../../../sdk/math/BigComplex.js";
-import FractoBigNumber from "../../../sdk/FractoBigNumber.js";
+import BigComplex from "@fracto/sdk/math/BigComplex.js";
+import FractoBigNumber from "@fracto/sdk/FractoBigNumber.js";
 
 const detect_orbital = (P, initial_Q, initial_iteration) => {
   let Q = new BigComplex(initial_Q.re, initial_Q.im);

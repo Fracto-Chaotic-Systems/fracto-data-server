@@ -1,6 +1,6 @@
 import path from "path";
 import { fileURLToPath } from "url";
-import FractoHyperComplexCalc from "../../../sdk/FractoHyperComplexCalc.js";
+import FractoHyperComplexCalc from "@fracto/sdk/FractoHyperComplexCalc.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

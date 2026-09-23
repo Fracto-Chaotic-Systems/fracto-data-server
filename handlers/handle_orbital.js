@@ -1,5 +1,5 @@
-import BigComplex from "../../../sdk/math/BigComplex.js";
-import FractoFastCalc from "../../../sdk/FractoFastCalc.js";
+import BigComplex from "@fracto/sdk/math/BigComplex.js";
+import FractoFastCalc from "@fracto/sdk/FractoFastCalc.js";
 import { performance } from "node:perf_hooks";
 
 const prepare_derivation = (point) => {

@@ -1,5 +1,5 @@
-import Complex from "../../../sdk/math/Complex.js";
-import FractoFastCalc from "../../../sdk/FractoFastCalc.js";
+import Complex from "@fracto/sdk/math/Complex.js";
+import FractoFastCalc from "@fracto/sdk/FractoFastCalc.js";
 import { copy_json } from "../../../utils.js";
 
 const orbital_recurse = (

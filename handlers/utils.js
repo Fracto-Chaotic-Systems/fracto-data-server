@@ -3,8 +3,8 @@ import csv from "csv-parser";
 import { fileURLToPath } from "url";
 import { dirname } from "path";
 
-import Complex from "../../../sdk/math/Complex.js";
-import FractoFastCalc from "../../../sdk/FractoFastCalc.js";
+import Complex from "@fracto/sdk/math/Complex.js";
+import FractoFastCalc from "@fracto/sdk/FractoFastCalc.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);

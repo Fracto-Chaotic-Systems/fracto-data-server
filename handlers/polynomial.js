@@ -1,4 +1,4 @@
-import Complex from "../../../sdk/math/Complex.js";
+import Complex from "@fracto/sdk/math/Complex.js";
 
 const Z = new Complex(0.121191, 0.61058);
 // const Z = new Complex(-0.122561057,0.744860052)

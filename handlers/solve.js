@@ -1,4 +1,4 @@
-import Complex from "../../../sdk/math/Complex.js";
+import Complex from "@fracto/sdk/math/Complex.js";
 
 const solve = (z_re, z_im, cardinality, path_factor = 1.0) => {
   let result = new Complex(z_re, z_im);

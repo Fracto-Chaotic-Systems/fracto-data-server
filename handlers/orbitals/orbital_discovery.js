@@ -1,4 +1,4 @@
-import BigComplex from "../../../../sdk/math/BigComplex.js";
+import BigComplex from "@fracto/sdk/math/BigComplex.js";
 import { analyze_polar_spectrum } from "./spectral_analysis.js";
 
 const DEFAULT_ITERATIONS = 4096;
