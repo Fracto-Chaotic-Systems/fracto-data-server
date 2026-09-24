@@ -2,7 +2,7 @@ import express from "express";
 import chalk from "chalk";
 import path from "path";
 
-import { FRACTO_DATA_PORT } from "../../constants.js";
+const FRACTO_DATA_PORT = Number(process.env.FRACTO_DATA_PORT || 3002);
 
 import { handle_main_status } from "./handlers/status.js";
 import { handle_health } from "./handlers/health.js";
