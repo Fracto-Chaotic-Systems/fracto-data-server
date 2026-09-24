@@ -21,6 +21,40 @@ is updated in the corresponding table or JSON section.
 - Add representative fixtures and a reproducible migration/normalization test
   whenever a schema or JSON version changes.
 
+## `assets` table
+
+The asset server owns the meaning of asset records; the data server owns the
+connection and query execution. Asset records used by the welcome page are
+ordinary image assets whose `asset_type` is `image`, `width` is `4800`, and
+`height` is `4800`.
+
+| Field | MySQL type | Null | Default | Description |
+| --- | --- | --- | --- | --- |
+| `id` | `INT` | no | auto-increment | Stable database identifier. |
+| `asset_id` | `VARCHAR(45)` | no | none | Unique public asset identifier. |
+| `width` | `INT` | no | none | Source image width in pixels. |
+| `height` | `INT` | no | none | Source image height in pixels. |
+| `focal_point_x` | `DOUBLE` | no | none | Complex-plane real coordinate associated with the image. |
+| `focal_point_y` | `DOUBLE` | no | none | Complex-plane imaginary coordinate associated with the image. |
+| `scope` | `DOUBLE` | no | none | Complex-plane scope used to generate the image. |
+| `filename` | `VARCHAR(45)` | no | none | Source or generated filename. |
+| `public_url` | `VARCHAR(255)` | no | none | Fetchable public image URL. |
+| `asset_type` | `VARCHAR(45)` | no | none | Asset classification, such as `image`. |
+
+`asset_id` is unique and `id` is the primary key. The welcome-image query
+must apply the allowlisted predicates `asset_type = 'image'`, `width = 4800`,
+and `height = 4800` in the data server. Records with an empty or invalid
+`public_url` are not usable as welcome images and should be omitted by the
+consumer or reported as invalid data.
+
+### Welcome-image query contract
+
+The planned filtered asset response is an object containing a `result` array.
+Each usable item includes at least `asset_id`, `public_url`, `width`, and
+`height`; focal-point and scope metadata may be retained for future welcome
+screen behavior. The current unfiltered asset-list behavior remains
+backward-compatible until the filtered endpoint is introduced.
+
 ## `videos` table
 
 | Field | Type | Description |
