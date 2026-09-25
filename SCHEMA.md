@@ -21,6 +21,57 @@ is updated in the corresponding table or JSON section.
 - Add representative fixtures and a reproducible migration/normalization test
   whenever a schema or JSON version changes.
 
+## `users` table
+
+The main server owns authentication semantics; the data server owns the
+connection and startup DDL. The table is an explicit allowlist of identities
+that have authenticated through an external OpenID Connect provider and have
+been enabled by an administrator. A successful provider login does not enable
+the record automatically.
+
+| Field | MySQL type | Null | Default | Description |
+| --- | --- | --- | --- | --- |
+| `id` | `BIGINT UNSIGNED` | no | auto-increment | Stable local user identifier. |
+| `provider` | `VARCHAR(64)` | no | none | Identity-provider name. |
+| `provider_subject` | `VARCHAR(255)` | no | none | Provider's stable subject identifier. |
+| `email` | `VARCHAR(320)` | yes | `null` | Profile email; not an identity key. |
+| `display_name` | `VARCHAR(255)` | yes | `null` | Display name supplied by the provider. |
+| `enabled` | `TINYINT(1)` | no | `0` | Allowlist switch. Only enabled users may enter the app. |
+| `role` | `VARCHAR(64)` | yes | `null` | Reserved for a future authorization model. |
+| `created_at` | `TIMESTAMP` | no | current timestamp | Local record creation time. |
+| `updated_at` | `TIMESTAMP` | no | current timestamp/on update | Last local record update. |
+| `last_login_at` | `DATETIME` | yes | `null` | Last successful authenticated login. |
+| `last_seen_at` | `DATETIME` | yes | `null` | Last validated session activity. |
+
+The pair `(provider, provider_subject)` is unique. Email and display name may
+change and therefore must not be used as the primary identity key.
+
+## `login_events` table
+
+The main server writes authentication audit events through the data server.
+Events are append-only records and are separate from the current user state.
+
+| Field | MySQL type | Null | Default | Description |
+| --- | --- | --- | --- | --- |
+| `id` | `BIGINT UNSIGNED` | no | auto-increment | Event identifier. |
+| `user_id` | `BIGINT UNSIGNED` | yes | `null` | Local user id when one is known. |
+| `provider` | `VARCHAR(64)` | no | none | Provider involved in the attempt. |
+| `provider_subject` | `VARCHAR(255)` | no | none | Provider subject, when supplied. |
+| `event_type` | `VARCHAR(32)` | no | none | `authenticated`, `rejected`, `disabled`, `logout`, or `error`. |
+| `success` | `TINYINT(1)` | no | `0` | Whether the event completed successfully. |
+| `event_at` | `TIMESTAMP` | no | current timestamp | Event time recorded by the server. |
+| `ip_address` | `VARCHAR(45)` | yes | `null` | Optional IPv4 or IPv6 source address. |
+| `user_agent` | `VARCHAR(512)` | yes | `null` | Optional browser user-agent summary. |
+| `details` | `JSON` | yes | `null` | Non-secret diagnostic context. Tokens and secrets are prohibited. |
+
+The data server creates an index on `(provider, provider_subject, event_at)`
+for identity history and audit queries.
+
+### Authentication schema history
+
+- Stage 2: added `users` and `login_events`. Existing records are preserved;
+  missing columns are added idempotently during data-server startup.
+
 ## `assets` table
 
 The asset server owns the meaning of asset records; the data server owns the

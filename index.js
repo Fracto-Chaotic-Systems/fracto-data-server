@@ -20,12 +20,18 @@ import { handle_video_get } from "./handlers/handle_video_get.js";
 import { handle_video_update } from "./handlers/handle_video_update.js";
 import { handle_backup } from "./handlers/handle_backup.js";
 import { handle_query } from "./handlers/handle_query.js";
+import {
+  handle_login_events,
+  handle_user_update,
+  handle_users,
+} from "./handlers/handle_users.js";
 import { handle_ensure_table } from "./handlers/handle_ensure_table.js";
 import {
   handle_automation,
   handle_automation_create,
 } from "./handlers/handle_automation.js";
 import { initialize_automation_table } from "./handlers/initialize_automation.js";
+import { initialize_user_tables } from "./handlers/initialize_users.js";
 import { handle_claim_automation } from "./handlers/claim_automation.js";
 import { handle_automation_update } from "./handlers/handle_automation_update.js";
 import { handle_solve } from "./handlers/solve.js";
@@ -77,6 +83,11 @@ await initialize_automation_table().catch((error) => {
     chalk.red(`automation table initialization failed: ${error.message}`),
   );
 });
+await initialize_user_tables().catch((error) => {
+  console.error(
+    chalk.red(`user table initialization failed: ${error.message}`),
+  );
+});
 
 app.listen(FRACTO_DATA_PORT, () => {
   console.log(
@@ -111,6 +122,9 @@ app.get("/tile", handle_tile_get);
 app.put("/tile", handle_tile);
 app.get("/backup", handle_backup);
 app.get("/query", handle_query);
+app.get("/users", handle_users);
+app.get("/login_events", handle_login_events);
+app.put("/user/:id", handle_user_update);
 app.post("/ensure_table", handle_ensure_table);
 app.get("/automation", handle_automation);
 app.post("/automation", handle_automation_create);
