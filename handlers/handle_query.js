@@ -8,6 +8,7 @@ const TABLES = new Set([
   "tiles",
   "videos",
   "automation",
+  "users",
 ]);
 
 export const handle_query = (req, res) => {

@@ -21,7 +21,10 @@ import { handle_video_update } from "./handlers/handle_video_update.js";
 import { handle_backup } from "./handlers/handle_backup.js";
 import { handle_query } from "./handlers/handle_query.js";
 import {
+  handle_login_event,
   handle_login_events,
+  handle_user_bootstrap,
+  handle_user_upsert,
   handle_user_update,
   handle_users,
 } from "./handlers/handle_users.js";
@@ -124,6 +127,9 @@ app.get("/backup", handle_backup);
 app.get("/query", handle_query);
 app.get("/users", handle_users);
 app.get("/login_events", handle_login_events);
+app.post("/login_event", handle_login_event);
+app.post("/user/bootstrap", handle_user_bootstrap);
+app.post("/user/upsert", handle_user_upsert);
 app.put("/user/:id", handle_user_update);
 app.post("/ensure_table", handle_ensure_table);
 app.get("/automation", handle_automation);
