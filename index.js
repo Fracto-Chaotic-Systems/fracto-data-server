@@ -2,6 +2,7 @@ import express from "express";
 import chalk from "chalk";
 import path from "path";
 import { require_administrator } from "../../utils/admin_authorization.js";
+import { require_enabled_user_if_configured, require_internal_service } from "../../utils/service_authorization.js";
 
 const FRACTO_DATA_PORT = Number(process.env.FRACTO_DATA_PORT || 3002);
 
@@ -74,10 +75,7 @@ app.use((req, res, next) => {
     "Access-Control-Allow-Methods",
     "GET, POST, PUT, DELETE, OPTIONS",
   ); // Specify allowed methods
-  res.setHeader(
-    "Access-Control-Allow-Headers",
-    "Content-Type, X-Requested-With",
-  ); // Specify allowed headers
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, X-Requested-With");
   if (req.method === "OPTIONS") return res.status(204).end();
   next();
 });
@@ -110,6 +108,16 @@ app.listen(FRACTO_DATA_PORT, () => {
 
 app.get("/", handle_main_status);
 app.get("/healthz", handle_health);
+app.use((req, res, next) => {
+  if (req.path === "/" || req.path === "/healthz" ||
+      (req.method === "GET" && req.path === "/assets" &&
+        Object.keys(req.query).length === 3 && req.query.asset_type === "image" &&
+        req.query.width === "4800" && req.query.height === "4800") ||
+      req.path.startsWith("/user/session/") ||
+      ["/login_event", "/user/bootstrap", "/user/upsert"].includes(req.path) ||
+      req.path === "/ensure_table") return next();
+  return require_enabled_user_if_configured(req, res, next);
+});
 app.get("/logs", handle_logs);
 
 app.get("/fracto_calc", handle_fracto_calc);
@@ -141,9 +149,15 @@ app.post("/login_event", handle_login_event);
 app.post("/user/bootstrap", handle_user_bootstrap);
 app.post("/user/upsert", handle_user_upsert);
 app.put("/user/:id", require_administrator, handle_user_update);
-app.post("/ensure_table", (req, res, next) =>
-  ["users", "login_events"].includes(`${req.body?.table || ""}`.toLowerCase())
-    ? require_administrator(req, res, next) : next(), handle_ensure_table);
+app.post("/ensure_table", (req, res, next) => {
+  if (["users", "login_events"].includes(`${req.body?.table || ""}`.toLowerCase())) {
+    return require_administrator(req, res, next);
+  }
+  if (process.env.FRACTO_AUTH_REQUIRED === "true") {
+    return require_internal_service(req, res, next);
+  }
+  return next();
+}, handle_ensure_table);
 app.get("/automation", handle_automation);
 app.post("/automation", handle_automation_create);
 app.post("/automation/claim", handle_claim_automation);
