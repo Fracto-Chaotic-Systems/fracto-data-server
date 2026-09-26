@@ -27,7 +27,7 @@ import {
   handle_session_user,
   handle_login_events,
   handle_user_bootstrap,
-  handle_user_upsert,
+  create_user_upsert_route,
   handle_user_update,
   handle_users,
 } from "./handlers/handle_users.js";
@@ -147,7 +147,7 @@ app.get("/users", require_administrator, handle_users);
 app.get("/login_events", require_administrator, handle_login_events);
 app.post("/login_event", handle_login_event);
 app.post("/user/bootstrap", handle_user_bootstrap);
-app.post("/user/upsert", handle_user_upsert);
+app.post("/user/upsert", create_user_upsert_route());
 app.put("/user/:id", require_administrator, handle_user_update);
 app.post("/ensure_table", (req, res, next) => {
   if (["users", "login_events"].includes(`${req.body?.table || ""}`.toLowerCase())) {

@@ -284,6 +284,10 @@ export const handle_user_upsert = (req, res, connection_factory = db_connect) =>
   );
 };
 
+/** Bind the handler without Express's third-argument `next` callback. */
+export const create_user_upsert_route = (connection_factory = db_connect) =>
+  (req, res) => handle_user_upsert(req, res, connection_factory);
+
 /** Append a non-secret authentication audit event from the main server. */
 export const handle_login_event = (req, res) => {
   if (!is_loopback_request(req)) {

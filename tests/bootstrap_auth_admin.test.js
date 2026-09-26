@@ -1,10 +1,63 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import express from "express";
 import {
+  create_user_upsert_route,
   handle_user_upsert,
   handle_user_bootstrap,
   provision_initial_admin,
 } from "../handlers/handle_users.js";
+
+test("Express user-upsert route does not treat next as its connection factory", async () => {
+  const user = {
+    id: 41,
+    provider: "google",
+    provider_subject: "stable-subject",
+    email: "user@example.test",
+    display_name: "Test User",
+    enabled: 1,
+    role: "admin",
+  };
+  const queries = [];
+  const connection = {
+    query(sql, values, callback) {
+      queries.push(sql);
+      if (sql.startsWith("INSERT INTO users")) callback(null, { affectedRows: 1 });
+      else if (sql.includes("FROM users WHERE provider = ?")) callback(null, [user]);
+      else if (sql.startsWith("INSERT INTO login_events")) callback(null, { affectedRows: 1 });
+      else assert.fail(`Unexpected SQL in route test: ${sql}`);
+    },
+    end(callback) { callback?.(); },
+  };
+  const app = express();
+  app.use(express.json());
+  app.post("/user/upsert", create_user_upsert_route(() => connection));
+  const server = app.listen(0, "127.0.0.1");
+  try {
+    await new Promise((resolve, reject) => {
+      server.once("listening", resolve);
+      server.once("error", reject);
+    });
+    const address = server.address();
+    const response = await fetch(`http://127.0.0.1:${address.port}/user/upsert`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        provider: "google",
+        provider_subject: "stable-subject",
+        email: "user@example.test",
+        display_name: "Test User",
+      }),
+    });
+    assert.equal(response.status, 200);
+    assert.equal((await response.json()).user.id, user.id);
+    assert.equal(queries.length, 3);
+  } finally {
+    await new Promise((resolve, reject) =>
+      server.close((error) => error ? reject(error) : resolve()),
+    );
+  }
+});
 
 const create_lock = () => {
   let held = false;
