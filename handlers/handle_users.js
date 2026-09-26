@@ -1,3 +1,4 @@
+import { createHash, timingSafeEqual } from "node:crypto";
 import { db_connect, db_disconnect, select, update } from "../mysql.js";
 
 const USER_COLUMNS =
@@ -22,6 +23,142 @@ const is_loopback_request = (req) => {
   if (req.headers?.origin || req.headers?.["sec-fetch-site"]) return false;
   const request_ip = `${req.ip || req.socket?.remoteAddress || ""}`;
   return ["127.0.0.1", "::1", "::ffff:127.0.0.1"].includes(request_ip);
+};
+
+const query_database = (connection, sql, values = []) =>
+  new Promise((resolve, reject) => {
+    connection.query(sql, values, (error, result) =>
+      error ? reject(error) : resolve(result),
+    );
+  });
+
+const bootstrap_conflict = () => {
+  const error = new Error("Administrator bootstrap is already completed or user data exists");
+  error.status = 409;
+  return error;
+};
+
+const bootstrap_confirmation_matches = (expected, provided) => {
+  if (typeof expected !== "string" || !expected || typeof provided !== "string") {
+    return false;
+  }
+  const expected_digest = createHash("sha256").update(expected).digest();
+  const provided_digest = createHash("sha256").update(provided).digest();
+  return timingSafeEqual(expected_digest, provided_digest);
+};
+
+/** Provision the initial admin exactly once per database, with safe same-user retries. */
+export const provision_initial_admin = async (connection, identity) => {
+  let lock_acquired = false;
+  let transaction_started = false;
+  const query = (sql, values) => query_database(connection, sql, values);
+  try {
+    const lock_rows = await query(
+      "SELECT GET_LOCK(SHA2(CONCAT('fracto:auth-bootstrap:', DATABASE()), 256), 10) AS acquired",
+    );
+    lock_acquired = Number(lock_rows?.[0]?.acquired) === 1;
+    if (!lock_acquired) {
+      const error = new Error("Administrator bootstrap is temporarily unavailable");
+      error.status = 503;
+      throw error;
+    }
+
+    await query("START TRANSACTION");
+    transaction_started = true;
+    const markers = await query(
+      "SELECT user_id FROM auth_bootstrap_state WHERE id = 1 LIMIT 1 FOR UPDATE",
+    );
+    if (markers?.[0]) {
+      const completed_users = await query(
+        "SELECT provider, provider_subject FROM users WHERE id = ? LIMIT 1 FOR UPDATE",
+        [markers[0].user_id],
+      );
+      const completed_user = completed_users?.[0];
+      if (
+        !completed_user ||
+        completed_user.provider !== identity.provider ||
+        completed_user.provider_subject !== identity.provider_subject
+      ) {
+        throw bootstrap_conflict();
+      }
+
+      // A repeated request for the identity recorded by the committed marker
+      // confirms success without changing current access or profile data.
+      await query("COMMIT");
+      transaction_started = false;
+      return { user_id: markers[0].user_id, already_completed: true };
+    }
+
+    // Lock the user range as well as existing rows so a concurrent first
+    // login cannot add an unexpected identity during bootstrap.
+    const existing_users = await query(
+      "SELECT id, provider, provider_subject FROM users ORDER BY id FOR UPDATE",
+    );
+    if (
+      existing_users.length > 1 ||
+      (existing_users.length === 1 &&
+        (existing_users[0].provider !== identity.provider ||
+          existing_users[0].provider_subject !== identity.provider_subject))
+    ) {
+      throw bootstrap_conflict();
+    }
+
+    let user_id;
+    if (existing_users.length === 1) {
+      user_id = existing_users[0].id;
+      await query(
+        `UPDATE users SET email = ?, display_name = ?, enabled = 1,
+          role = 'admin', last_seen_at = NOW() WHERE id = ?`,
+        [identity.email, identity.display_name, user_id],
+      );
+    } else {
+      const inserted = await query(
+        `INSERT INTO users (provider, provider_subject, email, display_name, enabled, role, last_seen_at)
+         VALUES (?, ?, ?, ?, 1, 'admin', NOW())`,
+        [
+          identity.provider,
+          identity.provider_subject,
+          identity.email,
+          identity.display_name,
+        ],
+      );
+      user_id = inserted.insertId;
+    }
+
+    const users = await query(
+      "SELECT id FROM users WHERE id = ? LIMIT 1 FOR UPDATE",
+      [user_id],
+    );
+    if (!users?.[0]) {
+      throw new Error("Administrator could not be loaded after bootstrap");
+    }
+    await query(
+      "INSERT INTO auth_bootstrap_state (id, user_id) VALUES (1, ?)",
+      [user_id],
+    );
+    await query("COMMIT");
+    transaction_started = false;
+    return { user_id, already_completed: false };
+  } catch (error) {
+    if (transaction_started) {
+      try {
+        await query("ROLLBACK");
+      } catch {
+        // Closing the connection below also releases any active transaction.
+      }
+    }
+    throw error;
+  } finally {
+    if (lock_acquired) {
+      try {
+        await query(
+          "SELECT RELEASE_LOCK(SHA2(CONCAT('fracto:auth-bootstrap:', DATABASE()), 256)) AS released",
+        );
+      } catch {
+        // The connection close releases a named lock if explicit release fails.
+      }
+    }
+  }
 };
 
 /** Internal lookup used by the main server before authorizing a session. */
@@ -72,7 +209,7 @@ export const handle_users = (req, res) => {
  * Create or refresh one provider identity and append a successful login event.
  * Enabled and role values are intentionally never changed during login.
  */
-export const handle_user_upsert = (req, res) => {
+export const handle_user_upsert = (req, res, connection_factory = db_connect) => {
   if (!is_loopback_request(req)) {
     res.status(403).json({ error: "User provisioning is an internal operation" });
     return;
@@ -90,7 +227,7 @@ export const handle_user_upsert = (req, res) => {
 
   const ip_address = `${req.body?.ip_address || ""}`.slice(0, 45) || null;
   const user_agent = `${req.body?.user_agent || ""}`.slice(0, 512) || null;
-  const connection = db_connect();
+  const connection = connection_factory();
   const upsert_sql = `INSERT INTO users (${USER_IDENTITY_FIELDS.join(", ")}, last_login_at, last_seen_at)
     VALUES (?, ?, ?, ?, NOW(), NOW())
     ON DUPLICATE KEY UPDATE
@@ -198,13 +335,13 @@ export const handle_login_event = (req, res) => {
 };
 
 /** Create or promote the explicitly configured first administrator. */
-export const handle_user_bootstrap = (req, res) => {
+export const handle_user_bootstrap = (req, res, connection_factory = db_connect) => {
   if (!is_loopback_request(req)) {
     res.status(403).json({ error: "Administrator bootstrap is an internal operation" });
     return;
   }
   const expected_confirmation = process.env.FRACTO_BOOTSTRAP_ADMIN_CONFIRM;
-  if (!expected_confirmation || req.body?.confirmation !== expected_confirmation) {
+  if (!bootstrap_confirmation_matches(expected_confirmation, req.body?.confirmation)) {
     res.status(403).json({ error: "Administrator bootstrap confirmation is invalid" });
     return;
   }
@@ -218,39 +355,23 @@ export const handle_user_bootstrap = (req, res) => {
     res.status(400).json({ error: "Provider and provider subject are required" });
     return;
   }
-  const connection = db_connect();
-  connection.query(
-    `INSERT INTO users (provider, provider_subject, email, display_name, enabled, role, last_seen_at)
-     VALUES (?, ?, ?, ?, 1, 'admin', NOW())
-     ON DUPLICATE KEY UPDATE
-       email = VALUES(email),
-       display_name = VALUES(display_name),
-       enabled = 1,
-       role = 'admin',
-       last_seen_at = NOW()`,
-    [provider, provider_subject, email, display_name],
-    (error) => {
-      if (error) {
-        db_disconnect(connection);
-        res.status(500).json({ error: error.message });
-        return;
-      }
-      connection.query(
-        `SELECT ${USER_COLUMNS} FROM users WHERE provider = ? AND provider_subject = ? LIMIT 1`,
-        [provider, provider_subject],
-        (select_error, rows) => {
-          db_disconnect(connection);
-          if (select_error || !rows?.[0]) {
-            res.status(500).json({
-              error: select_error?.message || "Administrator could not be loaded after bootstrap",
-            });
-            return;
-          }
-          res.status(200).json({ user: rows[0] });
-        },
-      );
-    },
-  );
+  const connection = connection_factory();
+  provision_initial_admin(connection, {
+    provider,
+    provider_subject,
+    email,
+    display_name,
+  }).then(() => {
+    db_disconnect(connection);
+    res.status(200).json({ success: true });
+  }).catch((error) => {
+    db_disconnect(connection);
+    if (error.status === 409 || error.status === 503) {
+      res.status(error.status).json({ error: error.message });
+      return;
+    }
+    res.status(500).json({ error: "Administrator bootstrap failed" });
+  });
 };
 
 /** Update only the allowlist-enabled flag for an existing user. */

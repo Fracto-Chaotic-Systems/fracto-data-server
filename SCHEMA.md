@@ -46,6 +46,28 @@ the record automatically.
 The pair `(provider, provider_subject)` is unique. Email and display name may
 change and therefore must not be used as the primary identity key.
 
+## `auth_bootstrap_state` table
+
+The data server owns this deployment-local marker for the one administrator
+established during installation. The database for each server deployment has
+its own marker table; it contains no provider subject, email, display name, or
+bootstrap secret. The `user_id` refers to the local row in `users`, avoiding a
+second copy of account identity data. The singleton `id` is reserved as `1`;
+bootstrap logic must only read or write that value. The state is written only
+after the initial administrator has been provisioned successfully.
+
+| Field | MySQL type | Null | Default | Description |
+| --- | --- | --- | --- | --- |
+| `id` | `TINYINT UNSIGNED` | no | none | Singleton marker key; bootstrap uses `1`. |
+| `user_id` | `BIGINT UNSIGNED` | no | none | Local `users.id` of the initial administrator. |
+| `completed_at` | `TIMESTAMP` | no | current timestamp | Time initial administrator provisioning completed. |
+
+The marker has a primary key on `id`; bootstrap logic must reserve and use only
+`id=1` so there is one deployment marker. A row is not inserted by schema
+initialization; it is created by the explicit installer bootstrap operation.
+The `user_id` is intentionally retained if the user row is later removed, so
+deleting an account cannot silently reopen first-run bootstrap.
+
 ## `login_events` table
 
 The main server writes authentication audit events through the data server.
@@ -71,6 +93,8 @@ for identity history and audit queries.
 
 - Stage 2: added `users` and `login_events`. Existing records are preserved;
   missing columns are added idempotently during data-server startup.
+- Stage 3: added the empty `auth_bootstrap_state` table. Existing user records
+  are preserved; startup creates the table without seeding a marker or user.
 
 ## `assets` table
 

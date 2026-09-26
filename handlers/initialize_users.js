@@ -40,6 +40,16 @@ export const LOGIN_EVENTS_TABLE_DEFINITION = {
   ],
 };
 
+/** Per-database marker for the administrator established during installation. */
+export const AUTH_BOOTSTRAP_STATE_TABLE_DEFINITION = {
+  table: "auth_bootstrap_state",
+  columns: [
+    "`id` TINYINT UNSIGNED NOT NULL PRIMARY KEY",
+    "`user_id` BIGINT UNSIGNED NOT NULL",
+    "`completed_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP",
+  ],
+};
+
 const definition_column_name = (definition) =>
   definition.match(/^`([^`]+)`/)?.[1];
 
@@ -90,9 +100,9 @@ const ensure_indexes = async (query) => {
   }
 };
 
-/** Ensure the user allowlist and login audit tables before serving requests. */
-export const initialize_user_tables = () => {
-  const connection = db_connect();
+/** Ensure authentication tables before serving requests. */
+export const initialize_user_tables = (connection_factory = db_connect) => {
+  const connection = connection_factory();
   const query = (sql) =>
     new Promise((resolve, reject) => {
       connection.query(sql, (error, result) =>
@@ -109,11 +119,19 @@ export const initialize_user_tables = () => {
         query,
         LOGIN_EVENTS_TABLE_DEFINITION,
       );
+      const bootstrap_state_migrations = await ensure_table(
+        query,
+        AUTH_BOOTSTRAP_STATE_TABLE_DEFINITION,
+      );
       await ensure_indexes(query);
-      if (user_migrations.length || event_migrations.length) {
+      if (
+        user_migrations.length ||
+        event_migrations.length ||
+        bootstrap_state_migrations.length
+      ) {
         console.log(
           chalk.yellow(
-            `user schema migration applied; users: ${user_migrations.length}, login_events: ${event_migrations.length}`,
+            `user schema migration applied; users: ${user_migrations.length}, login_events: ${event_migrations.length}, auth_bootstrap_state: ${bootstrap_state_migrations.length}`,
           ),
         );
       }
