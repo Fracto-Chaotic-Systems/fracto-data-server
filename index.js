@@ -1,6 +1,7 @@
 import express from "express";
 import chalk from "chalk";
 import path from "path";
+import { require_administrator } from "../../utils/admin_authorization.js";
 
 const FRACTO_DATA_PORT = Number(process.env.FRACTO_DATA_PORT || 3002);
 
@@ -22,6 +23,7 @@ import { handle_backup } from "./handlers/handle_backup.js";
 import { handle_query } from "./handlers/handle_query.js";
 import {
   handle_login_event,
+  handle_session_user,
   handle_login_events,
   handle_user_bootstrap,
   handle_user_upsert,
@@ -62,7 +64,12 @@ export const SEPARATOR = path.sep;
 export const app = express();
 
 app.use((req, res, next) => {
-  res.setHeader("Access-Control-Allow-Origin", "*"); // Allow all origins
+  const origin = req.headers.origin;
+  const ui_origin = process.env.FRACTO_UI_ORIGIN || `http://localhost:${process.env.FRACTO_UI_PORT || 3006}`;
+  const credentialed = origin && (origin === ui_origin || process.env.FRACTO_ALLOW_CORS_ALL === "true");
+  res.setHeader("Access-Control-Allow-Origin", credentialed ? origin : "*");
+  res.vary("Origin");
+  if (credentialed) res.setHeader("Access-Control-Allow-Credentials", "true");
   res.setHeader(
     "Access-Control-Allow-Methods",
     "GET, POST, PUT, DELETE, OPTIONS",
@@ -71,6 +78,7 @@ app.use((req, res, next) => {
     "Access-Control-Allow-Headers",
     "Content-Type, X-Requested-With",
   ); // Specify allowed headers
+  if (req.method === "OPTIONS") return res.status(204).end();
   next();
 });
 
@@ -123,15 +131,19 @@ app.get("/tiles", handle_tiles);
 app.get("/tile_coverage", handle_tile_coverage);
 app.get("/tile", handle_tile_get);
 app.put("/tile", handle_tile);
-app.get("/backup", handle_backup);
-app.get("/query", handle_query);
-app.get("/users", handle_users);
-app.get("/login_events", handle_login_events);
+app.post("/backup", require_administrator, handle_backup);
+app.get("/query", (req, res, next) => req.query.table === "users"
+  ? require_administrator(req, res, next) : next(), handle_query);
+app.get("/user/session/:id", handle_session_user);
+app.get("/users", require_administrator, handle_users);
+app.get("/login_events", require_administrator, handle_login_events);
 app.post("/login_event", handle_login_event);
 app.post("/user/bootstrap", handle_user_bootstrap);
 app.post("/user/upsert", handle_user_upsert);
-app.put("/user/:id", handle_user_update);
-app.post("/ensure_table", handle_ensure_table);
+app.put("/user/:id", require_administrator, handle_user_update);
+app.post("/ensure_table", (req, res, next) =>
+  ["users", "login_events"].includes(`${req.body?.table || ""}`.toLowerCase())
+    ? require_administrator(req, res, next) : next(), handle_ensure_table);
 app.get("/automation", handle_automation);
 app.post("/automation", handle_automation_create);
 app.post("/automation/claim", handle_claim_automation);

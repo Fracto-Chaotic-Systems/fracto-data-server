@@ -19,8 +19,36 @@ const AUDIT_EVENT_TYPES = new Set([
 ]);
 
 const is_loopback_request = (req) => {
+  if (req.headers?.origin || req.headers?.["sec-fetch-site"]) return false;
   const request_ip = `${req.ip || req.socket?.remoteAddress || ""}`;
   return ["127.0.0.1", "::1", "::ffff:127.0.0.1"].includes(request_ip);
+};
+
+/** Internal lookup used by the main server before authorizing a session. */
+export const handle_session_user = (req, res) => {
+  if (!is_loopback_request(req)) {
+    res.status(403).json({ error: "Session lookup is an internal operation" });
+    return;
+  }
+  const id = Number(req.params.id);
+  if (!Number.isSafeInteger(id) || id <= 0) {
+    res.status(400).json({ error: "A valid user id is required" });
+    return;
+  }
+  const connection = db_connect();
+  connection.query(`SELECT ${USER_COLUMNS} FROM users WHERE id = ? LIMIT 1`, [id], (error, rows) => {
+    db_disconnect(connection);
+    if (error) {
+      res.status(503).json({ error: "Unable to load user" });
+      return;
+    }
+    res.setHeader("Cache-Control", "no-store");
+    if (!rows?.[0]) {
+      res.status(404).json({ error: "User not found" });
+      return;
+    }
+    res.json({ user: rows[0] });
+  });
 };
 
 /** List allowlisted users without exposing credentials or provider tokens. */
