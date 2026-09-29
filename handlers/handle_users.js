@@ -369,7 +369,11 @@ export const handle_user_bootstrap = (req, res, connection_factory = db_connect)
     db_disconnect(connection);
     res.status(200).json({ success: true });
   }).catch((error) => {
-    db_disconnect(connection);
+    try {
+      db_disconnect(connection);
+    } catch {
+      // Preserve the provisioning response if connection cleanup also fails.
+    }
     if (error.status === 409 || error.status === 503) {
       res.status(error.status).json({ error: error.message });
       return;
@@ -377,6 +381,10 @@ export const handle_user_bootstrap = (req, res, connection_factory = db_connect)
     res.status(500).json({ error: "Administrator bootstrap failed" });
   });
 };
+
+/** Bind bootstrap without letting Express pass `next` as the connection factory. */
+export const create_user_bootstrap_route = (connection_factory = db_connect) =>
+  (req, res) => handle_user_bootstrap(req, res, connection_factory);
 
 /** Update only the allowlist-enabled flag for an existing user. */
 export const handle_user_update = (req, res) => {

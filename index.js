@@ -26,7 +26,7 @@ import {
   handle_login_event,
   handle_session_user,
   handle_login_events,
-  handle_user_bootstrap,
+  create_user_bootstrap_route,
   create_user_upsert_route,
   handle_user_update,
   handle_users,
@@ -146,7 +146,7 @@ app.get("/user/session/:id", handle_session_user);
 app.get("/users", require_administrator, handle_users);
 app.get("/login_events", require_administrator, handle_login_events);
 app.post("/login_event", handle_login_event);
-app.post("/user/bootstrap", handle_user_bootstrap);
+app.post("/user/bootstrap", create_user_bootstrap_route());
 app.post("/user/upsert", create_user_upsert_route());
 app.put("/user/:id", require_administrator, handle_user_update);
 app.post("/ensure_table", (req, res, next) => {

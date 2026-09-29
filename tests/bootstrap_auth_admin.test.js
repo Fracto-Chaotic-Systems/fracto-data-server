@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import express from "express";
 import {
+  create_user_bootstrap_route,
   create_user_upsert_route,
   handle_user_upsert,
   handle_user_bootstrap,
@@ -165,6 +166,7 @@ const create_database = (initial_users = []) => {
           (error) => callback(error),
         );
       },
+      end(callback) { callback?.(); },
     };
   };
   return { database, connect };
@@ -175,6 +177,41 @@ const identity = (provider_subject = "google-sub-1") => ({
   provider_subject,
   email: `${provider_subject}@example.test`,
   display_name: "Installer Admin",
+});
+
+test("Express bootstrap route does not treat next as its connection factory", async () => {
+  const previous_confirmation = process.env.FRACTO_BOOTSTRAP_ADMIN_CONFIRM;
+  process.env.FRACTO_BOOTSTRAP_ADMIN_CONFIRM = "route-test-confirmation";
+  const { database, connect } = create_database();
+  const app = express();
+  app.use(express.json());
+  app.post("/user/bootstrap", create_user_bootstrap_route(connect));
+  const server = app.listen(0, "127.0.0.1");
+
+  try {
+    await new Promise((resolve, reject) => {
+      server.once("listening", resolve);
+      server.once("error", reject);
+    });
+    const response = await fetch(`http://127.0.0.1:${server.address().port}/user/bootstrap`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        confirmation: "route-test-confirmation",
+        ...identity("route-test-subject"),
+      }),
+    });
+    assert.equal(response.status, 200);
+    assert.deepEqual(await response.json(), { success: true });
+    assert.deepEqual(database.marker, { id: 1, user_id: 1 });
+  } finally {
+    await new Promise((resolve) => server.close(resolve));
+    if (previous_confirmation === undefined) {
+      delete process.env.FRACTO_BOOTSTRAP_ADMIN_CONFIRM;
+    } else {
+      process.env.FRACTO_BOOTSTRAP_ADMIN_CONFIRM = previous_confirmation;
+    }
+  }
 });
 
 test("first bootstrap creates and records one enabled administrator", async () => {
