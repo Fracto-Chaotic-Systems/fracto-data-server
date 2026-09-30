@@ -68,7 +68,7 @@ const log_sql = (sql) => {
   );
 };
 
-export const db_connect = () => {
+export const db_connect = (on_connect) => {
   const requested_timeout = Number(
     process.env.FRACTO_MYSQL_CONNECT_TIMEOUT_MS || 5000,
   );
@@ -89,6 +89,7 @@ export const db_connect = () => {
       // return;
     }
     // console.log('Connected to MySQL database!');
+    if (typeof on_connect === "function") on_connect(err || null);
   });
   return connection;
 };

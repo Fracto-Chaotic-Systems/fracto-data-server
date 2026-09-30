@@ -163,7 +163,21 @@ export const provision_initial_admin = async (connection, identity) => {
 };
 
 /** Internal lookup used by the main server before authorizing a session. */
-export const handle_session_user = (req, res) => {
+export const create_session_user_handler = ({
+  connection_factory = db_connect,
+  disconnect = db_disconnect,
+  record_metric = record_runtime_metric,
+  now = () => performance.now(),
+} = {}) => (req, res) => {
+  const request_started_at = now();
+  record_metric("auth_user_record_request_arrival", 0, "received");
+  res.once?.("finish", () => {
+    record_metric(
+      "auth_user_record_handler_duration",
+      now() - request_started_at,
+      res.statusCode >= 500 ? "error" : String(res.statusCode || 200),
+    );
+  });
   if (!is_loopback_request(req)) {
     res.status(403).json({ error: "Session lookup is an internal operation" });
     return;
@@ -173,14 +187,32 @@ export const handle_session_user = (req, res) => {
     res.status(400).json({ error: "A valid user id is required" });
     return;
   }
-  const lookup_started_at = performance.now();
-  const connection = db_connect();
+  const lookup_started_at = now();
+  const connection_started_at = now();
+  let query_started_at = null;
+  const connection = connection_factory((connect_error) => {
+    const connection_duration_ms = now() - connection_started_at;
+    record_metric(
+      "auth_user_record_connection",
+      connection_duration_ms,
+      connect_error ? "error" : "success",
+    );
+    if (!connect_error) query_started_at = now();
+  });
   connection.query(`SELECT ${USER_COLUMNS} FROM users WHERE id = ? LIMIT 1`, [id], (error, rows) => {
-    db_disconnect(connection);
+    disconnect(connection);
+    const query_duration_ms = query_started_at === null
+      ? 0
+      : now() - query_started_at;
+    record_metric(
+      "auth_user_record_sql_query",
+      query_duration_ms,
+      query_started_at === null ? "not_run" : error ? "error" : "success",
+    );
     if (error) {
-      record_runtime_metric(
+      record_metric(
         "auth_user_record_query",
-        performance.now() - lookup_started_at,
+        now() - lookup_started_at,
         "error",
       );
       res.status(503).json({ error: "Unable to load user" });
@@ -188,22 +220,24 @@ export const handle_session_user = (req, res) => {
     }
     res.setHeader("Cache-Control", "no-store");
     if (!rows?.[0]) {
-      record_runtime_metric(
+      record_metric(
         "auth_user_record_query",
-        performance.now() - lookup_started_at,
+        now() - lookup_started_at,
         "not_found",
       );
       res.status(404).json({ error: "User not found" });
       return;
     }
-    record_runtime_metric(
+    record_metric(
       "auth_user_record_query",
-      performance.now() - lookup_started_at,
+      now() - lookup_started_at,
       "success",
     );
     res.json({ user: rows[0] });
   });
 };
+
+export const handle_session_user = create_session_user_handler();
 
 /** List allowlisted users without exposing credentials or provider tokens. */
 export const handle_users = (req, res) => {
