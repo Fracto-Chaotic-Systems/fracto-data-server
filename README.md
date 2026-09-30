@@ -32,6 +32,16 @@ npm ci
 
 The project uses native ES modules.
 
+## Authentication lookup measurements
+
+The internal `GET /user/session/:id` route records aggregated
+`auth_user_record_query` count, duration, and outcome metrics in
+`fracto_metric_window` logs. The metric includes connection setup and the SQL
+query, but does not include the caller's HTTP round trip. It does not log the
+user ID, provider subject, email, session token, or request URL. The root main
+server separately measures the complete internal lookup round trip as
+`auth_user_record_lookup`.
+
 ## Starting the service
 
 Preferred full-system startup from the root repository:

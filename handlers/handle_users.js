@@ -1,5 +1,6 @@
 import { createHash, timingSafeEqual } from "node:crypto";
 import { db_connect, db_disconnect, select, update } from "../mysql.js";
+import { record_runtime_metric } from "../../../utils/windowed_metrics.js";
 
 const USER_COLUMNS =
   "id, provider, provider_subject, email, display_name, enabled, role, created_at, updated_at, last_login_at, last_seen_at";
@@ -172,18 +173,34 @@ export const handle_session_user = (req, res) => {
     res.status(400).json({ error: "A valid user id is required" });
     return;
   }
+  const lookup_started_at = performance.now();
   const connection = db_connect();
   connection.query(`SELECT ${USER_COLUMNS} FROM users WHERE id = ? LIMIT 1`, [id], (error, rows) => {
     db_disconnect(connection);
     if (error) {
+      record_runtime_metric(
+        "auth_user_record_query",
+        performance.now() - lookup_started_at,
+        "error",
+      );
       res.status(503).json({ error: "Unable to load user" });
       return;
     }
     res.setHeader("Cache-Control", "no-store");
     if (!rows?.[0]) {
+      record_runtime_metric(
+        "auth_user_record_query",
+        performance.now() - lookup_started_at,
+        "not_found",
+      );
       res.status(404).json({ error: "User not found" });
       return;
     }
+    record_runtime_metric(
+      "auth_user_record_query",
+      performance.now() - lookup_started_at,
+      "success",
+    );
     res.json({ user: rows[0] });
   });
 };
