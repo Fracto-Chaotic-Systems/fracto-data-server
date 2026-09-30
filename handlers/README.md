@@ -21,6 +21,8 @@ This directory contains the HTTP handlers and calculation helpers used by the Fr
 - `handle_orbital_discovery.js` detects orbital patterns for discovery requests.
 - `handle_orbital_newton.js` computes Newton-style orbital results.
 - `handle_orbital_spectrum.js` generates orbital spectrum and pyramid results.
+- `data_compute_worker.js` runs allowlisted CPU-bound task payloads away from the data-server event loop; HTTP and database objects remain on the main thread.
+- `worker_task_pool.js` provides a bounded worker-thread pool with Promise and callback completion, queue backpressure, timeouts, and aggregate metrics.
 - `handle_query.js` executes the data server's constrained query endpoint.
 - `handle_tile.js` reads and writes individual tile records.
 - `handle_tiles.js` handles tile-list requests.

@@ -43,6 +43,20 @@ HTTP round trip; the root main server separately measures that as
 `auth_user_record_lookup`. No user ID, provider subject, email, session token,
 or request URL is recorded.
 
+## CPU-bound worker tasks
+
+The data server runs CPU-intensive, allowlisted jobs through a bounded
+`WorkerTaskPool`. Its Promise and Node-style callback interfaces keep compute
+work off the Express event loop, so lightweight routes such as internal user
+lookups can continue to respond. Database connections and HTTP response objects
+stay on the main thread; workers receive only structured-cloneable task names
+and payloads. Queue capacity, worker count, and per-task timeout can be tuned
+with `FRACTO_DATA_WORKER_QUEUE_LIMIT`, `FRACTO_DATA_WORKER_THREADS`, and
+`FRACTO_DATA_WORKER_TIMEOUT_MS`. Saturated queues return a retryable 503 rather
+than allowing unbounded queued work. Worker wait and execution times are
+reported as aggregate `data_worker_task_wait` and
+`data_worker_task_duration` metrics without task inputs.
+
 ## Starting the service
 
 Preferred full-system startup from the root repository:

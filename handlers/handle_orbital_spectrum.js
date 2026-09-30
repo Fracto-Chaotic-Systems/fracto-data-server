@@ -13,6 +13,7 @@ import {
   merge_spectral_candidates,
   score_consensus_candidates,
 } from "./orbitals/spectral_analysis.js";
+import { data_compute_worker_pool, WorkerPoolOverloadedError } from "./worker_task_pool.js";
 
 const WARMUP_STABILITY_ITERATIONS = [4096, 8192, 16384, 65536];
 const ADAPTIVE_MAX_ROUNDS = 2;
@@ -61,7 +62,8 @@ const is_truthy = (value) =>
  *   `multi_analysis=true`, `spectrum.multi_analysis` contains each configured
  *   pass and `spectrum.consensus_candidates` contains the ranked merged view.
  */
-export const handle_orbital_spectrum = (req, res) => {
+export const calculate_orbital_spectrum = (query, res) => {
+  const req = { query };
   const re = Number(req.query.re);
   const im = Number(req.query.im);
   if (!Number.isFinite(re) || !Number.isFinite(im)) {
@@ -232,6 +234,24 @@ export const handle_orbital_spectrum = (req, res) => {
   } catch (error) {
     console.error("handle_orbital_spectrum", error.message);
     return res.status(500).json({ error: error.message });
+  }
+};
+
+/** Dispatch CPU-bound orbital analysis away from the data-server event loop. */
+export const handle_orbital_spectrum = async (req, res) => {
+  try {
+    const result = await data_compute_worker_pool.run("orbital_spectrum", {
+      query: { ...req.query },
+    });
+    return res.status(result.status).json(result.body);
+  } catch (error) {
+    if (error instanceof WorkerPoolOverloadedError) {
+      res.setHeader("Retry-After", "2");
+      return res.status(503).json({ error: "Compute capacity is busy; retry shortly" });
+    }
+    console.error("orbital spectrum worker failed");
+    return res.status(error.message === "Compute worker task timed out" ? 504 : 500)
+      .json({ error: "Orbital analysis could not be completed" });
   }
 };
 
