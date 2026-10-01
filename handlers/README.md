@@ -45,5 +45,6 @@ This directory contains the HTTP handlers and calculation helpers used by the Fr
 - `utils.js` provides shared data-server handler utilities, including CSV conversion and sequence handling.
 - `wolfram.js` wraps Wolfram Alpha queries used by the data service.
 - `orbitals/` groups supporting orbital data and calculation modules.
+- `logistic_map/` contains the logistic-map request/result contract, bounded standalone orbit calculator, cautious numerical cycle candidates, and design notes; higher-precision validation, persistence, and HTTP integration are planned next.
 
 Keep route-specific validation and access rules near the handler that enforces them. Add or update the relevant entry here when a handler file or its responsibility changes.
