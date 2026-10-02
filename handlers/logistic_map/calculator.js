@@ -1,7 +1,12 @@
+import { performance } from "node:perf_hooks";
 import {
   create_logistic_map_result,
   normalize_logistic_map_request,
 } from "./calculation_contract.js";
+
+export const LOGISTIC_MAP_CHECKPOINT_INTERVAL = 100_000;
+export const LOGISTIC_MAP_SAMPLE_SIZE = 10_000;
+export const LOGISTIC_MAP_PROGRESS_INTERVAL = 10_000_000;
 
 const iterate = (r, x, count) => {
   for (let iteration = 0; iteration < count; iteration += 1) {
@@ -22,31 +27,17 @@ const prime_factors = (value) => {
   return factors;
 };
 
-const is_primitive_period = (r, start, period, tolerance) => {
+const is_primitive_period = (r, start, period) => {
   // If a period p is an integer multiple of a smaller period q, then p/q has
   // a prime factor s and q divides p/s. Testing p/s for each distinct prime
   // factor of p therefore detects every possible proper fundamental period.
   for (const factor of prime_factors(period)) {
     const possible_divisor = period / factor;
-    if (Math.abs(iterate(r, start, possible_divisor) - start) <= tolerance) {
+    if (iterate(r, start, possible_divisor) === start) {
       return false;
     }
   }
   return true;
-};
-
-const find_prior_state = (history, values, value, tolerance) => {
-  const bucket = Math.round(value / tolerance);
-  let closest = null;
-  for (let offset = -1; offset <= 1; offset += 1) {
-    const previous_index = history.get(bucket + offset);
-    if (previous_index === undefined) continue;
-    const difference = Math.abs(values[previous_index] - value);
-    if (difference <= tolerance && (!closest || difference < closest.difference)) {
-      closest = { index: previous_index, difference };
-    }
-  }
-  return closest;
 };
 
 const describe_invalid_parameter = (r) => {
@@ -60,7 +51,9 @@ const describe_invalid_parameter = (r) => {
   };
 };
 
-const create_invalid_input_result = (r, error) => ({
+const round_milliseconds = (value) => Math.round(value * 1_000) / 1_000;
+
+const create_invalid_input_result = (r, error, timing) => ({
   contract_version: 1,
   status: "invalid_input",
   reason: {
@@ -80,16 +73,17 @@ const create_invalid_input_result = (r, error) => ({
   sample: { start_iteration: null, end_iteration: null, values: [] },
   cycle: null,
   cycle_detection: null,
+  timing,
 });
 
 /**
  * Compute a bounded orbit sample for one logistic-map parameter.
  *
- * This standalone calculation has no HTTP or persistence dependencies. It
- * retains x_n beginning at the transient boundary and ending at the configured
- * iteration cap, inclusive. Thus a zero transient includes x_0, and the result
- * always contains at least one sample because transient_limit must be below
- * iteration_cap.
+ * This standalone calculation has no HTTP or persistence dependencies. Exact
+ * state repeats are searched with a single checkpoint that advances every
+ * LOGISTIC_MAP_CHECKPOINT_INTERVAL iterations. Optional result samples retain
+ * only their latest bounded window; callers doing diagnostics can disable
+ * sample retention entirely.
  *
  * A repeated state is only a candidate under the selected precision and
  * tolerance. Candidates must pass an independently replayed return-residual
@@ -102,15 +96,24 @@ const create_invalid_input_result = (r, error) => ({
  * @returns {object} Versioned result envelope and bounded orbit sample.
  */
 export const calculate_logistic_orbit = (r, options = {}) => {
+  const total_started_at = performance.now();
   let request;
   try {
     request = normalize_logistic_map_request(r, options);
   } catch (error) {
     if (error instanceof TypeError || error instanceof RangeError) {
-      return create_invalid_input_result(r, error);
+      const total_ms = round_milliseconds(performance.now() - total_started_at);
+      return create_invalid_input_result(r, error, {
+        validation_ms: total_ms,
+        calculation_ms: 0,
+        total_ms,
+        iterations_per_second: null,
+      });
     }
     throw error;
   }
+  const calculation_started_at = performance.now();
+  const validation_ms = round_milliseconds(calculation_started_at - total_started_at);
   const {
     cycle_tolerance,
     cycle_confirmation_returns,
@@ -119,19 +122,19 @@ export const calculate_logistic_orbit = (r, options = {}) => {
     seed_policy,
   } = request.settings;
   const r_value = request.r.represented_value;
+  const retain_sample = options.retain_sample !== false;
   let x = seed_policy.x0;
   const values = [];
-  const history = new Map();
+  let checkpoint = null;
   let cycle = null;
   let rejected_candidate_count = 0;
-  let pending_candidate = null;
   let iterations_attempted = 0;
   let iterations_completed = 0;
   let numerical_failure = null;
 
   if (transient_limit === 0) {
-    values.push(x);
-    history.set(Math.round(x / cycle_tolerance), 0);
+    checkpoint = { iteration: 0, value: x };
+    if (retain_sample) values.push({ iteration: 0, value: x });
   }
 
   for (let iteration = 1; iteration <= iteration_cap; iteration += 1) {
@@ -145,77 +148,70 @@ export const calculate_logistic_orbit = (r, options = {}) => {
       break;
     }
     iterations_completed = iteration;
+    if (iteration % LOGISTIC_MAP_PROGRESS_INTERVAL === 0) {
+      options.on_progress?.({ iterations_completed: iteration });
+    }
     if (iteration >= transient_limit) {
-      values.push(x);
-      const current_index = values.length - 1;
-      if (pending_candidate &&
-        iteration - pending_candidate.last_confirmation_iteration >= pending_candidate.period) {
-        const difference = Math.abs(x - pending_candidate.start_value);
-        pending_candidate.last_confirmation_iteration = iteration;
-        if (difference <= cycle_tolerance) {
-          pending_candidate.confirmation_returns += 1;
-          if (pending_candidate.confirmation_returns >= cycle_confirmation_returns) {
-            const period = pending_candidate.period;
-            const candidate_start_index = current_index - period;
-            const candidate_start_value = values[candidate_start_index];
-            const return_residual = Math.abs(
-              iterate(r_value, candidate_start_value, period) - candidate_start_value,
-            );
-            const primitive = return_residual <= cycle_tolerance &&
-              is_primitive_period(r_value, candidate_start_value, period, cycle_tolerance);
-
-            if (primitive) {
-              cycle = {
-                start_iteration: transient_limit + candidate_start_index,
-                period,
-                points: values.slice(candidate_start_index, current_index),
-                return_residual,
-                primitive: true,
-                confirmation_returns: pending_candidate.confirmation_returns,
-                validation_scope: "finite_precision",
-                mathematical_proof: false,
-              };
-              break;
-            }
-            rejected_candidate_count += 1;
-            pending_candidate = null;
+      if (!checkpoint) {
+        checkpoint = { iteration, value: x };
+      } else {
+        const elapsed_from_checkpoint = iteration - checkpoint.iteration;
+        if (x === checkpoint.value) {
+          const period = elapsed_from_checkpoint;
+          const return_residual = Math.abs(iterate(r_value, checkpoint.value, period) - checkpoint.value);
+          let confirmation_returns = 0;
+          let confirmation_state = checkpoint.value;
+          for (let confirmation = 0; confirmation < cycle_confirmation_returns; confirmation += 1) {
+            confirmation_state = iterate(r_value, confirmation_state, period);
+            if (confirmation_state !== checkpoint.value) break;
+            confirmation_returns += 1;
           }
-        } else {
-          rejected_candidate_count += 1;
-          pending_candidate = null;
-        }
-      }
-
-      if (!pending_candidate) {
-        const previous = find_prior_state(history, values, x, cycle_tolerance);
-        if (previous) {
-          const period = current_index - previous.index;
-          const start_value = values[previous.index];
-          const return_residual = Math.abs(iterate(r_value, start_value, period) - start_value);
-          if (return_residual <= cycle_tolerance) {
-            pending_candidate = {
-              start_value,
+          const primitive = is_primitive_period(r_value, checkpoint.value, period);
+          if (return_residual <= cycle_tolerance &&
+              confirmation_returns >= cycle_confirmation_returns && primitive) {
+            const points = [];
+            let cycle_state = checkpoint.value;
+            for (let point = 0; point < period; point += 1) {
+              points.push(cycle_state);
+              cycle_state = r_value * cycle_state * (1 - cycle_state);
+            }
+            cycle = {
+              start_iteration: checkpoint.iteration,
               period,
-              last_confirmation_iteration: iteration,
-              confirmation_returns: 0,
+              points,
+              return_residual,
+              primitive: true,
+              confirmation_returns,
+              validation_scope: "finite_precision",
+              mathematical_proof: false,
             };
           } else {
             rejected_candidate_count += 1;
+            checkpoint = { iteration, value: x };
           }
+        } else if (elapsed_from_checkpoint >= LOGISTIC_MAP_CHECKPOINT_INTERVAL) {
+          checkpoint = { iteration, value: x };
         }
       }
-      history.set(Math.round(x / cycle_tolerance), current_index);
+
+      if (retain_sample) {
+        if (values.length >= LOGISTIC_MAP_SAMPLE_SIZE) values.shift();
+        values.push({ iteration, value: x });
+      }
+      if (cycle) break;
     }
   }
 
-  const completed_state_iteration = values.length > 0
-    ? transient_limit + values.length - 1
-    : null;
+  const sample_start_iteration = values[0]?.iteration ?? null;
+  const completed_state_iteration = values.at(-1)?.iteration ?? null;
   const status = numerical_failure
     ? "numerical_failure"
     : cycle
       ? "cycle_candidate"
       : "sampled_unresolved";
+  const completed_at = performance.now();
+  const calculation_ms = round_milliseconds(completed_at - calculation_started_at);
+  const total_ms = round_milliseconds(completed_at - total_started_at);
   const result = create_logistic_map_result(request, {
     status,
     reason: numerical_failure || (cycle ? null : {
@@ -232,9 +228,9 @@ export const calculate_logistic_orbit = (r, options = {}) => {
       retained_sample_count: values.length,
     },
     sample: {
-      start_iteration: transient_limit,
+      start_iteration: sample_start_iteration,
       end_iteration: completed_state_iteration,
-      values,
+      values: values.map((state) => state.value),
     },
     cycle: numerical_failure ? null : cycle,
     cycle_detection: {
@@ -247,6 +243,16 @@ export const calculate_logistic_orbit = (r, options = {}) => {
       required_confirmation_returns: cycle_confirmation_returns,
       evidence_scope: "finite_precision_only",
       rejected_candidate_count,
+      match_mode: "exact_checkpoint",
+      checkpoint_interval: LOGISTIC_MAP_CHECKPOINT_INTERVAL,
+    },
+    timing: {
+      validation_ms,
+      calculation_ms,
+      total_ms,
+      iterations_per_second: calculation_ms > 0
+        ? Math.round(iterations_completed / (calculation_ms / 1_000))
+        : null,
     },
   });
   return result;

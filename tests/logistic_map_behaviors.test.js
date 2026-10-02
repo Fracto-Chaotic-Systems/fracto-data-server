@@ -61,7 +61,7 @@ test("covers the lower boundary, the excluded upper boundary, and values near it
 
 test("a deliberately short cap remains unresolved and a larger cap refines it", () => {
   const short_run = calculate_logistic_orbit(3.5, settings(10, 0));
-  const longer_run = calculate_logistic_orbit(3.5, settings(100, 0));
+  const longer_run = calculate_logistic_orbit(3.5, settings(120_000, 0));
 
   assert.equal(short_run.status, "sampled_unresolved");
   assert.equal(short_run.reason.code, "iteration_cap_reached");
@@ -78,4 +78,19 @@ test("does not claim higher precision before an arithmetic backend exists", () =
 
   assert.equal(result.status, "invalid_input");
   assert.match(result.reason.message, /precision.backend/);
+});
+
+test("reports monotonic timing diagnostics for valid and invalid r calculations", () => {
+  const valid = calculate_logistic_orbit(3.5, settings(100, 0));
+  const invalid = calculate_logistic_orbit(4, settings(100, 0));
+
+  for (const result of [valid, invalid]) {
+    assert.ok(Number.isFinite(result.timing.validation_ms));
+    assert.ok(Number.isFinite(result.timing.calculation_ms));
+    assert.ok(Number.isFinite(result.timing.total_ms));
+    assert.ok(result.timing.total_ms >= result.timing.calculation_ms);
+  }
+  assert.ok(Number.isFinite(valid.timing.iterations_per_second));
+  assert.equal(invalid.timing.calculation_ms, 0);
+  assert.equal(invalid.timing.iterations_per_second, null);
 });

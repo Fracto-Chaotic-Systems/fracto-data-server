@@ -39,14 +39,19 @@ export class WorkerTaskPool {
     this.slots = Array.from({ length: Math.max(1, size) }, () => ({ worker: null, job: null, generation: 0 }));
   }
 
-  run(task, payload, callback) {
+  run(task, payload, callback, options = {}) {
+    const { on_progress } = options;
     const promise = new Promise((resolve, reject) => {
       if (this.closed) return reject(new Error("Compute worker pool is closed"));
       if (!this.slots.some((slot) => !slot.job) && this.queue.length >= this.max_queue) {
         this.record_metric("data_worker_task_duration", 0, "overloaded");
         return reject(new WorkerPoolOverloadedError());
       }
-      this.queue.push({ id: this.next_id++, task, payload, queued_at: performance.now(), resolve, reject });
+      this.queue.push({
+        id: this.next_id++, task, payload, queued_at: performance.now(), resolve, reject,
+        on_progress,
+        task_timeout_ms: bounded_integer(options.task_timeout_ms, this.task_timeout_ms, 1, 300_000),
+      });
       this.pump();
     });
     if (typeof callback === "function") {
@@ -65,7 +70,7 @@ export class WorkerTaskPool {
       job.started_at = performance.now();
       this.record_metric("data_worker_task_wait", job.started_at - job.queued_at, "started");
       slot.job = job;
-      job.timer = setTimeout(() => this.timeout(slot, job), this.task_timeout_ms);
+      job.timer = setTimeout(() => this.timeout(slot, job), job.task_timeout_ms);
       slot.worker.ref?.();
       slot.worker.postMessage({ id: job.id, task: job.task, payload: job.payload });
     }
@@ -79,6 +84,10 @@ export class WorkerTaskPool {
     slot.worker = worker;
     worker.on("message", (message) => {
       if (slot.generation !== generation || !slot.job || message?.id !== slot.job.id) return;
+      if (message.progress) {
+        slot.job.on_progress?.(message.progress);
+        return;
+      }
       const job = slot.job;
       slot.job = null;
       clearTimeout(job.timer);

@@ -1,6 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { calculate_logistic_orbit } from "../handlers/logistic_map/calculator.js";
+import {
+  calculate_logistic_orbit,
+  LOGISTIC_MAP_CHECKPOINT_INTERVAL,
+} from "../handlers/logistic_map/calculator.js";
 
 const logistic_step = (r, x) => r * x * (1 - x);
 
@@ -64,9 +67,33 @@ test("uses an explicit reproducible seed and includes calculation provenance", (
 test("returns a bounded sample for the default iteration cap", () => {
   const result = calculate_logistic_orbit(3);
 
-  assert.equal(result.sample.values.length,
-    result.settings.iteration_cap - result.settings.transient_limit + 1);
+  assert.equal(result.sample.values.length, 10_000);
+  assert.equal(result.sample.start_iteration, result.settings.iteration_cap - 9_999);
+  assert.equal(result.sample.end_iteration, result.settings.iteration_cap);
   assert.ok(result.sample.values.every(Number.isFinite));
+});
+
+test("diagnostic callers can disable sample retention", () => {
+  const result = calculate_logistic_orbit(3.5, {
+    iteration_cap: 100,
+    transient_limit: 10,
+    retain_sample: false,
+  });
+
+  assert.deepEqual(result.sample, { start_iteration: null, end_iteration: null, values: [] });
+  assert.equal(result.iteration_counts.retained_sample_count, 0);
+});
+
+test("uses the expanded checkpoint interval without enlarging the retained sample", () => {
+  const result = calculate_logistic_orbit(3.9, {
+    iteration_cap: 120_000,
+    transient_limit: 0,
+    retain_sample: true,
+  });
+
+  assert.equal(LOGISTIC_MAP_CHECKPOINT_INTERVAL, 100_000);
+  assert.equal(result.cycle_detection.checkpoint_interval, 100_000);
+  assert.equal(result.sample.values.length, 10_000);
 });
 
 test("reports an attracting period-two orbit as a confirmed numerical candidate", () => {

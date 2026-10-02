@@ -51,6 +51,10 @@ import {
   handle_orbital_pyramid,
 } from "./handlers/handle_orbital_spectrum.js";
 import { handle_orbital_newton } from "./handlers/handle_orbital_newton.js";
+import {
+  handle_logistic_map_job_status,
+  handle_logistic_map_level_one_start,
+} from "./handlers/logistic_map/handle_level_one.js";
 import { handle_tile_coverage } from "./handlers/handle_coverage.js";
 import { handle_tile, handle_tile_get } from "./handlers/handle_tile.js";
 import {
@@ -171,6 +175,8 @@ app.get("/orbital_discovery", handle_orbital_discovery);
 app.get("/orbital_spectrum", handle_orbital_spectrum);
 app.get("/orbital_pyramid", handle_orbital_pyramid);
 app.get("/orbital_newton", handle_orbital_newton);
+app.post("/logistic_map/level_one", handle_logistic_map_level_one_start);
+app.get("/logistic_map/jobs/:job_id", handle_logistic_map_job_status);
 
 app.get("/lore_categories", handle_lore_categories);
 app.get("/lore_content", handle_lore_content);
