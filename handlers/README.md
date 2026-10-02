@@ -34,6 +34,19 @@ This directory contains the HTTP handlers and calculation helpers used by the Fr
 - `hyper-complex.js` handles hyper-complex buffer calculations.
 - `initialize_automation.js` defines and initializes the automation table.
 - `initialize_users.js` defines and initializes user, login-event, and bootstrap-state tables.
+- `logistic_map/initialize_span_catalog.js` creates the immutable legacy logistic-map span catalog table without seeding rows.
+- `logistic_map/legacy_span_catalog.js` validates legacy span JSON while preserving its exact source objects and reports non-mutating catalog geometry summaries.
+- `logistic_map/audit_legacy_span_catalog.js` runs the read-only catalog audit and can write a checksum-bound report of duplicates, overlap types, touching endpoints, gaps, and width inconsistencies.
+- `logistic_map/span_catalog_audit_bifurq_v1.json` records findings for the archived first legacy catalog version; it does not normalize or verify spans.
+- `logistic_map/review_span_interior.js` runs bounded Fracto calculations at selected points inside a legacy span and computes the candidate cycle multiplier.
+- `logistic_map/review_span_edges.js` samples neighborhoods of reported span endpoints, records candidate multipliers and separate finite-time Lyapunov evidence, and includes the analytic period-4 birth bracket.
+- `logistic_map/generate_span_render_packet.js` calculates an exploratory parameter grid, transactionally stores matching per-r review samples, and writes a versioned SHA-256 packet plus range index. Packet calculation is the source of both outputs; the files are not reconstructed from database rows, and publication across database/files/index is not atomic.
+- `logistic_map/initialize_span_catalog.js` creates the immutable imported-source catalog and mutable calculation-review sample tables.
+- `logistic_map/span_interior_review_bifurq_v1.json` records the first three finite-precision interior calculations for legacy source entry 0, including the distinction between machine repeat and tolerance-reduced candidate periods; these are not mathematically proven cycles.
+- `logistic_map/span_edge_review_bifurq_v1.json` records pilot endpoint checks and explicitly leaves both reported endpoints unverified as event boundaries.
+- `logistic_map/render_packets/` is the local output directory for generated exploratory packets and range indexes. It is Git-ignored while a durable persistence strategy is undecided, so it may be absent from a fresh checkout. The packet files are derived output, not source-of-truth data.
+- `logistic_map/import_legacy_span_catalog.js` explicitly imports an archived or supplied legacy `spans.json` file with checksum/version idempotency and transactional database writes.
+- `logistic_map/legacy_spans_bifurq_v1.json` is the byte-preserved legacy catalog archive used for the first import.
 - `logs.js` serves data-server logs.
 - `minibrots.js` handles minibrot list and detail requests.
 - `orbitals_not.js` contains recursive orbital derivation helpers.

@@ -1,0 +1,189 @@
+{
+  "review_version": 1,
+  "source_version": "bifurq-spans-v1",
+  "source_sha256": "a5a938d4d194ed861f32a163aee4b7ad17592cac6e2ed4065349512a85178608",
+  "source_file": "legacy_spans_bifurq_v1.json",
+  "source_order": 0,
+  "legacy_span": {
+    "min_r": 3.5000157834898675,
+    "max_r": 3.570063016267453,
+    "width": 0.0700472327775854,
+    "legacy_regime": 2,
+    "legacy_count": 17716,
+    "classification_status": "unverified_legacy_observation"
+  },
+  "method": {
+    "calculator": "calculate_logistic_orbit",
+    "multiplier": "product(r * (1 - 2 * x_k)) over returned cycle points",
+    "multiplier_interpretation": "finite-precision candidate evidence; not a proof for the exact real-valued map",
+    "approximate_primitive_period": "test each divisor of the machine repeat period; require both the reduced return residual and every repeated point gap to be within the calculator cycle tolerance"
+  },
+  "calculations": [
+    {
+      "fraction": 0.25,
+      "submitted_r": "3.5175275916842637",
+      "represented_r": 3.5175275916842637,
+      "calculator_status": "cycle_candidate",
+      "machine_repeat_period": 4,
+      "candidate_period": 4,
+      "machine_cycle_points": [
+        0.5107879442103649,
+        0.878972528973497,
+        0.37419396008044054,
+        0.8237094270478228
+      ],
+      "primitive_candidate_points": [
+        0.5107879442103649,
+        0.878972528973497,
+        0.37419396008044054,
+        0.8237094270478228
+      ],
+      "machine_repeat_return_residual": 0,
+      "return_residual": 0,
+      "max_repetition_gap": 0,
+      "primitive_period_validation": "no_smaller_divisor_within_tolerance",
+      "cycle_validation_scope": "finite_precision",
+      "mathematical_proof": false,
+      "multiplier": -0.4078244831575487,
+      "multiplier_magnitude": 0.4078244831575487,
+      "stability": "attracting_candidate",
+      "neutral_tolerance": 1e-8,
+      "iterations_completed": 10004,
+      "settings": {
+        "precision": {
+          "backend": "number",
+          "significant_digits": 16
+        },
+        "iteration_cap": 1000000,
+        "transient_limit": 10000,
+        "cycle_tolerance": 1e-12,
+        "cycle_confirmation_returns": 2,
+        "seed_policy": {
+          "type": "critical_point",
+          "x0": 0.5
+        }
+      },
+      "timing": {
+        "validation_ms": 0.187,
+        "calculation_ms": 0.779,
+        "total_ms": 0.966,
+        "iterations_per_second": 12842105
+      }
+    },
+    {
+      "fraction": 0.5,
+      "submitted_r": "3.5350393998786602",
+      "represented_r": 3.5350393998786602,
+      "calculator_status": "cycle_candidate",
+      "machine_repeat_period": 8,
+      "candidate_period": 4,
+      "machine_cycle_points": [
+        0.5194647053799891,
+        0.8824205127812479,
+        0.36677642713032615,
+        0.8210181311786658,
+        0.5194647053799906,
+        0.8824205127812477,
+        0.3667764271303268,
+        0.8210181311786665
+      ],
+      "primitive_candidate_points": [
+        0.5194647053799891,
+        0.8824205127812479,
+        0.36677642713032615,
+        0.8210181311786658
+      ],
+      "machine_repeat_return_residual": 0,
+      "return_residual": 1.4432899320127035e-15,
+      "max_repetition_gap": 1.4432899320127035e-15,
+      "primitive_period_validation": "reduced_within_tolerance",
+      "cycle_validation_scope": "finite_precision",
+      "mathematical_proof": false,
+      "multiplier": -0.7954202990144691,
+      "multiplier_magnitude": 0.7954202990144691,
+      "stability": "attracting_candidate",
+      "neutral_tolerance": 1e-8,
+      "iterations_completed": 10008,
+      "settings": {
+        "precision": {
+          "backend": "number",
+          "significant_digits": 16
+        },
+        "iteration_cap": 1000000,
+        "transient_limit": 10000,
+        "cycle_tolerance": 1e-12,
+        "cycle_confirmation_returns": 2,
+        "seed_policy": {
+          "type": "critical_point",
+          "x0": 0.5
+        }
+      },
+      "timing": {
+        "validation_ms": 0.051,
+        "calculation_ms": 0.309,
+        "total_ms": 0.361,
+        "iterations_per_second": 32388350
+      }
+    },
+    {
+      "fraction": 0.75,
+      "submitted_r": "3.552551208073057",
+      "represented_r": 3.552551208073057,
+      "calculator_status": "cycle_candidate",
+      "machine_repeat_period": 8,
+      "candidate_period": 8,
+      "machine_cycle_points": [
+        0.5025113892750369,
+        0.8881153958074786,
+        0.35300436481981334,
+        0.8113752817316264,
+        0.5437017411858314,
+        0.881352989864979,
+        0.3714899143454302,
+        0.8294679797116811
+      ],
+      "primitive_candidate_points": [
+        0.5025113892750369,
+        0.8881153958074786,
+        0.35300436481981334,
+        0.8113752817316264,
+        0.5437017411858314,
+        0.881352989864979,
+        0.3714899143454302,
+        0.8294679797116811
+      ],
+      "machine_repeat_return_residual": 0,
+      "return_residual": 0,
+      "max_repetition_gap": 0,
+      "primitive_period_validation": "no_smaller_divisor_within_tolerance",
+      "cycle_validation_scope": "finite_precision",
+      "mathematical_proof": false,
+      "multiplier": 0.20445726185595361,
+      "multiplier_magnitude": 0.20445726185595361,
+      "stability": "attracting_candidate",
+      "neutral_tolerance": 1e-8,
+      "iterations_completed": 10008,
+      "settings": {
+        "precision": {
+          "backend": "number",
+          "significant_digits": 16
+        },
+        "iteration_cap": 1000000,
+        "transient_limit": 10000,
+        "cycle_tolerance": 1e-12,
+        "cycle_confirmation_returns": 2,
+        "seed_policy": {
+          "type": "critical_point",
+          "x0": 0.5
+        }
+      },
+      "timing": {
+        "validation_ms": 0.009,
+        "calculation_ms": 0.319,
+        "total_ms": 0.328,
+        "iterations_per_second": 31373041
+      }
+    }
+  ],
+  "interpretation": "Interior samples describe only their represented parameter values. Different candidate periods within this legacy interval mean its label must not be used as a uniform cycle-period classification."
+}

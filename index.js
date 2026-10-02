@@ -38,6 +38,10 @@ import {
 } from "./handlers/handle_automation.js";
 import { initialize_automation_table } from "./handlers/initialize_automation.js";
 import { initialize_user_tables } from "./handlers/initialize_users.js";
+import {
+  initialize_logistic_map_span_catalog,
+  initialize_logistic_map_span_review_sample,
+} from "./handlers/logistic_map/initialize_span_catalog.js";
 import { handle_claim_automation } from "./handlers/claim_automation.js";
 import { handle_automation_update } from "./handlers/handle_automation_update.js";
 import { handle_solve } from "./handlers/solve.js";
@@ -99,6 +103,16 @@ await initialize_automation_table().catch((error) => {
 await initialize_user_tables().catch((error) => {
   console.error(
     chalk.red(`user table initialization failed: ${error.message}`),
+  );
+});
+await initialize_logistic_map_span_catalog().catch((error) => {
+  console.error(
+    chalk.red(`logistic-map span catalog initialization failed: ${error.message}`),
+  );
+});
+await initialize_logistic_map_span_review_sample().catch((error) => {
+  console.error(
+    chalk.red(`logistic-map review-sample initialization failed: ${error.message}`),
   );
 });
 

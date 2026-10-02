@@ -1,6 +1,70 @@
 # Logistic map handlers
 
-This folder is the implementation home for the logistic-map study feature in the Fracto data server. It contains the single-parameter calculation contract and bounded calculator, the temporary level-one diagnostic endpoints, and this design guide. The separate [MIGRATION_PLAN.md](./MIGRATION_PLAN.md) describes the proposed migration of legacy regime spans, their numerical review, and eventual rendering packets. The first page action is exploratory: it calculates 256 bins across `[3, 4)`, reports live progress, then returns compact outcomes and timings. These diagnostic results live only in the running data-server process and are not the future tile-style result store.
+This folder is the implementation home for the logistic-map study feature in the Fracto data server. It contains the single-parameter calculation contract and bounded calculator, temporary level-one diagnostic endpoints, legacy span catalog import/audit tools, pilot interior/edge reviews, and exploratory packet generation. The separate [MIGRATION_PLAN.md](./MIGRATION_PLAN.md) tracks completed work and unfinished migration, persistence, and rendering work. The level-one diagnostic calculates 256 bins across `[3, 4)`, reports live progress, and returns compact outcomes and timings; its jobs remain process-local and separate from the span packet workflow.
+
+## Legacy span catalog import
+
+`legacy_spans_bifurq_v1.json` is the unchanged archive of the legacy `regimes/spans.json` source. The `logistic_map_span_catalog` table is created idempotently when the data server starts; startup does not seed data. To inspect the import without database writes, run from the data-server repository:
+
+```sh
+node handlers/logistic_map/import_legacy_span_catalog.js handlers/logistic_map/legacy_spans_bifurq_v1.json --dry-run
+```
+
+To import it into the database configured for this data server, omit `--dry-run`:
+
+```sh
+node handlers/logistic_map/import_legacy_span_catalog.js handlers/logistic_map/legacy_spans_bifurq_v1.json
+```
+
+The explicit version is `bifurq-spans-v1`; every row records the source checksum, source filename, zero-based source-array order, numeric range fields, and the exact source object text. The import is serialized with a database advisory lock and committed transactionally. Repeating an unchanged import is a no-op. If that version already exists with a different checksum or incomplete row count, the importer refuses to overwrite it; a changed source must receive a new version in a reviewed code change. The summary reports source order-independent geometry observations (duplicate bounds, overlaps, nesting, and gaps) without changing records.
+
+`legacy_regime` and `legacy_count` preserve the source's reported values only. In particular, `legacy_count` is not a verified cycle cardinality, and neither the legacy label nor either bound is considered verified. Imported catalog rows are source observations, not calculation results or render packets.
+
+## Legacy catalog audit
+
+Run the read-only audit against the archived source and write a deterministic JSON findings report:
+
+```sh
+node handlers/logistic_map/audit_legacy_span_catalog.js handlers/logistic_map/legacy_spans_bifurq_v1.json --output handlers/logistic_map/span_catalog_audit_bifurq_v1.json
+```
+
+The report is tied to the source version and SHA-256 and retains source ordinals and original legacy labels/counts in every finding. It lists duplicate-bound groups, every overlapping pair (classified as duplicate bounds, strict nesting, or partial overlap), touching endpoints, gaps between interval unions, and entries whose reported width differs from `max_r - min_r` beyond a `64 * Number.EPSILON * max(1, |min_r|, |max_r|, |width|)` tolerance. Categories can overlap; for example, exact duplicate bounds are also geometrically overlapping. The audit never changes the catalog or decides which legacy value is correct.
+
+## Pilot interior review
+
+`review_span_interior.js` evaluates selected fractions inside one source-ordered span using Fracto's existing bounded calculator, then computes the cycle multiplier from the candidate's ordered points. Reproduce the first pilot with:
+
+```sh
+node handlers/logistic_map/review_span_interior.js handlers/logistic_map/legacy_spans_bifurq_v1.json --source-order 0 --fractions 0.25,0.5,0.75 --output handlers/logistic_map/span_interior_review_bifurq_v1.json
+```
+
+The stored evidence reports the calculator settings, represented parameter, machine repeat, tolerance-reduced candidate points/period, return residual, finite-precision validation scope, multiplier, and runtime. A multiplier magnitude below one is recorded as an attracting **candidate** at that numerical precision. It is not a proof for the exact real-valued map. The pilot's machine repeat periods were 4, 8, and 8; at the midpoint, the eight machine states repeat within `1.45e-15` after four steps, so the reviewed candidate period is 4. The tolerance-reduced candidate periods are therefore 4, 4, and 8, with multipliers approximately `-0.40782448`, `-0.79542030`, and `0.20445726`. This is evidence that the broad span should not be assumed to have one cycle period. Its `legacy_regime: 2` remains an uninterpreted label pending verification against the legacy implementation.
+
+## Pilot edge review
+
+The pilot edge script samples each reported endpoint from both sides, calculates candidate periods/multipliers where available, and records finite-time Lyapunov estimates separately:
+
+```sh
+node handlers/logistic_map/review_span_edges.js handlers/logistic_map/legacy_spans_bifurq_v1.json --source-order 0 --output handlers/logistic_map/span_edge_review_bifurq_v1.json
+```
+
+For this legacy span, offsets through `1e-6` around the lower bound all yielded period-4 candidates; their multipliers stay near `-0.0308`, far from a neutral edge at `±1`. Thus the reported lower bound is not bracketed as a period transition in the tested neighborhood. The known period-4 birth at `r = 1 + sqrt(6)` was independently bracketed by `[3.44948974278, 3.44948974279]` using the parent period-2 multiplier `4 + 2r - r²` crossing `-1`. This birth is substantially below the legacy lower bound; it does not validate that bound as an edge. The period-doubling criterion and value are given in [Knill's logistic-map notes](https://abel.math.harvard.edu/archive/118r_spring_05/handouts/feigenbaum.pdf).
+
+At the reported upper bound and at `±1e-8`, Fracto remained unresolved after one billion iterations, so there is no cycle multiplier to bracket an event. Ten-million-step finite-time Lyapunov estimates around that bound were about `+0.0119`, evidence consistent with chaotic dynamics but neither proof of chaos nor an exact boundary. The main accumulation estimate is near `3.569946`; a proper Fracto estimate still requires locating successive doubling events. Periodic windows can also occur inside broadly chaotic bands, so positive finite-time evidence must remain separate from the edge record ([Smolec & Moskalik, 2014](https://academic.oup.com/mnras/article/441/1/101/980622)). The pilot report therefore leaves the legacy upper edge unbracketed and does not label it a chaos boundary.
+
+## Exploratory render packets
+
+Exact event boundaries are not a prerequisite for exploratory rendering. Legacy spans are observation windows, not claims that the transition has a uniquely privileged boundary: their purpose is to include and study the transition, even when that means some chaotic or unresolved behavior falls inside the frame. Generate a 4,096-midpoint scan for source entry 0 with:
+
+```sh
+node handlers/logistic_map/generate_span_render_packet.js handlers/logistic_map/legacy_spans_bifurq_v1.json --source-order 0 --sample-count 4096 --iteration-cap 1000000 --transient-limit 10000
+```
+
+The command calculates the samples, transactionally stores matching per-parameter review records in `logistic_map_span_review_sample`, writes a checksummed packet under `render_packets/`, and updates the source-version range index. These writes are not an atomic transaction across MySQL and files. Packet generations are immutable by generation ID; conflicting database data under the same ID is rejected. The range index retains legacy bounds as an exploratory window and explicitly says they are not verified events. Each sample includes its finite-precision cycle result (if any), multiplier, and a separate 100,000-step finite-time Lyapunov diagnostic. Positive Lyapunov evidence that conflicts with a finite-precision cycle candidate is retained as a conflict; unresolved rows include a downsampled post-transient orbit tail. Neither condition is labeled a proof of chaos. Cycle candidates include period, multiplier, and reduced point data. Every result records its calculator settings, and `mathematical_proof` remains false.
+
+The initial 256-point grid stopped below the main cascade accumulation and produced no unresolved rows. A 1,024-point grid found 2 unresolved samples; the active 4,096-point grid finds 4,091 finite-precision attracting-cycle candidates and 5 unresolved samples. These samples help expose the transition inside the legacy observation window. Unresolved status and positive finite-time Lyapunov estimates are useful diagnostic evidence, not proof of chaos; finite-precision cycle candidates are not mathematical proofs either. Denser or nested sampling can be added where the transition needs closer inspection without treating a single exact endpoint as the goal.
+
+This packet is diagnostic, not a verified production release. Edge work can focus on transitions within the displayed window, but exact endpoint brackets are not required to use the window for exploratory study. The immutable catalog and per-sample database records preserve source and calculation evidence; packet files and the range index are derived read-optimized outputs. `render_packets/` is Git-ignored while the durable persistence strategy is undecided, so generated files may be absent after a fresh checkout. There is not yet a packet-serving API or UI integration.
 
 ## Mathematical model and scope
 

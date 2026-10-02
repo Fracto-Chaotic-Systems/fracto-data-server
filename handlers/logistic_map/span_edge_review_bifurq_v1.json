@@ -1,0 +1,455 @@
+{
+  "review_version": 1,
+  "source_version": "bifurq-spans-v1",
+  "source_sha256": "a5a938d4d194ed861f32a163aee4b7ad17592cac6e2ed4065349512a85178608",
+  "source_order": 0,
+  "legacy_span": {
+    "min_r": 3.5000157834898675,
+    "max_r": 3.570063016267453,
+    "legacy_regime": 2,
+    "legacy_count": 17716,
+    "classification_status": "unverified_legacy_observation"
+  },
+  "event_criteria": {
+    "period_doubling": "parent-cycle return multiplier equals -1",
+    "periodic_window_entry": "cycle return multiplier equals +1",
+    "end_of_cascade": "estimate from successive period-doubling parameters; not an exact finite-iteration chaos boundary",
+    "chaos": "finite-time diagnostics are reported separately and do not define an exact boundary"
+  },
+  "left_edge": {
+    "tested_neighborhood": [
+      {
+        "offset": -0.000001,
+        "submitted_r": "3.5000147834898674",
+        "represented_r": 3.5000147834898674,
+        "calculator_status": "cycle_candidate",
+        "machine_repeat_period": 4,
+        "candidate_period": 4,
+        "machine_repeat_return_residual": 0,
+        "candidate_return_residual": 0,
+        "max_repetition_gap": 0,
+        "multiplier": -0.03081382950180096,
+        "multiplier_magnitude": 0.03081382950180096,
+        "validation_scope": "finite_precision",
+        "mathematical_proof": false,
+        "iterations_completed": 10004,
+        "settings": {
+          "precision": {
+            "backend": "number",
+            "significant_digits": 16
+          },
+          "iteration_cap": 1000000,
+          "transient_limit": 10000,
+          "cycle_tolerance": 1e-12,
+          "cycle_confirmation_returns": 2,
+          "seed_policy": {
+            "type": "critical_point",
+            "x0": 0.5
+          }
+        },
+        "timing": {
+          "validation_ms": 0.372,
+          "calculation_ms": 0.803,
+          "total_ms": 1.175,
+          "iterations_per_second": 12458281
+        }
+      },
+      {
+        "offset": -1e-8,
+        "submitted_r": "3.5000157734898676",
+        "represented_r": 3.5000157734898676,
+        "calculator_status": "cycle_candidate",
+        "machine_repeat_period": 4,
+        "candidate_period": 4,
+        "machine_repeat_return_residual": 0,
+        "candidate_return_residual": 0,
+        "max_repetition_gap": 0,
+        "multiplier": -0.03083484746721023,
+        "multiplier_magnitude": 0.03083484746721023,
+        "validation_scope": "finite_precision",
+        "mathematical_proof": false,
+        "iterations_completed": 10004,
+        "settings": {
+          "precision": {
+            "backend": "number",
+            "significant_digits": 16
+          },
+          "iteration_cap": 1000000,
+          "transient_limit": 10000,
+          "cycle_tolerance": 1e-12,
+          "cycle_confirmation_returns": 2,
+          "seed_policy": {
+            "type": "critical_point",
+            "x0": 0.5
+          }
+        },
+        "timing": {
+          "validation_ms": 0.069,
+          "calculation_ms": 0.271,
+          "total_ms": 0.34,
+          "iterations_per_second": 36915129
+        }
+      },
+      {
+        "offset": -1e-10,
+        "submitted_r": "3.5000157833898675",
+        "represented_r": 3.5000157833898675,
+        "calculator_status": "cycle_candidate",
+        "machine_repeat_period": 4,
+        "candidate_period": 4,
+        "machine_repeat_return_residual": 0,
+        "candidate_return_residual": 0,
+        "max_repetition_gap": 0,
+        "multiplier": -0.030835057647027608,
+        "multiplier_magnitude": 0.030835057647027608,
+        "validation_scope": "finite_precision",
+        "mathematical_proof": false,
+        "iterations_completed": 10004,
+        "settings": {
+          "precision": {
+            "backend": "number",
+            "significant_digits": 16
+          },
+          "iteration_cap": 1000000,
+          "transient_limit": 10000,
+          "cycle_tolerance": 1e-12,
+          "cycle_confirmation_returns": 2,
+          "seed_policy": {
+            "type": "critical_point",
+            "x0": 0.5
+          }
+        },
+        "timing": {
+          "validation_ms": 0.008,
+          "calculation_ms": 0.317,
+          "total_ms": 0.325,
+          "iterations_per_second": 31558360
+        }
+      },
+      {
+        "offset": 0,
+        "submitted_r": "3.5000157834898675",
+        "represented_r": 3.5000157834898675,
+        "calculator_status": "cycle_candidate",
+        "machine_repeat_period": 4,
+        "candidate_period": 4,
+        "machine_repeat_return_residual": 0,
+        "candidate_return_residual": 0,
+        "max_repetition_gap": 0,
+        "multiplier": -0.0308350597700527,
+        "multiplier_magnitude": 0.0308350597700527,
+        "validation_scope": "finite_precision",
+        "mathematical_proof": false,
+        "iterations_completed": 10004,
+        "settings": {
+          "precision": {
+            "backend": "number",
+            "significant_digits": 16
+          },
+          "iteration_cap": 1000000,
+          "transient_limit": 10000,
+          "cycle_tolerance": 1e-12,
+          "cycle_confirmation_returns": 2,
+          "seed_policy": {
+            "type": "critical_point",
+            "x0": 0.5
+          }
+        },
+        "timing": {
+          "validation_ms": 0.007,
+          "calculation_ms": 0.845,
+          "total_ms": 0.852,
+          "iterations_per_second": 11839053
+        }
+      },
+      {
+        "offset": 1e-10,
+        "submitted_r": "3.5000157835898675",
+        "represented_r": 3.5000157835898675,
+        "calculator_status": "cycle_candidate",
+        "machine_repeat_period": 4,
+        "candidate_period": 4,
+        "machine_repeat_return_residual": 0,
+        "candidate_return_residual": 0,
+        "max_repetition_gap": 0,
+        "multiplier": -0.03083506189310077,
+        "multiplier_magnitude": 0.03083506189310077,
+        "validation_scope": "finite_precision",
+        "mathematical_proof": false,
+        "iterations_completed": 10004,
+        "settings": {
+          "precision": {
+            "backend": "number",
+            "significant_digits": 16
+          },
+          "iteration_cap": 1000000,
+          "transient_limit": 10000,
+          "cycle_tolerance": 1e-12,
+          "cycle_confirmation_returns": 2,
+          "seed_policy": {
+            "type": "critical_point",
+            "x0": 0.5
+          }
+        },
+        "timing": {
+          "validation_ms": 0.013,
+          "calculation_ms": 0.26,
+          "total_ms": 0.273,
+          "iterations_per_second": 38476923
+        }
+      },
+      {
+        "offset": 1e-8,
+        "submitted_r": "3.5000157934898675",
+        "represented_r": 3.5000157934898675,
+        "calculator_status": "cycle_candidate",
+        "machine_repeat_period": 4,
+        "candidate_period": 4,
+        "machine_repeat_return_residual": 0,
+        "candidate_return_residual": 0,
+        "max_repetition_gap": 0,
+        "multiplier": -0.03083527207291548,
+        "multiplier_magnitude": 0.03083527207291548,
+        "validation_scope": "finite_precision",
+        "mathematical_proof": false,
+        "iterations_completed": 10004,
+        "settings": {
+          "precision": {
+            "backend": "number",
+            "significant_digits": 16
+          },
+          "iteration_cap": 1000000,
+          "transient_limit": 10000,
+          "cycle_tolerance": 1e-12,
+          "cycle_confirmation_returns": 2,
+          "seed_policy": {
+            "type": "critical_point",
+            "x0": 0.5
+          }
+        },
+        "timing": {
+          "validation_ms": 0.006,
+          "calculation_ms": 0.339,
+          "total_ms": 0.345,
+          "iterations_per_second": 29510324
+        }
+      },
+      {
+        "offset": 0.000001,
+        "submitted_r": "3.5000167834898677",
+        "represented_r": 3.5000167834898677,
+        "calculator_status": "cycle_candidate",
+        "machine_repeat_period": 4,
+        "candidate_period": 4,
+        "machine_repeat_return_residual": 0,
+        "candidate_return_residual": 0,
+        "max_repetition_gap": 0,
+        "multiplier": -0.03085629007198306,
+        "multiplier_magnitude": 0.03085629007198306,
+        "validation_scope": "finite_precision",
+        "mathematical_proof": false,
+        "iterations_completed": 10004,
+        "settings": {
+          "precision": {
+            "backend": "number",
+            "significant_digits": 16
+          },
+          "iteration_cap": 1000000,
+          "transient_limit": 10000,
+          "cycle_tolerance": 1e-12,
+          "cycle_confirmation_returns": 2,
+          "seed_policy": {
+            "type": "critical_point",
+            "x0": 0.5
+          }
+        },
+        "timing": {
+          "validation_ms": 0.007,
+          "calculation_ms": 0.318,
+          "total_ms": 0.325,
+          "iterations_per_second": 31459119
+        }
+      }
+    ],
+    "assessment": "no_period_transition_observed_across_tested_neighborhood",
+    "event_type": null,
+    "note": "The reported lower bound has the same period-4 candidate on both sides at the tested offsets; its multiplier stays far from ±1. No bifurcation is bracketed at this legacy bound."
+  },
+  "right_edge": {
+    "tested_neighborhood": [
+      {
+        "offset": -1e-8,
+        "submitted_r": "3.570063006267453",
+        "represented_r": 3.570063006267453,
+        "calculator_status": "sampled_unresolved",
+        "machine_repeat_period": null,
+        "candidate_period": null,
+        "machine_repeat_return_residual": null,
+        "candidate_return_residual": null,
+        "max_repetition_gap": null,
+        "multiplier": null,
+        "multiplier_magnitude": null,
+        "validation_scope": null,
+        "mathematical_proof": false,
+        "iterations_completed": 1000000000,
+        "settings": {
+          "precision": {
+            "backend": "number",
+            "significant_digits": 16
+          },
+          "iteration_cap": 1000000000,
+          "transient_limit": 10000,
+          "cycle_tolerance": 1e-12,
+          "cycle_confirmation_returns": 2,
+          "seed_policy": {
+            "type": "critical_point",
+            "x0": 0.5
+          }
+        },
+        "timing": {
+          "validation_ms": 0.007,
+          "calculation_ms": 5179.958,
+          "total_ms": 5179.965,
+          "iterations_per_second": 193051758
+        }
+      },
+      {
+        "offset": 0,
+        "submitted_r": "3.570063016267453",
+        "represented_r": 3.570063016267453,
+        "calculator_status": "sampled_unresolved",
+        "machine_repeat_period": null,
+        "candidate_period": null,
+        "machine_repeat_return_residual": null,
+        "candidate_return_residual": null,
+        "max_repetition_gap": null,
+        "multiplier": null,
+        "multiplier_magnitude": null,
+        "validation_scope": null,
+        "mathematical_proof": false,
+        "iterations_completed": 1000000000,
+        "settings": {
+          "precision": {
+            "backend": "number",
+            "significant_digits": 16
+          },
+          "iteration_cap": 1000000000,
+          "transient_limit": 10000,
+          "cycle_tolerance": 1e-12,
+          "cycle_confirmation_returns": 2,
+          "seed_policy": {
+            "type": "critical_point",
+            "x0": 0.5
+          }
+        },
+        "timing": {
+          "validation_ms": 0.087,
+          "calculation_ms": 5190.796,
+          "total_ms": 5190.883,
+          "iterations_per_second": 192648680
+        }
+      },
+      {
+        "offset": 1e-8,
+        "submitted_r": "3.570063026267453",
+        "represented_r": 3.570063026267453,
+        "calculator_status": "sampled_unresolved",
+        "machine_repeat_period": null,
+        "candidate_period": null,
+        "machine_repeat_return_residual": null,
+        "candidate_return_residual": null,
+        "max_repetition_gap": null,
+        "multiplier": null,
+        "multiplier_magnitude": null,
+        "validation_scope": null,
+        "mathematical_proof": false,
+        "iterations_completed": 1000000000,
+        "settings": {
+          "precision": {
+            "backend": "number",
+            "significant_digits": 16
+          },
+          "iteration_cap": 1000000000,
+          "transient_limit": 10000,
+          "cycle_tolerance": 1e-12,
+          "cycle_confirmation_returns": 2,
+          "seed_policy": {
+            "type": "critical_point",
+            "x0": 0.5
+          }
+        },
+        "timing": {
+          "validation_ms": 0.058,
+          "calculation_ms": 5158.782,
+          "total_ms": 5158.84,
+          "iterations_per_second": 193844206
+        }
+      }
+    ],
+    "assessment": "unresolved_at_iteration_cap_no_cycle_multiplier_available",
+    "event_type": null,
+    "note": "The calculator remains unresolved through the billion-iteration cap on both sides and at the reported upper bound. No cycle multiplier or event bracket is available; do not label this endpoint a chaos boundary."
+  },
+  "independently_identified_period_four_birth": {
+    "event_type": "period_doubling",
+    "transition": "stable period-2 cycle loses stability and a period-4 cycle is born",
+    "parameter_identity": "1 + sqrt(6)",
+    "lower_r": 3.44948974278,
+    "upper_r": 3.44948974279,
+    "exact_parameter": 3.449489742783178,
+    "width": 1.000000082740371e-11,
+    "lower_period_two_multiplier": -0.9999999999844302,
+    "upper_period_two_multiplier": -1.0000000000334204,
+    "criterion": "the period-2 return multiplier crosses -1",
+    "source": "https://abel.math.harvard.edu/archive/118r_spring_05/handouts/feigenbaum.pdf",
+    "relation_to_legacy_lower_bound": "This known period-4 birth lies below the legacy span's reported min_r; the reported min_r itself is not the period-4 birth."
+  },
+  "separate_chaos_evidence": {
+    "kind": "finite_time_lyapunov_estimate",
+    "samples": [
+      {
+        "represented_r": 3.5699,
+        "iterations": 10000000,
+        "transient_discarded": 10000,
+        "finite_time_lyapunov_estimate": -0.0037865832092088174,
+        "interpretation": "finite-time diagnostic only; neither positive values prove chaos nor non-positive values prove a stable periodic attractor"
+      },
+      {
+        "represented_r": 3.569945672,
+        "iterations": 10000000,
+        "transient_discarded": 10000,
+        "finite_time_lyapunov_estimate": 0.000019581122505101123,
+        "interpretation": "finite-time diagnostic only; neither positive values prove chaos nor non-positive values prove a stable periodic attractor"
+      },
+      {
+        "represented_r": 3.56999,
+        "iterations": 10000000,
+        "transient_discarded": 10000,
+        "finite_time_lyapunov_estimate": 0.009616774632598808,
+        "interpretation": "finite-time diagnostic only; neither positive values prove chaos nor non-positive values prove a stable periodic attractor"
+      },
+      {
+        "represented_r": 3.570063006267453,
+        "iterations": 10000000,
+        "transient_discarded": 10000,
+        "finite_time_lyapunov_estimate": 0.011957708932304799,
+        "interpretation": "finite-time diagnostic only; neither positive values prove chaos nor non-positive values prove a stable periodic attractor"
+      },
+      {
+        "represented_r": 3.570063016267453,
+        "iterations": 10000000,
+        "transient_discarded": 10000,
+        "finite_time_lyapunov_estimate": 0.011868338065656356,
+        "interpretation": "finite-time diagnostic only; neither positive values prove chaos nor non-positive values prove a stable periodic attractor"
+      },
+      {
+        "represented_r": 3.570063026267453,
+        "iterations": 10000000,
+        "transient_discarded": 10000,
+        "finite_time_lyapunov_estimate": 0.011885074147283315,
+        "interpretation": "finite-time diagnostic only; neither positive values prove chaos nor non-positive values prove a stable periodic attractor"
+      }
+    ],
+    "note": "Positive estimates near and above the reported upper bound are evidence consistent with chaos, kept separate from the edge/event assessment."
+  }
+}
