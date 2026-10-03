@@ -21,8 +21,8 @@ export const newton_big_complex = (point, limit, known_cardinality = null) => {
     known_cardinality !== undefined &&
     Number.isInteger(requested_cardinality);
   const cardinalities = cardinality_supplied
-    ? [Math.max(3, requested_cardinality)]
-    : Array.from({ length: 2497 }, (_, index) => index + 3);
+    ? [Math.max(1, requested_cardinality)]
+    : Array.from({ length: 2499 }, (_, index) => index + 1);
   for (const N of cardinalities) {
     let z0 = new BigComplex(0, 0);
     for (let i = 1; i <= limit; i++) {
@@ -46,6 +46,30 @@ export const newton_big_complex = (point, limit, known_cardinality = null) => {
       z0 = z0.add(negative_step);
 
       const step_magnitude = step.magnitude();
+      if (step_magnitude.isZero()) {
+        const point_list = [];
+        let exact_current = new BigComplex(z0.re, z0.im, z0.precision);
+        for (let k = 0; k < N; k += 1) {
+          exact_current = exact_current.mul(exact_current).add(P);
+          point_list.push(
+            new BigComplex(
+              exact_current.re,
+              exact_current.im,
+              exact_current.precision,
+            ),
+          );
+        }
+        const end = performance.now();
+        return {
+          point_list,
+          cardinality: N,
+          cycles: i,
+          time: `${end - start}ms`,
+          least_magnitude: 0,
+          least_magnitude_N: N,
+          cardinality_supplied,
+        };
+      }
       if (step_magnitude > 0 && step_magnitude < least_magnitude) {
         least_magnitude = step_magnitude;
         least_magnitude_N = N;

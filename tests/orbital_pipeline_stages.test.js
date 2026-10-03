@@ -3,7 +3,10 @@ import assert from "node:assert/strict";
 
 import { detect_cardinality } from "../handlers/orbitals/cardinality_detection.js";
 import { refine_orbital_points } from "../handlers/orbitals/newton_refinement.js";
-import { build_circuitry_from_points } from "../handlers/orbitals/circuitry_pipeline.js";
+import {
+  build_circuitry_from_points,
+  build_circuitry_pipeline,
+} from "../handlers/orbitals/circuitry_pipeline.js";
 import { get_cardioid_root } from "../handlers/orbitals/orbitals_utils.js";
 
 const seven_point = { re: 0.1211937096, im: 0.6106129599 };
@@ -43,6 +46,18 @@ test("radial circuitry can begin from caller-supplied points and Q", () => {
   assert.equal(result.body.samples, points.length * 4 + 1);
   assert.deepEqual(result.body.Q, { re: 0, im: 0 });
   assert.equal(result.body.result.length, points.length * 4 + 1);
+});
+
+test("a one-point orbit remains a renderable circuitry result", () => {
+  const result = build_circuitry_pipeline({ re: 0, im: 0 }, {
+    interpolation: "radial_sweep",
+  });
+  assert.equal(result.status, "success");
+  assert.equal(result.body.cardinality, 1);
+  assert.equal(result.body.samples, 1);
+  assert.equal(result.body.orbital_points.length, 1);
+  assert.equal(result.body.result.length, 1);
+  assert.deepEqual(result.body.result[0].C, result.body.orbital_points[0]);
 });
 
 test("Q calculation remains independently available", () => {

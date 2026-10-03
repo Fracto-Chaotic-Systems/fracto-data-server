@@ -22,3 +22,17 @@ test("BigComplex Newton accepts a known cardinality", () => {
   assert.equal(result.cardinality_supplied, true);
   assert.equal(result.least_magnitude_N, 65);
 });
+
+test("both Newton solvers preserve supplied periods one and two", () => {
+  for (const solve of [newton_derived, newton_big_complex]) {
+    const fixed = solve({ x: 0, y: 0 }, 4, 1);
+    assert.equal(fixed.cardinality, 1);
+    assert.equal(fixed.least_magnitude_N, 1);
+    assert.equal(fixed.point_list.length, 1);
+
+    const period_two = solve({ x: -1, y: 0 }, 4, 2);
+    assert.equal(period_two.cardinality, 2);
+    assert.equal(period_two.least_magnitude_N, 2);
+    assert.equal(period_two.point_list.length, 2);
+  }
+});

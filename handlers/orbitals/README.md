@@ -163,6 +163,11 @@ detector first when a cardinality is known from a table, experiment, or other
 detector. `detector_newton.js` delegates to this stage while retaining the
 existing combined workflow and response fields.
 
+The Newton solvers preserve supplied cardinalities 1 and 2; they do not raise
+them to 3. An exact zero-step root is returned with the requested period rather
+than being discarded. These are candidate results and still require closure
+and primitive-period validation before they are treated as confirmed orbits.
+
 `orbitals_utils.js` exposes `get_cardioid_root(focal_point)` as the independent
 Q calculation. Radial-sweep, Hermite, and waveform consumers may use a
 caller-supplied Q or calculate it once at their boundary; none needs to invoke

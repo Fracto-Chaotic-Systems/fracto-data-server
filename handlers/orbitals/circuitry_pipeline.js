@@ -156,6 +156,30 @@ export const build_circuitry_pipeline = (focal_point, options = {}) => {
     };
   }
   const points = orbit?.points;
+  if (points?.length === 1) {
+    const point = points[0];
+    const cardioid_root = get_cardioid_root(focal_point);
+    return {
+      status: "success",
+      body: {
+        result: [{ t: 0, C: point }],
+        orbital_points: points,
+        cardinality: 1,
+        samples: 1,
+        Q: cardioid_root,
+        interpolation,
+        looped_points: false,
+        optimize_polarity: false,
+        polarity_pattern: null,
+        polarity_score: null,
+        polarity_metrics: null,
+        polarity_exhaustive: false,
+        point_source: orbit.source,
+        detector: summarize_detector(orbit.detector),
+        detector_elapsed_ms,
+      },
+    };
+  }
   if (!points || points.length < 2) {
     return {
       status: "no_orbit",

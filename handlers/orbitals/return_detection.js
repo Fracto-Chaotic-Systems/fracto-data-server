@@ -310,7 +310,7 @@ export const detect_pyramid_contenders = (samples, options = {}) => {
   const minimum_cycles = Math.max(2, Math.floor(Number(options.minimum_cycles) || 10));
   const max_cardinality = Math.min(
     Math.floor((samples.length - 1) / minimum_cycles),
-    Math.max(3, Math.floor(Number(options.max_cardinality) || 4096)),
+    Math.max(1, Math.floor(Number(options.max_cardinality) || 4096)),
   );
   const noise_factor = Math.max(1, Number(options.noise_factor) || 64);
   const near_zero_tolerance = Math.max(
@@ -388,7 +388,7 @@ export const detect_pyramid_contenders = (samples, options = {}) => {
     contender.schedule_next_index = schedule_heads[offset];
     schedule_heads[offset] = contender.state_index;
   };
-  for (let cardinality = 3; cardinality <= max_cardinality; cardinality += 1) {
+  for (let cardinality = 1; cardinality <= max_cardinality; cardinality += 1) {
     const contender = create_pyramid_contender_state(cardinality, max_layers);
     contender.state_index = contender_states.length;
     contender_states.push(contender);

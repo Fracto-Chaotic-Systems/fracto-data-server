@@ -24,8 +24,8 @@ export const newton_derived = (point, limit, known_cardinality = null) => {
     known_cardinality !== undefined &&
     Number.isInteger(requested_cardinality);
   const cardinalities = cardinality_supplied
-    ? [Math.max(3, requested_cardinality)]
-    : Array.from({ length: 4997 }, (_, index) => index + 3);
+    ? [Math.max(1, requested_cardinality)]
+    : Array.from({ length: 4999 }, (_, index) => index + 1);
   for (const N of cardinalities) {
     // Start at zero, to find the orbital point closest to the origin
     let z0_re = 0;
@@ -109,6 +109,27 @@ export const newton_derived = (point, limit, known_cardinality = null) => {
       if (!Number.isFinite(magnitude_squared)) {
         console.log("magnitude_squared", magnitude_squared);
         break;
+      }
+      if (magnitude_squared === 0) {
+        const point_list = [];
+        let exact_re = z0_re;
+        let exact_im = z0_im;
+        for (let k = 0; k < N; k += 1) {
+          const next_re = exact_re * exact_re - exact_im * exact_im + point.x;
+          exact_im = 2 * exact_re * exact_im + point.y;
+          exact_re = next_re;
+          point_list.push(new Complex(exact_re, exact_im));
+        }
+        const end = performance.now();
+        return {
+          point_list,
+          cardinality: N,
+          cycles: i,
+          time: `${end - start}ms`,
+          least_magnitude: 0,
+          least_magnitude_N: N,
+          cardinality_supplied,
+        };
       }
       if (magnitude_squared > 0) {
         if (magnitude_squared < least_magnitude * least_magnitude) {
