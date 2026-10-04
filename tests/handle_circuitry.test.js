@@ -63,7 +63,7 @@ test(
       "fracto_fast_calc_outside_main_cardioid",
     );
     assert.equal(response.body.cardinality, 2);
-    assert.equal(response.body.orbital_two_calc_newton_experiment, undefined);
+    assert.equal(response.body.two_point_calc_newton_fallback, undefined);
   },
 );
 
@@ -74,7 +74,7 @@ test("detector cardinality 2 automatically falls back to calc cardinality", () =
     detector_iterations: "4096",
     interpolation: "radial_sweep",
   });
-  const fallback = response.body.orbital_two_calc_newton_experiment;
+  const fallback = response.body.two_point_calc_newton_fallback;
   assert.equal(response.code, 200);
   assert.equal(response.body.detector.detection.candidate_cardinality, 2);
   assert.equal(fallback.detector_cardinality, 2);
@@ -85,7 +85,7 @@ test("detector cardinality 2 automatically falls back to calc cardinality", () =
   assert.equal(response.body.orbital_points.length, 1);
   assert.equal(
     response.body.point_source,
-    "orbital_two_calc_newton_experiment",
+    "two_point_calc_newton_fallback",
   );
 });
 

@@ -1,8 +1,6 @@
 import { discover_and_newton } from "./orbitals/detector_newton.js";
 import FractoUtil from "@fracto/sdk/FractoUtil.js";
-import {
-  run_orbital_two_calc_newton_experiment,
-} from "./orbitals/orbital_two_calc_newton_experiment.js";
+import { run_two_point_calc_newton_fallback } from "./orbitals/two_point_calc_newton_fallback.js";
 import { performance } from "node:perf_hooks";
 
 const is_truthy = (value) =>
@@ -98,19 +96,19 @@ export const handle_orbital_newton = (req, res) => {
       result.detection?.candidate_cardinality === 2 &&
       FractoUtil.point_in_main_cardioid({ x: re, y: im })
     ) {
-      const experiment = run_orbital_two_calc_newton_experiment(
+      const fallback = run_two_point_calc_newton_fallback(
         { re: point.re, im: point.im },
         { newton_limit: req.query.newton_limit },
       );
-      result.orbital_two_calc_newton_experiment = {
-        status: experiment.status,
-        ...experiment.diagnostics,
+      result.two_point_calc_newton_fallback = {
+        status: fallback.status,
+        ...fallback.diagnostics,
       };
-      if (experiment.status === "newton_points_available") {
+      if (fallback.status === "newton_points_available") {
         result.newton_big_complex = {
           ...(result.newton_big_complex || {}),
-          cardinality: experiment.cardinality,
-          point_list: experiment.points.map(({ re: point_re, im: point_im }) => ({
+          cardinality: fallback.cardinality,
+          point_list: fallback.points.map(({ re: point_re, im: point_im }) => ({
             re: String(point_re),
             im: String(point_im),
           })),
@@ -118,11 +116,11 @@ export const handle_orbital_newton = (req, res) => {
           diagnostics: {
             ...(result.newton_big_complex?.diagnostics || {}),
             mode: "big_complex",
-            supplied_cardinality: experiment.cardinality,
-            source: "orbital_two_calc_newton_experiment",
+            supplied_cardinality: fallback.cardinality,
+            source: "two_point_calc_newton_fallback",
           },
         };
-        result.orbital_two_calc_newton_experiment.used_for_chart = true;
+        result.two_point_calc_newton_fallback.used_for_newton = true;
       }
     }
     if (iterations.horizons) {

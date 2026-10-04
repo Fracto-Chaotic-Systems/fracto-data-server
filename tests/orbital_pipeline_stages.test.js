@@ -9,12 +9,12 @@ import {
 } from "../handlers/orbitals/circuitry_pipeline.js";
 import { get_cardioid_root } from "../handlers/orbitals/orbitals_utils.js";
 import { newton_big_complex } from "../handlers/orbitals/newton_big_complex.js";
-import { newton_big_complex_experimental } from "../handlers/orbitals/newton_big_complex_experimental.js";
-import { run_newton_coarse_sweep } from "../handlers/orbitals/newton_coarse_sweep.js";
+import { newton_big_complex_experimental } from "../handlers/orbitals/archive/newton_big_complex_experimental.js";
+import { run_newton_coarse_sweep } from "../handlers/orbitals/archive/newton_coarse_sweep.js";
 import {
   approximate_theta_rational,
   investigate_two_point_orbit,
-} from "../handlers/orbitals/orbital_two.js";
+} from "../handlers/orbitals/archive/orbital_two.js";
 import FractoUtil from "@fracto/sdk/FractoUtil.js";
 
 const seven_point = { re: 0.1211937096, im: 0.6106129599 };

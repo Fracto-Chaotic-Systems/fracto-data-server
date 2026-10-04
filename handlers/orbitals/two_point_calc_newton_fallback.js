@@ -22,17 +22,16 @@ const get_point_extent_upper_bound = (points = []) => {
 };
 
 /**
- * Experimental main-cardioid path for a detector result that appears to have
- * two points. FractoFastCalc's finite-precision pattern is used only as a
- * supplied Newton cardinality; its critically iterated points are not used as
- * the refined orbit.
+ * Main-cardioid fallback for a detector result with candidate cardinality 2.
+ * FractoFastCalc's finite-precision pattern supplies the Newton candidate;
+ * its critically iterated points are not used as the refined orbit.
  *
  * @param {{re:number,im:number}} focal_point Mandelbrot parameter.
  * @param {{newton_limit?:number}} [options] Newton effort controls.
  * @returns {{status:string,points?:Array<object>,cardinality?:number,
  *   diagnostics:object}} Experimental output and comparison diagnostics.
  */
-export const run_orbital_two_calc_newton_experiment = (
+export const run_two_point_calc_newton_fallback = (
   focal_point,
   options = {},
 ) => {
@@ -95,7 +94,8 @@ export const run_orbital_two_calc_newton_experiment = (
   if (
     !diagnostics.newton_cardinality_matches_calc ||
     points.some(
-      (point) => !Number.isFinite(point.re) || !Number.isFinite(point.im),
+      (point) =>
+        !Number.isFinite(point.re) || !Number.isFinite(point.im),
     )
   ) {
     return {

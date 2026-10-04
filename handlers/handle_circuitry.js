@@ -19,11 +19,6 @@ import {
  * - `detector_iterations`, `minimum_return_repetitions`, `newton_limit`
  *   (optional): controls the return detector and BigComplex Newton refinement
  *   used to supply the fitted orbital points.
- * - `newton_sweep_experiment=true` (optional): for apparent orbital-2 results
- *   only, run an isolated coarse-cardinality sweep and high-precision shortlist.
- *   `newton_sweep_max_cardinality`, `newton_sweep_coarse_iterations`,
- *   `newton_sweep_candidate_count`, and
- *   `newton_sweep_refinement_iterations` optionally bound that experiment.
  * - When the detector reports cardinality 2 inside the main cardioid, use
  *   `FractoFastCalc.calc().pattern` as the BigComplex Newton candidate. This
  *   fallback includes comparison diagnostics and uses Newton points only
@@ -79,14 +74,6 @@ export const handle_circuitry = (req, res) => {
       detector_iterations: req.query.detector_iterations,
       minimum_return_repetitions: req.query.minimum_return_repetitions,
       newton_limit: req.query.newton_limit,
-      newton_sweep_experiment: [true, "true", 1, "1"].includes(
-        req.query.newton_sweep_experiment,
-      ),
-      newton_sweep_max_cardinality: req.query.newton_sweep_max_cardinality,
-      newton_sweep_coarse_iterations: req.query.newton_sweep_coarse_iterations,
-      newton_sweep_candidate_count: req.query.newton_sweep_candidate_count,
-      newton_sweep_refinement_iterations:
-        req.query.newton_sweep_refinement_iterations,
     },
   );
   const status_code = pipeline.status === "no_orbit" ? 422 : 200;

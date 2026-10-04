@@ -29,10 +29,14 @@ test("both Newton solvers preserve supplied periods one and two", () => {
     assert.equal(fixed.cardinality, 1);
     assert.equal(fixed.least_magnitude_N, 1);
     assert.equal(fixed.point_list.length, 1);
+    assert.equal(fixed.cycles, 1);
+    assert.equal(fixed.least_magnitude, 0);
 
     const period_two = solve({ x: -1, y: 0 }, 4, 2);
     assert.equal(period_two.cardinality, 2);
     assert.equal(period_two.least_magnitude_N, 2);
     assert.equal(period_two.point_list.length, 2);
+    assert.equal(period_two.cycles, 1);
+    assert.equal(period_two.least_magnitude, 0);
   }
 });

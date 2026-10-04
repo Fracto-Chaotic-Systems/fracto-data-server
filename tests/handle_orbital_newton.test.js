@@ -62,15 +62,15 @@ test("detector cardinality 2 automatically uses calc-derived Newton points", () 
   assert.equal(response.code, 200);
   assert.equal(response.body.detection.candidate_cardinality, 2);
   assert.equal(
-    response.body.orbital_two_calc_newton_experiment.status,
+    response.body.two_point_calc_newton_fallback.status,
     "newton_points_available",
   );
   assert.equal(
-    response.body.orbital_two_calc_newton_experiment.calc_cardinality,
+    response.body.two_point_calc_newton_fallback.calc_cardinality,
     1,
   );
   assert.equal(
-    response.body.orbital_two_calc_newton_experiment.used_for_chart,
+    response.body.two_point_calc_newton_fallback.used_for_newton,
     true,
   );
   assert.equal(response.body.newton_big_complex.cardinality, 1);
@@ -89,11 +89,11 @@ test("two-point fallback passes numeric coordinates to FractoFastCalc", () => {
   assert.equal(response.code, 200);
   assert.equal(response.body.detection.candidate_cardinality, 2);
   assert.equal(
-    response.body.orbital_two_calc_newton_experiment.calc_cardinality,
+    response.body.two_point_calc_newton_fallback.calc_cardinality,
     calculator_result.pattern,
   );
   assert.equal(
-    response.body.orbital_two_calc_newton_experiment.newton_cardinality,
+    response.body.two_point_calc_newton_fallback.newton_cardinality,
     calculator_result.pattern,
   );
   assert.equal(

@@ -2,9 +2,7 @@ import FractoFastCalc from "@fracto/sdk/FractoFastCalc.js";
 import FractoUtil from "@fracto/sdk/FractoUtil.js";
 import { performance } from "node:perf_hooks";
 import { discover_and_newton } from "./detector_newton.js";
-import {
-  run_orbital_two_calc_newton_experiment,
-} from "./orbital_two_calc_newton_experiment.js";
+import { run_two_point_calc_newton_fallback } from "./two_point_calc_newton_fallback.js";
 import {
   get_cardioid_root,
   magnitude,
@@ -86,21 +84,18 @@ const get_orbital_points = (focal_point, options = {}) => {
   ) {
     const pattern = detected.detection.candidate_cardinality;
     if (pattern === 2) {
-      const experiment = run_orbital_two_calc_newton_experiment(
+      const fallback = run_two_point_calc_newton_fallback(
         focal_point,
         options,
       );
-      const experiment_details = {
-        status: experiment.status,
-        ...experiment.diagnostics,
-      };
-      if (experiment.status === "newton_points_available") {
+      const fallback_details = { status: fallback.status, ...fallback.diagnostics };
+      if (fallback.status === "newton_points_available") {
         return {
-          points: experiment.points,
-          pattern: experiment.cardinality,
-          source: "orbital_two_calc_newton_experiment",
+          points: fallback.points,
+          pattern: fallback.cardinality,
+          source: "two_point_calc_newton_fallback",
           detector: detected,
-          orbital_two_calc_newton_experiment: experiment_details,
+          two_point_calc_newton_fallback: fallback_details,
         };
       }
       return {
@@ -108,7 +103,7 @@ const get_orbital_points = (focal_point, options = {}) => {
         pattern,
         source: "detector_newton",
         detector: detected,
-        orbital_two_calc_newton_experiment: experiment_details,
+        two_point_calc_newton_fallback: fallback_details,
       };
     }
     return {
@@ -241,8 +236,7 @@ export const build_circuitry_pipeline = (focal_point, options = {}) => {
         polarity_metrics: null,
         polarity_exhaustive: false,
         point_source: orbit.source,
-        orbital_two_calc_newton_experiment:
-          orbit.orbital_two_calc_newton_experiment,
+        two_point_calc_newton_fallback: orbit.two_point_calc_newton_fallback,
         detector: summarize_detector(orbit.detector),
         detector_elapsed_ms,
       },
@@ -297,8 +291,7 @@ export const build_circuitry_pipeline = (focal_point, options = {}) => {
         polarity_metrics: null,
         polarity_exhaustive: false,
         point_source: orbit.source,
-        orbital_two_calc_newton_experiment:
-          orbit.orbital_two_calc_newton_experiment,
+        two_point_calc_newton_fallback: orbit.two_point_calc_newton_fallback,
         detector: summarize_detector(orbit.detector),
         detector_elapsed_ms,
       },
@@ -329,8 +322,7 @@ export const build_circuitry_pipeline = (focal_point, options = {}) => {
       polarity_metrics: optimized.metrics,
       polarity_exhaustive: optimized.exhaustive,
       point_source: orbit.source,
-      orbital_two_calc_newton_experiment:
-        orbit.orbital_two_calc_newton_experiment,
+      two_point_calc_newton_fallback: orbit.two_point_calc_newton_fallback,
       detector_elapsed_ms,
       detector: summarize_detector(orbit.detector),
     },

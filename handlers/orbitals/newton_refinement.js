@@ -41,7 +41,7 @@ export const refine_orbital_points = (point, cardinality, options = {}) => {
   const numeric_cardinality = Math.floor(Number(cardinality));
   const newton_limit = Math.max(
     1,
-    Math.floor(Number(options.newton_limit) || 5),
+    Math.floor(Number(options.newton_limit) || 10),
   );
   const newton_mode = options.newton_mode || "big_complex";
   const newton_point = { x: Number(point.re), y: Number(point.im) };

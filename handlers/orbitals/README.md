@@ -1,10 +1,112 @@
 # Orbital analysis
 
-The orbital discovery pipeline currently performs a polar scout around the
-fixed point `Q`, optionally recomputes the samples with adaptive
-`BigComplex` precision, and applies a first windowed Fourier analysis. The
-reported candidate periods are suggestions only and must be validated by a
-later exact-period solver.
+This folder contains two related but distinct paths: the active detector →
+Newton → optional circuitry pipeline, and a spectral-inspection endpoint used
+for diagnostics and research. The spectral scout is not the source of
+cardinality for normal `/circuitry` or `/orbital_newton` requests.
+
+## Active detection, refinement, and circuitry flow
+
+`detect_cardinality()` samples the critical orbit beginning at `z=0` and
+`detect_return_cardinality()` looks for repeated near-origin return gaps. This
+is a finite-precision heuristic: it reports a *candidate* cardinality, not a
+proof that the parameter has a unique or attracting orbit of that period.
+The five-gap default, recurrence comparisons, radius-gap filtering, and
+derivative-pyramid checks are evidence thresholds; they can miss periods,
+accept a misleading finite-window pattern, or depend on the iteration horizon.
+The origin-based detector is therefore one input to the pipeline, not a
+general solution to discovering every stable orbital in the main cardioid.
+
+`discover_and_newton()` is the reusable detector-plus-refinement adapter. It
+returns the detection evidence and, when a candidate exists, passes that
+candidate to `refine_orbital_points()`. It does not run `FractoFastCalc` or
+the special two-point fallback. Callers that need only detection can use
+`detect_cardinality()`; callers with a candidate from another source can call
+`refine_orbital_points()` directly. There is not yet one shared
+`resolve_cardinality()` stage that produces a selected cardinality for every
+consumer, so the two-point fallback is currently orchestrated separately by
+the HTTP handler and circuitry pipeline. Consolidating that policy is a
+future modularity improvement.
+
+The HTTP `/orbital_newton` route returns HTTP 200 for an inconclusive detector
+result, with a diagnostic status; invalid coordinates return HTTP 400. Its
+default detector horizon is 4,096 iterations. `adaptive_detection=true` may
+repeat detection at increasing horizons, up to 262,144 by default (or a
+smaller configured maximum), and stops when its evidence gate passes or the
+cap is reached. This is bounded retry, not precision escalation: detector
+sampling and its evidence remain ordinary numeric calculations. Each retry
+starts the detector from `z=0` again and also runs Newton for a detected
+candidate, so the option repeats work rather than incrementally extending one
+orbit sample. It is intended for diagnostic use and can cost substantially
+more than a single request.
+
+Both `/orbital_newton` and `/circuitry` invoke the active
+`two_point_calc_newton_fallback` only when the detector candidate is exactly
+2 and the parameter is in the main cardioid. It runs `FractoFastCalc.calc()`
+to obtain a replacement candidate count, then runs BigComplex Newton with
+that count. The calculator's orbit points are not used as the Newton orbit;
+they contribute only count and extent diagnostics. A result is accepted when
+Newton reports the requested count, returns the same number of finite points,
+and supplies no count mismatch. This is a deliberately narrow experimental
+fallback, and even an accepted result is a numerical candidate rather than a
+verified mathematical period.
+
+The fallback does not replace a candidate when it fails its count/finite-point
+checks. In `/circuitry`, the normal detector/Newton points remain in that
+case. In `/orbital_newton`, the original detector evidence remains and the
+fallback result is reported under `two_point_calc_newton_fallback`; when
+accepted, the route replaces `newton_big_complex` with the fallback result
+and marks `used_for_newton`. Note that the detector's top-level candidate
+remains 2, while the accepted Newton cardinality can be different; consumers
+must inspect the fallback diagnostic and the Newton result rather than assume
+those fields always agree.
+
+Within the main cardioid, circuitry gives an escaped critical orbit precedence
+over finite-window recurrence and returns the outside-set response. For
+parameters outside the main cardioid, it uses `FractoFastCalc.calc()` directly.
+For an in-cardioid detector/Newton result with at least two refined points,
+normal Newton points are used unless the two-point fallback succeeds. If that
+path cannot provide a usable multi-point result, a separate legacy
+`FractoFastCalc` fallback remains in place (marked for future removal in the
+source); thus `FractoFastCalc` can still be called for other in-cardioid
+inconclusive/short-result cases. A one-point result is rendered as a single
+point without curve interpolation.
+
+For multi-point circuitry, the default path constructs a Hermite curve; the
+`radial_sweep` option uses radial parameterization. `build_circuitry_from_points()`
+is a direct curve-stage entry for already-ordered points and currently performs
+radial-sweep parameterization only. These curve stages do not independently
+validate that their input points form a primitive periodic orbit.
+
+### Numerical and verification limits
+
+The Newton output is refinement evidence, not proof. The current acceptance
+checks do not verify that each returned point maps to the next, that the final
+point closes to the first, that the period is primitive, or that the cycle is
+stable. `least_newton_step` is a step-size proxy, not a return residual or
+periodicity certificate. The BigComplex path advertises 64 digits, but the
+Newton denominator/step calculation uses JavaScript `Number` arithmetic, and
+`newton_refinement.js` converts focal coordinates to `Number` before invoking
+the solvers. Therefore precision is not preserved end-to-end; the reported
+precision is nominal and must not be read as 64-digit verified accuracy.
+The refinement wrapper defaults to a maximum of 10 Newton cycles. Either
+solver returns early when its computed Newton step is exactly zero, including
+the current orbital point list and the number of cycles run; this zero-step
+condition is not by itself a cycle-closure or convergence certificate.
+
+The calculator fallback also uses ordinary numeric arithmetic and its
+`pattern` is an SDK estimate at its current implementation precision. Its
+result may change with coordinate rounding, SDK behavior, or iteration limits.
+The present pipeline does not compare the candidate across increasing
+precision or horizons, calculate a stability multiplier, or certify uniqueness
+of an attracting orbit. Future work should centralize candidate selection,
+preserve coordinate precision through the solver, and add independent closure,
+primitive-period, stability, and precision-stability checks before using the
+word “confirmed.”
+
+The later sections document the spectral-inspection subsystem. Its frequency
+and rational-period estimates are diagnostic evidence only and are separate
+from the active detector/Newton flow described above.
 
 ## Future spectral confidence improvements
 
@@ -151,11 +253,14 @@ survivor list together with `elapsed_ms`, `eliminated_count`, and
 are query controls. This mode is for performance and accuracy experiments;
 it does not replace the recurrence detector or establish exact periodicity.
 
-`detector_newton.js` provides the detector-to-Newton adapter for the next
-workflow stage. It accepts `newton_mode` values `native`, `big_complex`, or
-`both`, passes the detected cardinality directly to the selected solver, and
-returns `cardinality_inconclusive` without invoking Newton when five matching
-returns have not been established.
+`detector_newton.js` provides the detector-to-Newton adapter. It accepts
+`newton_mode` values `native`, `big_complex`, or `both`, passes a detected
+candidate directly to the selected solver, and returns
+`cardinality_inconclusive` when the return detector does not produce an
+integer candidate. The detector's default requires five repeated gaps, but
+the threshold is configurable and the broader evidence also includes
+recurrence and derivative-pyramid diagnostics; meeting it does not prove the
+candidate period.
 
 The standalone `newton_refinement.js` stage accepts a focal point and a
 caller-supplied cardinality. It can therefore be used without running the
@@ -183,8 +288,8 @@ compatibility alias for existing callers.
 `/circuitry`. `build_circuitry_pipeline(focal_point, options)` coordinates
 detection, Newton refinement, fallback point acquisition, Q calculation, and
 Hermite or radial-sweep interpolation without depending on Express. The HTTP
-handler is therefore limited to query validation, option normalization, and
-mapping the pipeline result to its existing status code and JSON response.
+handler validates request coordinates, supplies query options, and maps the
+pipeline result to an HTTP status and JSON response.
 Within the closed main cardioid, if the critical-orbit detector reports escape,
 the pipeline returns the outside-set response before accepting any finite-
 window recurrence candidate. The specialized detector/Newton path is limited
@@ -193,49 +298,30 @@ For points outside it, the pipeline uses `FractoUtil.point_in_main_cardioid`
 to select the established `FractoFastCalc.calc()` result directly, including
 its period-zero escape result.
 
-`orbital_two.js` contains an isolated investigation for results that appear to
-have exactly two orbital points. It converts an eligible focal parameter to
-`(r, theta)`, approximates theta by enumerating reduced denominators below the
-configured cardinality ceiling, and can pass that candidate to the experimental
-BigComplex Newton solver. This hook is not called by the production circuitry
-pipeline, and its experimental results are not added to normal `/circuitry`
-responses. The solver's early exits and diagnostics remain available for
-explicit isolated investigation. The established `newton_big_complex.js`
-implementation and normal detector/Newton path are unchanged.
+The retired theta-derived orbital-2 investigation, coarse Newton sweep, and
+early-exit Newton variant are preserved under `archive/`. They are not imported
+by runtime routes and are excluded from the root syntax/format checks and Docker
+build context. The active two-point cardinality fallback is implemented in
+`two_point_calc_newton_fallback.js`.
 
 When the main-cardioid detector's candidate cardinality is 2, both `/circuitry`
 and `/orbital_newton` automatically use `FractoFastCalc.calc().pattern` as the
-supplied cardinality for BigComplex Newton. A 1- or 2-point calculator result is
-accepted, as is any other positive cardinality when Newton returns that number
-of finite points. The critical-orbit points from `calc()` are used only for
-count and extent diagnostics. A missing or mismatched Newton result leaves the
-normal detector/Newton points in place. The response field
-`orbital_two_calc_newton_experiment` retains the diagnostic field name and
-reports both cardinalities, point counts, the calculator point-extent upper
-bound, elapsed times, and status. This fallback is not evaluated outside the
-main cardioid. The calculator receives numeric real and imaginary coordinates
-even when HTTP request values are strings; passing strings directly can change
-JavaScript arithmetic coercion and produce a spurious cardinality.
+supplied cardinality for BigComplex Newton. Any positive integer calculator
+cardinality, including 1 or 2, is eligible; it is accepted only when Newton
+reports the same cardinality and returns that number of finite points. The
+critical-orbit points from `calc()` are used only for count and extent
+diagnostics. A missing or mismatched Newton result leaves the normal
+detector/Newton points in place. The response field
+`two_point_calc_newton_fallback` reports both cardinalities, point counts, the
+calculator point-extent upper bound, elapsed times, and status. This fallback
+is not evaluated outside the main cardioid. The calculator receives numeric
+real and imaginary coordinates even when HTTP request values are strings;
+passing strings directly can change JavaScript arithmetic coercion and produce
+a spurious cardinality.
 
-The `/circuitry` query option `newton_sweep_experiment=true` opts into a second,
-separate orbital-2 experiment. `newton_coarse_sweep.js` scans bounded candidate
-cardinalities with JavaScript Number arithmetic, ranks candidates by their
-smallest observed Newton step, breaking zero-step ties by the number of coarse
-Newton iterations needed to reach zero. It reruns only a small shortlist
-through `newton_big_complex_experimental.js`. The response reports counts by
-zero-step iteration and all zero-step candidate cardinalities, so the reduced
-shortlist can be audited. Iteration count is not normalized for the candidate
-period's per-iteration cost and is only a ranking heuristic. The theta-derived
-denominator is also included when it falls within the scan bound. Defaults cap
-the coarse sweep at
-2048 cardinalities, six coarse Newton iterations per candidate, five ranked
-candidates, and eight refinement iterations; query options can adjust these
-limits within hard bounds. The response includes stage timings and both coarse
-and refined candidate diagnostics. The option is off by default, so ordinary
-requests incur no sweep cost. Neither sweep nor refined candidate results
-replace or reorder the established two points. Newton-step rankings are only
-a screening heuristic; closure, primitive period, and stability still need
-independent validation.
+The retired coarse Newton sweep and its theta-derived candidate seed are kept
+under `archive/` for reference. They are not available as circuitry query
+options and do not affect runtime requests.
 
 The same module exposes `build_circuitry_from_points(points, Q, options)` for
 direct entry after detection or refinement has already happened. This path
