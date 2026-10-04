@@ -50,11 +50,43 @@ test("circuitry endpoint preserves the outside-set response", () => {
   assert.match(response.body.message, /outside the Mandelbrot set/);
 });
 
-test("outside the main cardioid, circuitry uses the established fast calculator", () => {
-  const response = invoke({ re: "-1", im: "0" });
+test(
+  "outside the main cardioid, circuitry uses the established fast calculator",
+  () => {
+    const response = invoke({
+      re: "-1",
+      im: "0",
+    });
+    assert.equal(response.code, 200);
+    assert.equal(
+      response.body.point_source,
+      "fracto_fast_calc_outside_main_cardioid",
+    );
+    assert.equal(response.body.cardinality, 2);
+    assert.equal(response.body.orbital_two_calc_newton_experiment, undefined);
+  },
+);
+
+test("detector cardinality 2 automatically falls back to calc cardinality", () => {
+  const response = invoke({
+    re: "-0.6690634164",
+    im: "0.0908537666",
+    detector_iterations: "4096",
+    interpolation: "radial_sweep",
+  });
+  const fallback = response.body.orbital_two_calc_newton_experiment;
   assert.equal(response.code, 200);
-  assert.equal(response.body.point_source, "fracto_fast_calc_outside_main_cardioid");
-  assert.equal(response.body.cardinality, 2);
+  assert.equal(response.body.detector.detection.candidate_cardinality, 2);
+  assert.equal(fallback.detector_cardinality, 2);
+  assert.equal(fallback.calc_cardinality, 1);
+  assert.equal(fallback.newton_cardinality, 1);
+  assert.equal(fallback.newton_point_count, 1);
+  assert.equal(response.body.cardinality, 1);
+  assert.equal(response.body.orbital_points.length, 1);
+  assert.equal(
+    response.body.point_source,
+    "orbital_two_calc_newton_experiment",
+  );
 });
 
 test("circuitry endpoint rejects invalid coordinates", () => {

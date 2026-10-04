@@ -203,6 +203,20 @@ responses. The solver's early exits and diagnostics remain available for
 explicit isolated investigation. The established `newton_big_complex.js`
 implementation and normal detector/Newton path are unchanged.
 
+When the main-cardioid detector's candidate cardinality is 2, both `/circuitry`
+and `/orbital_newton` automatically use `FractoFastCalc.calc().pattern` as the
+supplied cardinality for BigComplex Newton. A 1- or 2-point calculator result is
+accepted, as is any other positive cardinality when Newton returns that number
+of finite points. The critical-orbit points from `calc()` are used only for
+count and extent diagnostics. A missing or mismatched Newton result leaves the
+normal detector/Newton points in place. The response field
+`orbital_two_calc_newton_experiment` retains the diagnostic field name and
+reports both cardinalities, point counts, the calculator point-extent upper
+bound, elapsed times, and status. This fallback is not evaluated outside the
+main cardioid. The calculator receives numeric real and imaginary coordinates
+even when HTTP request values are strings; passing strings directly can change
+JavaScript arithmetic coercion and produce a spurious cardinality.
+
 The `/circuitry` query option `newton_sweep_experiment=true` opts into a second,
 separate orbital-2 experiment. `newton_coarse_sweep.js` scans bounded candidate
 cardinalities with JavaScript Number arithmetic, ranks candidates by their

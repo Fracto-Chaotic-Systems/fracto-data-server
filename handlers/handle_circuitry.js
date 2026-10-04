@@ -24,6 +24,10 @@ import {
  *   `newton_sweep_max_cardinality`, `newton_sweep_coarse_iterations`,
  *   `newton_sweep_candidate_count`, and
  *   `newton_sweep_refinement_iterations` optionally bound that experiment.
+ * - When the detector reports cardinality 2 inside the main cardioid, use
+ *   `FractoFastCalc.calc().pattern` as the BigComplex Newton candidate. This
+ *   fallback includes comparison diagnostics and uses Newton points only
+ *   when their count matches the calculator candidate.
  *
  * Both modes use detector/Newton-refined points when available and return
  * `{t, C}` samples, the exact normalized `orbital_points` used to construct

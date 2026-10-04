@@ -19,7 +19,9 @@ This directory contains the HTTP handlers and calculation helpers used by the Fr
 - `handle_lore.js` serves lore categories, content, and storage operations.
 - `handle_orbital.js` handles orbital derivation and listing requests.
 - `handle_orbital_discovery.js` detects orbital patterns for discovery requests.
-- `handle_orbital_newton.js` computes Newton-style orbital results.
+- `handle_orbital_newton.js` computes detector/Newton orbital results and
+  applies a two-point FractoFastCalc-cardinality fallback for
+  consumers such as the orbital-points Newton-derived chart.
 - `handle_orbital_spectrum.js` generates orbital spectrum and pyramid results.
 - `data_compute_worker.js` runs allowlisted CPU-bound task payloads away from the data-server event loop; HTTP and database objects remain on the main thread.
 - `worker_task_pool.js` provides a bounded worker-thread pool with Promise and callback completion, queue backpressure, timeouts, and aggregate metrics.

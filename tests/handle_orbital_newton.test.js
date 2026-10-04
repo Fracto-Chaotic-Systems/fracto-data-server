@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import FractoFastCalc from "@fracto/sdk/FractoFastCalc.js";
 import { handle_orbital_newton } from "../handlers/handle_orbital_newton.js";
 
 const invoke = (query) => {
@@ -48,6 +49,61 @@ test("orbital Newton endpoint rejects invalid coordinates", () => {
   const response = invoke({ re: "not-a-number", im: "0" });
   assert.equal(response.code, 400);
   assert.match(response.body.error, /finite numbers/);
+});
+
+test("detector cardinality 2 automatically uses calc-derived Newton points", () => {
+  const response = invoke({
+    re: "-0.6690634164",
+    im: "0.0908537666",
+    iterations: "4096",
+    newton_limit: "5",
+    newton_mode: "big_complex",
+  });
+  assert.equal(response.code, 200);
+  assert.equal(response.body.detection.candidate_cardinality, 2);
+  assert.equal(
+    response.body.orbital_two_calc_newton_experiment.status,
+    "newton_points_available",
+  );
+  assert.equal(
+    response.body.orbital_two_calc_newton_experiment.calc_cardinality,
+    1,
+  );
+  assert.equal(
+    response.body.orbital_two_calc_newton_experiment.used_for_chart,
+    true,
+  );
+  assert.equal(response.body.newton_big_complex.cardinality, 1);
+  assert.equal(response.body.newton_big_complex.point_list.length, 1);
+});
+
+test("two-point fallback passes numeric coordinates to FractoFastCalc", () => {
+  const calculator_result = FractoFastCalc.calc(-0.7478628725, 0.0472735375);
+  const response = invoke({
+    re: "-0.7478628725",
+    im: "0.0472735375",
+    iterations: "4096",
+    newton_limit: "5",
+    newton_mode: "big_complex",
+  });
+  assert.equal(response.code, 200);
+  assert.equal(response.body.detection.candidate_cardinality, 2);
+  assert.equal(
+    response.body.orbital_two_calc_newton_experiment.calc_cardinality,
+    calculator_result.pattern,
+  );
+  assert.equal(
+    response.body.orbital_two_calc_newton_experiment.newton_cardinality,
+    calculator_result.pattern,
+  );
+  assert.equal(
+    response.body.newton_big_complex.cardinality,
+    calculator_result.pattern,
+  );
+  assert.equal(
+    response.body.newton_big_complex.point_list.length,
+    calculator_result.pattern,
+  );
 });
 
 test("adaptive detection stops once the candidate evidence is sufficient", () => {
