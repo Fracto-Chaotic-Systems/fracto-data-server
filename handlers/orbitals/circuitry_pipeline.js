@@ -1,6 +1,7 @@
 import FractoFastCalc from "@fracto/sdk/FractoFastCalc.js";
 import { performance } from "node:perf_hooks";
 import { discover_and_newton } from "./detector_newton.js";
+import { investigate_two_point_orbit } from "./orbital_two.js";
 import {
   get_cardioid_root,
   magnitude,
@@ -46,9 +47,16 @@ const get_orbital_points = (focal_point, options = {}) => {
     detected.status === "cardinality_passed_to_newton" &&
     refined_points?.length >= 2
   ) {
+    const pattern = detected.detection.candidate_cardinality;
+    const investigation =
+      pattern === 2 && refined_points.length === 2
+        ? investigate_two_point_orbit(focal_point, refined_points, options)
+        : null;
     return {
-      points: refined_points,
-      pattern: detected.detection.candidate_cardinality,
+      points: investigation?.points || refined_points,
+      pattern,
+      two_point_investigation: investigation?.parameterization,
+      two_point_newton_experiment: investigation?.newton_experiment,
       source: "detector_newton",
       detector: detected,
     };
@@ -67,9 +75,16 @@ const get_orbital_points = (focal_point, options = {}) => {
   ) {
     points.pop();
   }
+  const pattern = calculation?.pattern;
+  const investigation =
+    pattern === 2 && points?.length === 2
+      ? investigate_two_point_orbit(focal_point, points, options)
+      : null;
   return {
-    points,
-    pattern: calculation?.pattern,
+    points: investigation?.points || points,
+    pattern,
+    two_point_investigation: investigation?.parameterization,
+    two_point_newton_experiment: investigation?.newton_experiment,
     source: "fracto_fast_calc_fallback",
     detector: detected,
   };
@@ -175,6 +190,8 @@ export const build_circuitry_pipeline = (focal_point, options = {}) => {
         polarity_metrics: null,
         polarity_exhaustive: false,
         point_source: orbit.source,
+        two_point_investigation: orbit.two_point_investigation,
+        two_point_newton_experiment: orbit.two_point_newton_experiment,
         detector: summarize_detector(orbit.detector),
         detector_elapsed_ms,
       },
@@ -229,6 +246,8 @@ export const build_circuitry_pipeline = (focal_point, options = {}) => {
         polarity_metrics: null,
         polarity_exhaustive: false,
         point_source: orbit.source,
+        two_point_investigation: orbit.two_point_investigation,
+        two_point_newton_experiment: orbit.two_point_newton_experiment,
         detector: summarize_detector(orbit.detector),
         detector_elapsed_ms,
       },
@@ -259,6 +278,8 @@ export const build_circuitry_pipeline = (focal_point, options = {}) => {
       polarity_metrics: optimized.metrics,
       polarity_exhaustive: optimized.exhaustive,
       point_source: orbit.source,
+      two_point_investigation: orbit.two_point_investigation,
+      two_point_newton_experiment: orbit.two_point_newton_experiment,
       detector_elapsed_ms,
       detector: summarize_detector(orbit.detector),
     },

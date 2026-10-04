@@ -186,6 +186,46 @@ Hermite or radial-sweep interpolation without depending on Express. The HTTP
 handler is therefore limited to query validation, option normalization, and
 mapping the pipeline result to its existing status code and JSON response.
 
+`orbital_two.js` is the isolated investigation hook for results that appear to
+have exactly two orbital points. The circuitry pipeline calls it only when the
+reported pattern and returned point list both have cardinality two. At present
+it returns the same ordered points unchanged, preserving current rendering
+behavior while keeping the future two-point analysis separate from general
+orbital handling. It also converts an eligible focal parameter to `(r, theta)`
+and approximates theta by enumerating denominators below the current
+cardinality ceiling of 2048. The rational result is reduced by the greatest
+common divisor and includes its absolute approximation error. Parameters
+outside the upper main cardioid retain their two points and report an
+`outside_main_cardioid` parameterization status without theta values.
+For eligible points, the reduced theta denominator is also submitted as an
+experimental candidate cardinality to the isolated
+`newton_big_complex_experimental.js` solver. Its result is exposed separately
+as `two_point_newton_experiment`; it never replaces or reorders the existing
+two points. This solver applies configurable early exits for repeated Newton
+step growth, stagnation, and invalid arithmetic, and reports its exit reason
+and step history. The established `newton_big_complex.js` implementation and
+the normal detector/Newton path remain unchanged.
+
+The `/circuitry` query option `newton_sweep_experiment=true` opts into a second,
+separate orbital-2 experiment. `newton_coarse_sweep.js` scans bounded candidate
+cardinalities with JavaScript Number arithmetic, ranks candidates by their
+smallest observed Newton step, breaking zero-step ties by the number of coarse
+Newton iterations needed to reach zero. It reruns only a small shortlist
+through `newton_big_complex_experimental.js`. The response reports counts by
+zero-step iteration and all zero-step candidate cardinalities, so the reduced
+shortlist can be audited. Iteration count is not normalized for the candidate
+period's per-iteration cost and is only a ranking heuristic. The theta-derived
+denominator is also included when it falls within the scan bound. Defaults cap
+the coarse sweep at
+2048 cardinalities, six coarse Newton iterations per candidate, five ranked
+candidates, and eight refinement iterations; query options can adjust these
+limits within hard bounds. The response includes stage timings and both coarse
+and refined candidate diagnostics. The option is off by default, so ordinary
+requests incur no sweep cost. Neither sweep nor refined candidate results
+replace or reorder the established two points. Newton-step rankings are only
+a screening heuristic; closure, primitive period, and stability still need
+independent validation.
+
 The same module exposes `build_circuitry_from_points(points, Q, options)` for
 direct entry after detection or refinement has already happened. This path
 performs only radial-sweep parameterization and reports `point_source:
