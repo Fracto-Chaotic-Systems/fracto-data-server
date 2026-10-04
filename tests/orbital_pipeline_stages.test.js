@@ -203,22 +203,21 @@ test("two-point coarse sweep is opt-in and leaves established points unchanged",
   );
 });
 
-test("circuitry routes apparent two-point results through the pass-through hook", () => {
+test("circuitry returns apparent two-point results without the experiment hook", () => {
   const result = build_circuitry_pipeline({ re: -1, im: 0 }, {
     interpolation: "radial_sweep",
     detector_iterations: 2048,
   });
   assert.equal(result.status, "success");
-  assert.equal(result.body.detector.detection.candidate_cardinality, 2);
+  assert.equal(result.body.detector, undefined);
   assert.equal(result.body.cardinality, 2);
   assert.deepEqual(result.body.orbital_points, [
     { re: -1, im: 0 },
     { re: 0, im: 0 },
   ]);
-  assert.equal(
-    result.body.two_point_investigation.status,
-    "outside_main_cardioid",
-  );
+  assert.equal(result.body.point_source, "fracto_fast_calc_outside_main_cardioid");
+  assert.equal(result.body.two_point_investigation, undefined);
+  assert.equal(result.body.two_point_newton_experiment, undefined);
 });
 
 test("a one-point orbit remains a renderable circuitry result", () => {

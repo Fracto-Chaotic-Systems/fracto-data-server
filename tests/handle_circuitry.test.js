@@ -46,7 +46,15 @@ test("circuitry endpoint preserves the outside-set response", () => {
   assert.equal(response.body.in_mandelbrot_set, false);
   assert.deepEqual(response.body.result, []);
   assert.deepEqual(response.body.orbital_points, []);
+  assert.equal(response.body.point_source, "fracto_fast_calc_outside_main_cardioid");
   assert.match(response.body.message, /outside the Mandelbrot set/);
+});
+
+test("outside the main cardioid, circuitry uses the established fast calculator", () => {
+  const response = invoke({ re: "-1", im: "0" });
+  assert.equal(response.code, 200);
+  assert.equal(response.body.point_source, "fracto_fast_calc_outside_main_cardioid");
+  assert.equal(response.body.cardinality, 2);
 });
 
 test("circuitry endpoint rejects invalid coordinates", () => {

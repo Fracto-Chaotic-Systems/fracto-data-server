@@ -185,26 +185,23 @@ detection, Newton refinement, fallback point acquisition, Q calculation, and
 Hermite or radial-sweep interpolation without depending on Express. The HTTP
 handler is therefore limited to query validation, option normalization, and
 mapping the pipeline result to its existing status code and JSON response.
+Within the closed main cardioid, if the critical-orbit detector reports escape,
+the pipeline returns the outside-set response before accepting any finite-
+window recurrence candidate. The specialized detector/Newton path is limited
+to the closed main cardioid.
+For points outside it, the pipeline uses `FractoUtil.point_in_main_cardioid`
+to select the established `FractoFastCalc.calc()` result directly, including
+its period-zero escape result.
 
-`orbital_two.js` is the isolated investigation hook for results that appear to
-have exactly two orbital points. The circuitry pipeline calls it only when the
-reported pattern and returned point list both have cardinality two. At present
-it returns the same ordered points unchanged, preserving current rendering
-behavior while keeping the future two-point analysis separate from general
-orbital handling. It also converts an eligible focal parameter to `(r, theta)`
-and approximates theta by enumerating denominators below the current
-cardinality ceiling of 2048. The rational result is reduced by the greatest
-common divisor and includes its absolute approximation error. Parameters
-outside the upper main cardioid retain their two points and report an
-`outside_main_cardioid` parameterization status without theta values.
-For eligible points, the reduced theta denominator is also submitted as an
-experimental candidate cardinality to the isolated
-`newton_big_complex_experimental.js` solver. Its result is exposed separately
-as `two_point_newton_experiment`; it never replaces or reorders the existing
-two points. This solver applies configurable early exits for repeated Newton
-step growth, stagnation, and invalid arithmetic, and reports its exit reason
-and step history. The established `newton_big_complex.js` implementation and
-the normal detector/Newton path remain unchanged.
+`orbital_two.js` contains an isolated investigation for results that appear to
+have exactly two orbital points. It converts an eligible focal parameter to
+`(r, theta)`, approximates theta by enumerating reduced denominators below the
+configured cardinality ceiling, and can pass that candidate to the experimental
+BigComplex Newton solver. This hook is not called by the production circuitry
+pipeline, and its experimental results are not added to normal `/circuitry`
+responses. The solver's early exits and diagnostics remain available for
+explicit isolated investigation. The established `newton_big_complex.js`
+implementation and normal detector/Newton path are unchanged.
 
 The `/circuitry` query option `newton_sweep_experiment=true` opts into a second,
 separate orbital-2 experiment. `newton_coarse_sweep.js` scans bounded candidate

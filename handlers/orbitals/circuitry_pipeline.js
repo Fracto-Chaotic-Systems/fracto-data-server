@@ -1,7 +1,7 @@
 import FractoFastCalc from "@fracto/sdk/FractoFastCalc.js";
+import FractoUtil from "@fracto/sdk/FractoUtil.js";
 import { performance } from "node:perf_hooks";
 import { discover_and_newton } from "./detector_newton.js";
-import { investigate_two_point_orbit } from "./orbital_two.js";
 import {
   get_cardioid_root,
   magnitude,
@@ -34,12 +34,46 @@ const MAX_SAMPLE_COUNT = 65536;
  *   pattern:number|undefined,source:string,detector?:object}}
  */
 const get_orbital_points = (focal_point, options = {}) => {
+  if (
+    !FractoUtil.point_in_main_cardioid({
+      x: focal_point.re,
+      y: focal_point.im,
+    })
+  ) {
+    const calculation = FractoFastCalc.calc(focal_point.re, focal_point.im);
+    const points = calculation?.orbital_points?.map((point) => ({
+      re: point.x,
+      im: point.y,
+    }));
+    if (
+      points?.length > 1 &&
+      magnitude(sub(points[points.length - 1], points[0])) <= 1e-12
+    ) {
+      points.pop();
+    }
+    return {
+      points,
+      pattern: calculation?.pattern,
+      source: "fracto_fast_calc_outside_main_cardioid",
+    };
+  }
+
   const detected = discover_and_newton(focal_point, {
     iterations: options.detector_iterations,
     minimum_return_repetitions: options.minimum_return_repetitions,
     newton_limit: options.newton_limit,
     newton_mode: "big_complex",
   });
+  // Inside the main cardioid, an escaped critical orbit is not a periodic
+  // orbital. Give escape precedence over any finite-window recurrence.
+  if (detected.escaped) {
+    return {
+      points: [],
+      pattern: 0,
+      source: "detector_escape",
+      detector: detected,
+    };
+  }
   const refined_points = detected.newton_big_complex?.point_list
     ?.map((point) => ({ re: Number(point.re), im: Number(point.im) }))
     .filter((point) => Number.isFinite(point.re) && Number.isFinite(point.im));
@@ -48,15 +82,9 @@ const get_orbital_points = (focal_point, options = {}) => {
     refined_points?.length >= 2
   ) {
     const pattern = detected.detection.candidate_cardinality;
-    const investigation =
-      pattern === 2 && refined_points.length === 2
-        ? investigate_two_point_orbit(focal_point, refined_points, options)
-        : null;
     return {
-      points: investigation?.points || refined_points,
+      points: refined_points,
       pattern,
-      two_point_investigation: investigation?.parameterization,
-      two_point_newton_experiment: investigation?.newton_experiment,
       source: "detector_newton",
       detector: detected,
     };
@@ -76,15 +104,9 @@ const get_orbital_points = (focal_point, options = {}) => {
     points.pop();
   }
   const pattern = calculation?.pattern;
-  const investigation =
-    pattern === 2 && points?.length === 2
-      ? investigate_two_point_orbit(focal_point, points, options)
-      : null;
   return {
-    points: investigation?.points || points,
+    points,
     pattern,
-    two_point_investigation: investigation?.parameterization,
-    two_point_newton_experiment: investigation?.newton_experiment,
     source: "fracto_fast_calc_fallback",
     detector: detected,
   };
@@ -190,8 +212,6 @@ export const build_circuitry_pipeline = (focal_point, options = {}) => {
         polarity_metrics: null,
         polarity_exhaustive: false,
         point_source: orbit.source,
-        two_point_investigation: orbit.two_point_investigation,
-        two_point_newton_experiment: orbit.two_point_newton_experiment,
         detector: summarize_detector(orbit.detector),
         detector_elapsed_ms,
       },
@@ -246,8 +266,6 @@ export const build_circuitry_pipeline = (focal_point, options = {}) => {
         polarity_metrics: null,
         polarity_exhaustive: false,
         point_source: orbit.source,
-        two_point_investigation: orbit.two_point_investigation,
-        two_point_newton_experiment: orbit.two_point_newton_experiment,
         detector: summarize_detector(orbit.detector),
         detector_elapsed_ms,
       },
@@ -278,8 +296,6 @@ export const build_circuitry_pipeline = (focal_point, options = {}) => {
       polarity_metrics: optimized.metrics,
       polarity_exhaustive: optimized.exhaustive,
       point_source: orbit.source,
-      two_point_investigation: orbit.two_point_investigation,
-      two_point_newton_experiment: orbit.two_point_newton_experiment,
       detector_elapsed_ms,
       detector: summarize_detector(orbit.detector),
     },
