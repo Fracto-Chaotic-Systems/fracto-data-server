@@ -1,4 +1,5 @@
 import { discover_and_newton } from "./orbitals/detector_newton.js";
+import { has_sufficient_detection } from "./orbitals/adaptive_detection.js";
 import FractoUtil from "@fracto/sdk/FractoUtil.js";
 import { run_two_point_calc_newton_fallback } from "./orbitals/two_point_calc_newton_fallback.js";
 import { performance } from "node:perf_hooks";
@@ -6,20 +7,6 @@ import { performance } from "node:perf_hooks";
 const is_truthy = (value) =>
   ["1", "true", "yes"].includes(String(value).toLowerCase());
 const ADAPTIVE_MAX_ITERATIONS = 262144;
-
-const has_sufficient_detection = (result, horizon) => {
-  const detection = result?.detection;
-  const cardinality = detection?.candidate_cardinality;
-  return (
-    detection?.status === "return_pattern_detected" &&
-    Number.isInteger(cardinality) &&
-    horizon >= cardinality * 10 &&
-    detection.pyramid_coherence >= 0.9 &&
-    detection.recurrence_quality >= 0.9 &&
-    detection.confidence_margin >= 0.25 &&
-    detection.ambiguous !== true
-  );
-};
 
 /**
  * Discover a cardinality from critical-orbit returns and refine it with Newton.

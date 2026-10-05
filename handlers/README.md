@@ -13,7 +13,10 @@ This directory contains the HTTP handlers and calculation helpers used by the Fr
 - `handle_automation.js` reads and creates automation jobs.
 - `handle_automation_update.js` validates and applies automation-job updates.
 - `handle_backup.js` handles database backup requests.
-- `handle_circuitry.js` serves circuitry study data.
+  - `handle_circuitry.js` serves circuitry study data. Its default detector
+    uses the shared adaptive evidence gate from `/orbital_newton`, increasing
+    the critical-orbit horizon when a short-window candidate is ambiguous;
+    `adaptive_detection=false` is available for controlled comparisons.
 - `handle_coverage.js` serves tile-coverage information.
 - `handle_ensure_table.js` creates or updates an allowed database table schema.
 - `handle_lore.js` serves lore categories, content, and storage operations.

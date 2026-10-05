@@ -94,3 +94,26 @@ test("circuitry endpoint rejects invalid coordinates", () => {
   assert.equal(response.code, 400);
   assert.match(response.body.error, /finite numbers/);
 });
+
+test("circuitry adapts an ambiguous short-window result before returning points", () => {
+  const response = invoke({
+    re: "0.3237686467",
+    im: "0.0535461409",
+  });
+  assert.equal(response.code, 200);
+  assert.equal(response.body.cardinality, 92);
+  assert.equal(response.body.detector.detection.candidate_cardinality, 92);
+  assert.deepEqual(response.body.detector.checked_horizons, [4096, 8192, 16384]);
+  assert.equal(response.body.detector.adaptive_detection, true);
+});
+
+test("circuitry can opt into a fixed horizon for controlled comparisons", () => {
+  const response = invoke({
+    re: "0.3237686467",
+    im: "0.0535461409",
+    adaptive_detection: "false",
+  });
+  assert.equal(response.code, 200);
+  assert.equal(response.body.cardinality, 10);
+  assert.deepEqual(response.body.detector.checked_horizons, [4096]);
+});

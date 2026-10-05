@@ -2,6 +2,8 @@ import FractoFastCalc from "@fracto/sdk/FractoFastCalc.js";
 import FractoUtil from "@fracto/sdk/FractoUtil.js";
 import { performance } from "node:perf_hooks";
 import { discover_and_newton } from "./detector_newton.js";
+import { detect_cardinality } from "./cardinality_detection.js";
+import { has_sufficient_detection } from "./adaptive_detection.js";
 import { run_two_point_calc_newton_fallback } from "./two_point_calc_newton_fallback.js";
 import {
   get_cardioid_root,
@@ -59,20 +61,57 @@ const get_orbital_points = (focal_point, options = {}) => {
     };
   }
 
+  const base_iterations = Math.min(
+    262144,
+    Math.max(1, Math.floor(Number(options.detector_iterations) || 4096)),
+  );
+  const maximum_iterations = Math.min(
+    262144,
+    Math.max(
+      base_iterations,
+      Math.floor(Number(options.maximum_detection_iterations)) || 262144,
+    ),
+  );
+  const adaptive_detection = options.adaptive_detection !== false;
+  let horizon = base_iterations;
+  const checked_horizons = [];
+  while (true) {
+    const pass = detect_cardinality(focal_point, {
+      iterations: horizon,
+      minimum_return_repetitions: options.minimum_return_repetitions,
+    });
+    checked_horizons.push(horizon);
+    if (
+      !adaptive_detection ||
+      pass.escaped ||
+      has_sufficient_detection(pass, horizon) ||
+      horizon >= maximum_iterations
+    ) {
+      break;
+    }
+    horizon = Math.min(maximum_iterations, horizon * 2);
+  }
   const detected = discover_and_newton(focal_point, {
-    iterations: options.detector_iterations,
+    iterations: horizon,
     minimum_return_repetitions: options.minimum_return_repetitions,
     newton_limit: options.newton_limit,
     newton_mode: "big_complex",
   });
+  detected.diagnostics = {
+    adaptive_detection,
+    maximum_detection_iterations: maximum_iterations,
+    checked_horizons,
+  };
   // Inside the main cardioid, an escaped critical orbit is not a periodic
   // orbital. Give escape precedence over any finite-window recurrence.
   if (detected.escaped) {
     return {
       points: [],
       pattern: 0,
-      source: "detector_escape",
-      detector: detected,
+          source: "detector_escape",
+          detector: detected,
+          detector_horizon_iterations: horizon,
+          checked_horizons,
     };
   }
   const refined_points = detected.newton_big_complex?.point_list
@@ -95,6 +134,8 @@ const get_orbital_points = (focal_point, options = {}) => {
           pattern: fallback.cardinality,
           source: "two_point_calc_newton_fallback",
           detector: detected,
+          detector_horizon_iterations: horizon,
+          checked_horizons,
           two_point_calc_newton_fallback: fallback_details,
         };
       }
@@ -103,6 +144,8 @@ const get_orbital_points = (focal_point, options = {}) => {
         pattern,
         source: "detector_newton",
         detector: detected,
+        detector_horizon_iterations: horizon,
+        checked_horizons,
         two_point_calc_newton_fallback: fallback_details,
       };
     }
@@ -111,6 +154,8 @@ const get_orbital_points = (focal_point, options = {}) => {
       pattern,
       source: "detector_newton",
       detector: detected,
+      detector_horizon_iterations: horizon,
+      checked_horizons,
     };
   }
 
@@ -133,6 +178,8 @@ const get_orbital_points = (focal_point, options = {}) => {
     pattern,
     source: "fracto_fast_calc_fallback",
     detector: detected,
+    detector_horizon_iterations: horizon,
+    checked_horizons,
   };
 };
 
@@ -142,6 +189,8 @@ const summarize_detector = (detector) =>
     ? {
         status: detector.status,
         iterations: detector.iterations,
+        adaptive_detection: detector.diagnostics?.adaptive_detection,
+        checked_horizons: detector.diagnostics?.checked_horizons,
         escaped: detector.escaped,
         detection: {
           status: detector.detection?.status,

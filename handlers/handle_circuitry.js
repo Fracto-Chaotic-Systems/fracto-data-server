@@ -19,6 +19,10 @@ import {
  * - `detector_iterations`, `minimum_return_repetitions`, `newton_limit`
  *   (optional): controls the return detector and BigComplex Newton refinement
  *   used to supply the fitted orbital points.
+ * - `adaptive_detection` (optional, default true): use the same evidence gate
+ *   as `/orbital_newton`, increasing the observation horizon from 4,096 up to
+ *   262,144 iterations when the initial candidate is ambiguous or weak.
+ * - `maximum_detection_iterations` (optional): lower the adaptive cap.
  * - When the detector reports cardinality 2 inside the main cardioid, use
  *   `FractoFastCalc.calc().pattern` as the BigComplex Newton candidate. This
  *   fallback includes comparison diagnostics and uses Newton points only
@@ -72,6 +76,10 @@ export const handle_circuitry = (req, res) => {
       optimize_polarity: optimize_polarity_pattern,
       samples: req.query.samples,
       detector_iterations: req.query.detector_iterations,
+      adaptive_detection: ![false, "false", 0, "0"].includes(
+        req.query.adaptive_detection,
+      ),
+      maximum_detection_iterations: req.query.maximum_detection_iterations,
       minimum_return_repetitions: req.query.minimum_return_repetitions,
       newton_limit: req.query.newton_limit,
     },
