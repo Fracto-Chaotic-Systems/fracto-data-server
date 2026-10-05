@@ -91,7 +91,11 @@ const fast_pro_derivation = (point) => {
     cardinality,
     calculation?.iteration || 0,
   );
-  return { ...result, elapsed_ms: performance.now() - started };
+  return {
+    ...result,
+    cardinality_source: "legacy_fracto_fast_calc",
+    elapsed_ms: performance.now() - started,
+  };
 };
 
 export const handle_orbital = (req, res) => {
@@ -101,7 +105,10 @@ export const handle_orbital = (req, res) => {
     const im = parseFloat(req.query.im);
     const limit = parseFloat(req.query.limit);
     const point = { x: re, y: im };
-    const result = retro_derivation(point, limit);
+    const result = {
+      ...retro_derivation(point, limit),
+      cardinality_source: "legacy_retro_derivation",
+    };
     res.status(200).json({ result });
   } catch (error) {
     console.error(error.message);

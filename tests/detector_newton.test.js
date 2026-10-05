@@ -8,6 +8,7 @@ const seven_point = { re: 0.1211937096, im: 0.6106129599 };
 test("passes a detected cardinality into both Newton implementations", () => {
   const result = discover_and_newton(reference_point, {
     iterations: 512,
+    adaptive_detection: false,
     newton_limit: 1,
     newton_mode: "both",
   });
@@ -23,6 +24,7 @@ test("passes a detected cardinality into both Newton implementations", () => {
 test("does not invoke Newton when the return pattern is inconclusive", () => {
   const result = discover_and_newton(reference_point, {
     iterations: 128,
+    adaptive_detection: false,
     newton_limit: 1,
   });
   assert.equal(result.status, "cardinality_inconclusive");
@@ -32,6 +34,7 @@ test("does not invoke Newton when the return pattern is inconclusive", () => {
 test("detects and forwards a second known cardinality", () => {
   const result = discover_and_newton(seven_point, {
     iterations: 256,
+    adaptive_detection: false,
     newton_limit: 1,
     newton_mode: "native",
   });

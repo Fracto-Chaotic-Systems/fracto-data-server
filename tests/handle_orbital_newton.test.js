@@ -39,6 +39,7 @@ test("orbital Newton endpoint reports inconclusive detection normally", () => {
     re: "0.1517440416",
     im: "0.5760073226",
     iterations: "128",
+    adaptive_detection: "false",
   });
   assert.equal(response.code, 200);
   assert.equal(response.body.status, "cardinality_inconclusive");
@@ -118,4 +119,18 @@ test("adaptive detection stops once the candidate evidence is sufficient", () =>
   assert.equal(response.body.detection.candidate_cardinality, 7);
   assert.equal(response.body.detector_horizon_iterations, 4096);
   assert.deepEqual(response.body.diagnostics.checked_horizons, [4096]);
+});
+
+test("orbital Newton defaults to the shared adaptive candidate for the circuitry comparison point", () => {
+  const response = invoke({
+    re: "0.3237686467",
+    im: "0.0535461409",
+  });
+  assert.equal(response.code, 200);
+  assert.equal(response.body.detection.candidate_cardinality, 92);
+  assert.deepEqual(response.body.diagnostics.checked_horizons, [
+    4096,
+    8192,
+    16384,
+  ]);
 });

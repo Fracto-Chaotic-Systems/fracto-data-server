@@ -7,6 +7,41 @@ cardinality for normal `/circuitry` or `/orbital_newton` requests.
 
 ## Active detection, refinement, and circuitry flow
 
+The production critical-orbit detector is being consolidated in the main
+repository's `@fracto/sdk` `FractoCardinality` function. The data-server
+`cardinality_detection.js`, `orbit_sampling.js`, and `return_detection.js`
+modules are compatibility re-exports of the SDK implementation; active
+`/orbital_newton` and `/circuitry` callers therefore use one implementation.
+The function performs bounded adaptive horizon checks by default and returns
+the candidate, evidence, and checked horizons. It still reports a best-known
+numerical candidate, not a proof.
+
+Several separate cardinality-like values remain and need an explicit policy
+before they can be merged into the best-known result:
+
+- `/orbitals` returns the `FractoFastCalc.calc().pattern` value for the
+  **legacy iterative** chart. This can disagree with the critical-orbit
+  detector and remains labeled as a legacy result.
+- `/orbital` uses the older inverse-square-root `retro_derivation()` and
+  detects a repeated BigComplex text state. It is a separate legacy method;
+  its response now labels `cardinality_source: "legacy_retro_derivation"`.
+- If `/circuitry` cannot use detector/Newton points, it may fall back to
+  `FractoFastCalc.calc()` in the main cardioid. That fallback is labeled in
+  `point_source`; it is not the SDK-selected cardinality.
+- When the critical-orbit detector returns 2, `/orbital_newton` and
+  `/circuitry` run a narrow FractoFastCalc fallback and may use its count as
+  Newton's supplied period. The detector's original candidate stays in the
+  response. This is a competing period estimate, not a replacement for the
+  SDK's `FractoCardinality` result.
+- `/orbital_spectrum?detection_mode=pyramid` and the spectral scout produce
+  experimental contenders or frequency-derived candidates. They are
+  diagnostic evidence and do not set the production cardinality.
+
+These paths are intentionally called out rather than silently blended. Any
+future reconciliation should define how alternative evidence is ranked and
+how disagreements appear in the result before changing the central function's
+selected candidate.
+
 `detect_cardinality()` samples the critical orbit beginning at `z=0` and
 `detect_return_cardinality()` looks for repeated near-origin return gaps. This
 is a finite-precision heuristic: it reports a *candidate* cardinality, not a

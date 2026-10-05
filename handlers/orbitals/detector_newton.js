@@ -20,6 +20,7 @@ export const discover_and_newton = (point, options = {}) => {
     escaped: detected.escaped,
     detection,
     newton: null,
+    diagnostics: detected.diagnostics,
   };
   if (
     detection.status !== "return_pattern_detected" ||

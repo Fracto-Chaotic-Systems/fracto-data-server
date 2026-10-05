@@ -1,5 +1,4 @@
 import { discover_and_newton } from "./orbitals/detector_newton.js";
-import { has_sufficient_detection } from "./orbitals/adaptive_detection.js";
 import FractoUtil from "@fracto/sdk/FractoUtil.js";
 import { run_two_point_calc_newton_fallback } from "./orbitals/two_point_calc_newton_fallback.js";
 import { performance } from "node:perf_hooks";
@@ -46,39 +45,17 @@ export const handle_orbital_newton = (req, res) => {
           ADAPTIVE_MAX_ITERATIONS,
       ),
     );
-    const iterations = is_truthy(req.query.adaptive_detection)
-      ? (() => {
-          let horizon = base_iterations;
-          let result = null;
-          const checked_horizons = [];
-          while (true) {
-            result = discover_and_newton(point, {
-              iterations: horizon,
-              minimum_return_repetitions: req.query.minimum_return_repetitions,
-              newton_limit: req.query.newton_limit,
-              newton_mode: req.query.newton_mode,
-            });
-            checked_horizons.push(horizon);
-            if (
-              has_sufficient_detection(result, horizon) ||
-              horizon >= maximum_iterations
-            ) {
-              break;
-            }
-            horizon = Math.min(maximum_iterations, horizon * 2);
-          }
-          return {
-            result,
-            horizons: checked_horizons,
-          };
-        })()
-      : { result: discover_and_newton(point, {
-          iterations: base_iterations,
-          minimum_return_repetitions: req.query.minimum_return_repetitions,
-          newton_limit: req.query.newton_limit,
-          newton_mode: req.query.newton_mode,
-        }), horizons: null };
-    const result = iterations.result;
+    const adaptive_detection = req.query.adaptive_detection === undefined
+      ? true
+      : is_truthy(req.query.adaptive_detection);
+    const result = discover_and_newton(point, {
+      iterations: base_iterations,
+      maximum_detection_iterations: maximum_iterations,
+      adaptive_detection,
+      minimum_return_repetitions: req.query.minimum_return_repetitions,
+      newton_limit: req.query.newton_limit,
+      newton_mode: req.query.newton_mode,
+    });
     if (
       result.detection?.candidate_cardinality === 2 &&
       FractoUtil.point_in_main_cardioid({ x: re, y: im })
@@ -109,14 +86,6 @@ export const handle_orbital_newton = (req, res) => {
         };
         result.two_point_calc_newton_fallback.used_for_newton = true;
       }
-    }
-    if (iterations.horizons) {
-      result.diagnostics = {
-        ...(result.diagnostics || {}),
-        adaptive_detection: true,
-        maximum_detection_iterations: maximum_iterations,
-        checked_horizons: iterations.horizons,
-      };
     }
     return res.status(200).json({
       ...result,

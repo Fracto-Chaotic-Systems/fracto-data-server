@@ -1,10 +1,10 @@
 import { performance } from "node:perf_hooks";
+import FractoCardinality from "@fracto/sdk/FractoCardinality.js";
 import { discover_orbital } from "./orbitals/orbital_discovery.js";
 import { sample_critical_orbit } from "./orbitals/orbit_sampling.js";
 import {
   DETECTION_MODE_PYRAMID_ONLY,
   detect_pyramid_contenders,
-  detect_return_cardinality,
 } from "./orbitals/return_detection.js";
 import {
   analyze_multi_polar_spectrum,
@@ -72,18 +72,19 @@ export const calculate_orbital_spectrum = (query, res) => {
   try {
     const point = { re: req.query.re, im: req.query.im };
     if (req.query.detection_mode === "returns") {
-      const orbit = sample_critical_orbit(point, {
+      const result = FractoCardinality(point, {
         iterations: req.query.iterations,
-      });
-      const detection = detect_return_cardinality(orbit.samples, {
+        maximum_detection_iterations:
+          req.query.maximum_detection_iterations,
         minimum_return_repetitions: req.query.minimum_return_repetitions,
+        adaptive_detection: req.query.adaptive_detection === undefined
+          ? true
+          : is_truthy(req.query.adaptive_detection),
       });
+      delete result.samples;
       return res.status(200).json({
-        point: { re: String(req.query.re), im: String(req.query.im) },
         detection_mode: "returns",
-        iterations: orbit.iterations,
-        escaped: orbit.escaped,
-        detection,
+        ...result,
       });
     }
     if (
