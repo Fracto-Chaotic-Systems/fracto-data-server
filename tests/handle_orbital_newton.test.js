@@ -25,22 +25,22 @@ const invoke = (query) => {
 
 test("orbital Newton endpoint returns detector and Newton data", () => {
   const response = invoke({
-    re: "0.1517440416",
-    im: "0.5760073226",
-    iterations: "512",
+    re: "0.112602264",
+    im: "0.5939821402",
+    iterations: "4096",
     newton_limit: "1",
     newton_mode: "native",
   });
   assert.equal(response.code, 200);
   assert.equal(response.body.status, "cardinality_passed_to_newton");
-  assert.equal(response.body.detection.candidate_cardinality, 65);
+  assert.equal(response.body.detection.candidate_cardinality, 7);
   assert.equal(response.body.newton.cardinality_supplied, true);
 });
 
 test("orbital Newton endpoint reports inconclusive detection normally", () => {
   const response = invoke({
-    re: "0.1517440416",
-    im: "0.5760073226",
+    re: "0.2",
+    im: "0.1",
     iterations: "128",
     adaptive_detection: "false",
   });
@@ -55,20 +55,43 @@ test("orbital Newton endpoint rejects invalid coordinates", () => {
   assert.match(response.body.error, /finite numbers/);
 });
 
-test("orbital Newton HTTP diagnostics summarize large minima arrays", () => {
+test("orbital Newton HTTP response omits investigation-only diagnostics", () => {
   const minima = [{ iteration: 1 }, { iteration: 2 }];
   const matching_minima = [{ iteration: 1 }];
+  const point_list = [{ re: "0", im: "0" }];
   const result = {
-    detection: { minima, matching_minima, candidate_cardinality: 37 },
-    newton_big_complex: { point_list: [{ re: "0", im: "0" }] },
+    status: "cardinality_passed_to_newton",
+    point: { re: "0.2", im: "0.1" },
+    iterations: 4096,
+    diagnostics: { checked_horizons: [4096], large_debug_field: true },
+    detection: {
+      status: "return_pattern_detected",
+      minima,
+      matching_minima,
+      alternatives: [{ cardinality: 35 }],
+      pyramid_layer_diagnostics: [{ scale: 1 }],
+      candidate_cardinality: 37,
+      ambiguous: true,
+    },
+    newton_big_complex: {
+      point_list,
+      cardinality: 37,
+      diagnostics: { least_newton_step: "0" },
+    },
+    newton: { point_list, cardinality: 37, diagnostics: { verbose: true } },
   };
   const response = summarize_orbital_newton_response(result);
-  assert.equal(response.detection.minima_count, 2);
-  assert.equal(response.detection.matching_minima_count, 1);
+  assert.deepEqual(response.detection, {
+    status: "return_pattern_detected",
+    candidate_cardinality: 37,
+    ambiguous: true,
+  });
+  assert.equal(response.newton_big_complex.point_list, point_list);
+  assert.equal(response.newton_big_complex.cardinality, 37);
+  assert.equal("diagnostics" in response.newton_big_complex, false);
+  assert.equal("diagnostics" in response, false);
   assert.equal("minima" in response.detection, false);
-  assert.equal("matching_minima" in response.detection, false);
-  assert.equal(response.detection.candidate_cardinality, 37);
-  assert.equal(response.newton_big_complex, result.newton_big_complex);
+  assert.equal("alternatives" in response.detection, false);
   assert.equal(result.detection.minima, minima);
 });
 
@@ -138,7 +161,7 @@ test("adaptive detection stops once the candidate evidence is sufficient", () =>
   assert.equal(response.code, 200);
   assert.equal(response.body.detection.candidate_cardinality, 7);
   assert.equal(response.body.detector_horizon_iterations, 4096);
-  assert.deepEqual(response.body.diagnostics.checked_horizons, [4096]);
+  assert.equal(response.body.iterations, 4096);
 });
 
 test("orbital Newton defaults to the shared adaptive candidate for the circuitry comparison point", () => {
@@ -148,9 +171,5 @@ test("orbital Newton defaults to the shared adaptive candidate for the circuitry
   });
   assert.equal(response.code, 200);
   assert.equal(response.body.detection.candidate_cardinality, 92);
-  assert.deepEqual(response.body.diagnostics.checked_horizons, [
-    4096,
-    8192,
-    16384,
-  ]);
+  assert.equal(response.body.iterations, 16384);
 });

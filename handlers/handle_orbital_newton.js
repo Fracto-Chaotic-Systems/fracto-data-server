@@ -7,30 +7,59 @@ const is_truthy = (value) =>
   ["1", "true", "yes"].includes(String(value).toLowerCase());
 const ADAPTIVE_MAX_ITERATIONS = 262144;
 
+const summarize_detection = (detection) =>
+  detection
+    ? {
+        status: detection.status,
+        candidate_cardinality: detection.candidate_cardinality ?? null,
+        ambiguous: detection.ambiguous ?? null,
+      }
+    : null;
+
+const summarize_newton = (newton) =>
+  newton
+    ? {
+        cardinality: newton.cardinality,
+        point_list: newton.point_list,
+        cycles: newton.cycles,
+        time: newton.time,
+        cardinality_supplied: newton.cardinality_supplied,
+      }
+    : null;
+
 /**
- * Keep detector diagnostics useful over HTTP without serializing every
- * observed radius minimum. The full arrays remain available from the SDK for
- * local analysis; API callers receive exact counts instead.
+ * Keep the orbital endpoint response to fields used by the UI. Detailed
+ * minima, alternative candidates, pyramid layers, and solver diagnostics are
+ * available from direct SDK calls when diagnostic inspection is needed.
  * @param {object} result Full detector/Newton result.
- * @returns {object} Response-safe result.
+ * @returns {object} Compact API result.
  */
 export const summarize_orbital_newton_response = (result) => {
-  const detection = result?.detection;
-  if (!detection) return result;
-  const {
-    minima,
-    matching_minima,
-    ...summary
-  } = detection;
+  if (!result?.detection) return result;
+  const fallback = result.two_point_calc_newton_fallback;
   return {
-    ...result,
-    detection: {
-      ...summary,
-      ...(Array.isArray(minima) ? { minima_count: minima.length } : {}),
-      ...(Array.isArray(matching_minima)
-        ? { matching_minima_count: matching_minima.length }
-        : {}),
-    },
+    status: result.status,
+    point: result.point,
+    domain: result.domain,
+    iterations: result.iterations,
+    escaped: result.escaped,
+    detection: summarize_detection(result.detection),
+    cardinality: result.cardinality,
+    cardinality_source: result.cardinality_source,
+    newton_native: summarize_newton(result.newton_native),
+    newton_big_complex: summarize_newton(result.newton_big_complex),
+    newton: summarize_newton(result.newton),
+    ...(fallback
+      ? {
+          two_point_calc_newton_fallback: {
+            status: fallback.status,
+            calc_cardinality: fallback.calc_cardinality,
+            calc_iteration: fallback.calc_iteration,
+            newton_cardinality: fallback.newton_cardinality,
+            used_for_newton: fallback.used_for_newton,
+          },
+        }
+      : {}),
   };
 };
 

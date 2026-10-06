@@ -352,8 +352,9 @@ reports the same cardinality and returns that number of finite points. The
 critical-orbit points from `calc()` are used only for count and extent
 diagnostics. A missing or mismatched Newton result leaves the normal
 detector/Newton points in place. The response field
-`two_point_calc_newton_fallback` reports both cardinalities, point counts, the
-calculator point-extent upper bound, elapsed times, and status. This fallback
+`two_point_calc_newton_fallback` reports the status, calculator cardinality and
+iteration, Newton cardinality, and whether the fallback supplied the returned
+points. Detailed point-extent and timing data remain internal. This fallback
 is not evaluated outside the main cardioid. The calculator receives numeric
 real and imaginary coordinates even when HTTP request values are strings;
 passing strings directly can change JavaScript arithmetic coercion and produce
@@ -377,11 +378,12 @@ The data-server test suite includes stage tests and a handler-level integration
 test for `/circuitry`. The integration test checks the stable response contract
 for a successful radial result, an outside-set result, and invalid coordinates.
 
-Each Newton result includes diagnostics identifying the arithmetic mode,
-supplied cardinality, nominal precision, least observed Newton-step magnitude,
-and whether the best result used the requested cardinality. The step magnitude
-is reported explicitly as a residual proxy; it is not an exact periodicity
-proof.
+The `/orbital_newton` response is intentionally compact: it keeps the detector
+status, candidate and ambiguity flag, iteration count, returned Newton points,
+and cycle count. Large minima arrays, alternative candidates, derivative
+pyramid details, and solver diagnostics are omitted from HTTP responses. They
+remain available to direct SDK callers for focused analysis. Newton's least
+step is a residual proxy, not an exact periodicity proof.
 
 The `/orbital_newton` endpoint exposes that adapter without changing the
 existing `/orbital` or `/orbital_spectrum` routes. It returns HTTP 200 for an

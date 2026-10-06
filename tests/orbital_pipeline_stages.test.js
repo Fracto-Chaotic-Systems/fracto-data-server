@@ -17,10 +17,10 @@ import {
 } from "../handlers/orbitals/archive/orbital_two.js";
 import FractoUtil from "@fracto/sdk/FractoUtil.js";
 
-const seven_point = { re: 0.1211937096, im: 0.6106129599 };
+const seven_point = { re: 0.112602264, im: 0.5939821402 };
 
 test("cardinality detection is independently callable", () => {
-  const result = detect_cardinality(seven_point, { iterations: 256 });
+  const result = detect_cardinality(seven_point, { iterations: 4096 });
   assert.equal(result.point.re, String(seven_point.re));
   assert.equal(result.point.im, String(seven_point.im));
   assert.ok(Array.isArray(result.samples));
