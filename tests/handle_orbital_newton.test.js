@@ -1,7 +1,10 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import FractoFastCalc from "@fracto/sdk/FractoFastCalc.js";
-import { handle_orbital_newton } from "../handlers/handle_orbital_newton.js";
+import {
+  handle_orbital_newton,
+  summarize_orbital_newton_response,
+} from "../handlers/handle_orbital_newton.js";
 
 const invoke = (query) => {
   const response = {
@@ -50,6 +53,23 @@ test("orbital Newton endpoint rejects invalid coordinates", () => {
   const response = invoke({ re: "not-a-number", im: "0" });
   assert.equal(response.code, 400);
   assert.match(response.body.error, /finite numbers/);
+});
+
+test("orbital Newton HTTP diagnostics summarize large minima arrays", () => {
+  const minima = [{ iteration: 1 }, { iteration: 2 }];
+  const matching_minima = [{ iteration: 1 }];
+  const result = {
+    detection: { minima, matching_minima, candidate_cardinality: 37 },
+    newton_big_complex: { point_list: [{ re: "0", im: "0" }] },
+  };
+  const response = summarize_orbital_newton_response(result);
+  assert.equal(response.detection.minima_count, 2);
+  assert.equal(response.detection.matching_minima_count, 1);
+  assert.equal("minima" in response.detection, false);
+  assert.equal("matching_minima" in response.detection, false);
+  assert.equal(response.detection.candidate_cardinality, 37);
+  assert.equal(response.newton_big_complex, result.newton_big_complex);
+  assert.equal(result.detection.minima, minima);
 });
 
 test("detector cardinality 2 automatically uses calc-derived Newton points", () => {

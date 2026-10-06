@@ -71,6 +71,7 @@ export const run_two_point_calc_newton_fallback = (
   const refinement = refine_orbital_points(focal_point, cardinality, {
     newton_mode: "big_complex",
     newton_limit: options.newton_limit,
+    cardinality_source: "fracto_fast_calc_two_point_fallback",
   });
   const newton_result = refinement.newton_big_complex;
   const points = (newton_result?.point_list || []).map((point) => ({

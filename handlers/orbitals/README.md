@@ -7,14 +7,17 @@ cardinality for normal `/circuitry` or `/orbital_newton` requests.
 
 ## Active detection, refinement, and circuitry flow
 
-The production critical-orbit detector is being consolidated in the main
-repository's `@fracto/sdk` `FractoCardinality` function. The data-server
+The production critical-orbit detector lives in the main repository's
+`@fracto/sdk` `FractoCardinality` function. The data-server
 `cardinality_detection.js`, `orbit_sampling.js`, and `return_detection.js`
-modules are compatibility re-exports of the SDK implementation; active
-`/orbital_newton` and `/circuitry` callers therefore use one implementation.
-The function performs bounded adaptive horizon checks by default and returns
-the candidate, evidence, and checked horizons. It still reports a best-known
-numerical candidate, not a proof.
+modules re-export SDK code. The SDK's `FractoOrbitalPoints` function is the
+shared detector-to-Newton interface; data-server `detector_newton.js` and
+`newton_refinement.js` are compatibility adapters. The solver implementations
+also live in the SDK and their old data-server module paths re-export them.
+The shared interface performs bounded adaptive detection by default, carries
+the best-known candidate into Newton, and records whether cardinality came
+from the SDK detector or another named source. It still reports numerical
+candidates, not mathematical proofs.
 
 Several separate cardinality-like values remain and need an explicit policy
 before they can be merged into the best-known result:
@@ -119,12 +122,13 @@ The Newton output is refinement evidence, not proof. The current acceptance
 checks do not verify that each returned point maps to the next, that the final
 point closes to the first, that the period is primitive, or that the cycle is
 stable. `least_newton_step` is a step-size proxy, not a return residual or
-periodicity certificate. The BigComplex path advertises 64 digits, but the
-Newton denominator/step calculation uses JavaScript `Number` arithmetic, and
-`newton_refinement.js` converts focal coordinates to `Number` before invoking
-the solvers. Therefore precision is not preserved end-to-end; the reported
-precision is nominal and must not be read as 64-digit verified accuracy.
-The refinement wrapper defaults to a maximum of 10 Newton cycles. Either
+periodicity certificate. The SDK BigComplex path defaults to 64 significant
+digits, preserves string coordinates, and performs the Newton quotient with
+Decimal arithmetic. This preserves arithmetic resolution through the
+refinement calculation; it does not certify that a returned cycle is accurate
+to that many digits. The native path intentionally uses JavaScript `Number`
+arithmetic. The shared interface defaults to a maximum of 10 Newton cycles.
+Either
 solver returns early when its computed Newton step is exactly zero, including
 the current orbital point list and the number of cycles run; this zero-step
 condition is not by itself a cycle-closure or convergence certificate.
@@ -288,20 +292,21 @@ survivor list together with `elapsed_ms`, `eliminated_count`, and
 are query controls. This mode is for performance and accuracy experiments;
 it does not replace the recurrence detector or establish exact periodicity.
 
-`detector_newton.js` provides the detector-to-Newton adapter. It accepts
-`newton_mode` values `native`, `big_complex`, or `both`, passes a detected
-candidate directly to the selected solver, and returns
-`cardinality_inconclusive` when the return detector does not produce an
-integer candidate. The detector's default requires five repeated gaps, but
-the threshold is configurable and the broader evidence also includes
+`FractoOrbitalPoints` provides the shared detector-to-Newton interface. It
+accepts `newton_mode` values `native`, `big_complex`, or `both`, passes the
+SDK-detected candidate to the selected solver, and returns
+`cardinality_inconclusive` when detection does not produce an integer
+candidate. A caller may instead provide an explicit positive cardinality
+with `cardinality_source` provenance. The detector's default requires five
+repeated gaps, but the threshold is configurable and the broader evidence also includes
 recurrence and derivative-pyramid diagnostics; meeting it does not prove the
 candidate period.
 
-The standalone `newton_refinement.js` stage accepts a focal point and a
-caller-supplied cardinality. It can therefore be used without running the
-detector first when a cardinality is known from a table, experiment, or other
-detector. `detector_newton.js` delegates to this stage while retaining the
-existing combined workflow and response fields.
+The data-server's `newton_refinement.js` adapter accepts a focal point and a
+caller-supplied cardinality, then delegates to the SDK interface. This keeps
+experimental or imported candidates usable without letting them silently
+replace the SDK detector's result. `detector_newton.js` delegates directly to
+the same SDK interface while retaining the existing HTTP response fields.
 
 The Newton solvers preserve supplied cardinalities 1 and 2; they do not raise
 them to 3. An exact zero-step root is returned with the requested period rather

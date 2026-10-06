@@ -8,6 +8,33 @@ const is_truthy = (value) =>
 const ADAPTIVE_MAX_ITERATIONS = 262144;
 
 /**
+ * Keep detector diagnostics useful over HTTP without serializing every
+ * observed radius minimum. The full arrays remain available from the SDK for
+ * local analysis; API callers receive exact counts instead.
+ * @param {object} result Full detector/Newton result.
+ * @returns {object} Response-safe result.
+ */
+export const summarize_orbital_newton_response = (result) => {
+  const detection = result?.detection;
+  if (!detection) return result;
+  const {
+    minima,
+    matching_minima,
+    ...summary
+  } = detection;
+  return {
+    ...result,
+    detection: {
+      ...summary,
+      ...(Array.isArray(minima) ? { minima_count: minima.length } : {}),
+      ...(Array.isArray(matching_minima)
+        ? { matching_minima_count: matching_minima.length }
+        : {}),
+    },
+  };
+};
+
+/**
  * Discover a cardinality from critical-orbit returns and refine it with Newton.
  *
  * @param {import('express').Request} req Express request.
@@ -88,7 +115,7 @@ export const handle_orbital_newton = (req, res) => {
       }
     }
     return res.status(200).json({
-      ...result,
+      ...summarize_orbital_newton_response(result),
       detector_horizon_iterations: result.iterations,
       elapsed_ms: performance.now() - started,
     });

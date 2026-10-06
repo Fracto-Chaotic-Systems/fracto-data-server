@@ -11,10 +11,15 @@ test("derived Newton accepts a known cardinality without searching", () => {
   assert.equal(result.least_magnitude_N, 65);
 });
 
-test("derived Newton preserves the legacy cardinality search", () => {
+test("Newton solvers require a candidate instead of choosing a cardinality", () => {
   const result = newton_derived(reference_point, 1);
   assert.equal(result.cardinality_supplied, false);
-  assert.ok(result.least_magnitude_N > 0);
+  assert.equal(result.status, "cardinality_required");
+  assert.equal(result.least_magnitude_N, 0);
+  assert.deepEqual(result.point_list, []);
+  const big_result = newton_big_complex(reference_point, 1);
+  assert.equal(big_result.status, "cardinality_required");
+  assert.equal(big_result.least_magnitude_N, 0);
 });
 
 test("BigComplex Newton accepts a known cardinality", () => {
