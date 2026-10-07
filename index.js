@@ -47,7 +47,12 @@ import { handle_automation_update } from "./handlers/handle_automation_update.js
 import { handle_solve } from "./handlers/solve.js";
 import { handle_hyper_complex_buffer } from "./handlers/hyper-complex.js";
 import { handle_tiles } from "./handlers/handle_tiles.js";
-import { handle_orbital, handle_orbitals, handle_seed_survey_job } from "./handlers/handle_orbital.js";
+import {
+  handle_orbital,
+  handle_orbitals,
+  handle_seed_survey_job,
+  handle_seed_survey_start,
+} from "./handlers/handle_orbital.js";
 import { handle_circuitry } from "./handlers/handle_circuitry.js";
 import { handle_orbital_discovery } from "./handlers/handle_orbital_discovery.js";
 import {
@@ -184,6 +189,7 @@ app.put("/automation/:id", handle_automation_update);
 app.get("/solve", handle_solve);
 app.get("/orbital", handle_orbital);
 app.get("/orbitals", handle_orbitals);
+app.get("/orbitals/seed-survey", handle_seed_survey_start);
 app.get("/orbitals/seed-survey/:job_id", handle_seed_survey_job);
 app.get("/circuitry", handle_circuitry);
 app.get("/orbital_discovery", handle_orbital_discovery);

@@ -21,7 +21,12 @@ This directory contains the HTTP handlers and calculation helpers used by the Fr
 - `handle_ensure_table.js` creates or updates an allowed database table schema.
 - `handle_lore.js` serves lore categories, content, and storage operations.
 - `handle_orbital.js` handles orbital derivation, returns the legacy points
-  series, and starts/polls process-local ordinary-precision seeded survey jobs.
+  series, and starts/polls process-local seeded survey jobs. The dedicated
+  `GET /orbitals/seed-survey?re=...&im=...` route starts only the survey job;
+  `GET /orbitals/seed-survey/:job_id` returns cumulative progress and the final
+  result. The optional `resolution=1024` render mode streams compact row data
+  for a 1024×1024 seed grid with `3/1024` spacing, while the default remains the
+  existing preview grid. Render tasks have a bounded one-hour timeout.
 - `handle_orbital_discovery.js` detects orbital patterns for discovery requests.
 - `handle_orbital_newton.js` computes detector/Newton orbital results and
   applies a two-point FractoFastCalc-cardinality fallback for

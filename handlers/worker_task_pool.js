@@ -61,7 +61,7 @@ export class WorkerTaskPool {
         id: task_id, task, payload, queued_at: performance.now(), resolve, reject,
         on_progress,
         on_started,
-        task_timeout_ms: bounded_integer(options.task_timeout_ms, this.task_timeout_ms, 1, 300_000),
+        task_timeout_ms: bounded_integer(options.task_timeout_ms, this.task_timeout_ms, 1, 3_600_000),
       });
       this.pump();
     });

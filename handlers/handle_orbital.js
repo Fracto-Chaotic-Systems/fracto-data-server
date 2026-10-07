@@ -60,6 +60,10 @@ const SEED_SURVEY_IMAGINARY_STEPS = Math.round(
 const SEED_SURVEY_TOTAL_SAMPLES =
   (SEED_SURVEY_REAL_STEPS + 1) * (SEED_SURVEY_IMAGINARY_STEPS + 1);
 const SEED_SURVEY_PROGRESS_INTERVAL = 8;
+const SEED_SURVEY_PREVIEW_RESOLUTION = SEED_SURVEY_REAL_STEPS + 1;
+const SEED_SURVEY_RENDER_RESOLUTION = 1024;
+const SEED_SURVEY_RENDER_BYTES_PER_SAMPLE = 13;
+const SEED_SURVEY_RENDER_POLL_ROWS = 16;
 const SEED_SURVEY_CALCULATION_SETTINGS = {
   detector: "FractoCardinality",
   iterations: 4096,
@@ -76,10 +80,16 @@ export const calculate_seed_survey = (
   parameter,
   calculate = FractoCardinality,
   on_progress = () => {},
+  options = {},
 ) => {
   const started = performance.now();
-  const stable_points = [];
-  const unresolved_points = [];
+  const resolution = options.resolution === SEED_SURVEY_RENDER_RESOLUTION
+    ? SEED_SURVEY_RENDER_RESOLUTION
+    : SEED_SURVEY_PREVIEW_RESOLUTION;
+  const render_mode = resolution === SEED_SURVEY_RENDER_RESOLUTION;
+  const stable_points = render_mode ? null : [];
+  const unresolved_points = render_mode ? null : [];
+  const escaped_points = render_mode ? null : [];
   const outcome_counts = {
     non_singleton_candidate: 0,
     single_point_candidate: 0,
@@ -93,16 +103,35 @@ export const calculate_seed_survey = (
   const negative_Q = Q_minus.scale(-1);
   let minimum_orbital_magnitude = Infinity;
   let maximum_orbital_magnitude = -Infinity;
+  let minimum_confidence = Infinity;
+  let maximum_confidence = -Infinity;
   const grid_coordinate = (minimum, step) =>
     (minimum + step / SEED_SURVEY_STEPS_PER_UNIT).toFixed(3);
+  const render_coordinate = (minimum, index) =>
+    (minimum + ((index + 0.5) * (SEED_SURVEY_REAL_MAX - SEED_SURVEY_REAL_MIN)) / resolution)
+      .toFixed(12);
+  const render_imaginary_coordinate = (index) =>
+    (SEED_SURVEY_IMAGINARY_MAX - ((index + 0.5) * (SEED_SURVEY_IMAGINARY_MAX - SEED_SURVEY_IMAGINARY_MIN)) / resolution)
+      .toFixed(12);
   let total_samples = 0;
+  let stable_count = 0;
   let reported_stable_point_count = 0;
   let reported_unresolved_point_count = 0;
+  let reported_escaped_point_count = 0;
 
-  for (let re_step = 0; re_step <= SEED_SURVEY_REAL_STEPS; re_step++) {
-    const seed_re = grid_coordinate(SEED_SURVEY_REAL_MIN, re_step);
-    for (let im_step = 0; im_step <= SEED_SURVEY_IMAGINARY_STEPS; im_step++) {
-      const seed_im = grid_coordinate(SEED_SURVEY_IMAGINARY_MIN, im_step);
+  const axis_count = render_mode ? resolution : SEED_SURVEY_PREVIEW_RESOLUTION;
+  const total_expected = axis_count * axis_count;
+  for (let im_step = 0; im_step < axis_count; im_step++) {
+    const seed_im = render_mode
+      ? render_imaginary_coordinate(im_step)
+      : grid_coordinate(SEED_SURVEY_IMAGINARY_MIN, im_step);
+    const render_row_data = render_mode
+      ? new Uint8Array(resolution * SEED_SURVEY_RENDER_BYTES_PER_SAMPLE)
+      : null;
+    for (let re_step = 0; re_step < axis_count; re_step++) {
+      const seed_re = render_mode
+        ? render_coordinate(SEED_SURVEY_REAL_MIN, re_step)
+        : grid_coordinate(SEED_SURVEY_REAL_MIN, re_step);
       const calculation = calculate(parameter, {
         ...SEED_SURVEY_CALCULATION_SETTINGS,
         seed: { re: seed_re, im: seed_im },
@@ -140,7 +169,7 @@ export const calculate_seed_survey = (
         : Object.hasOwn(outcome_counts, status) ? status : "other";
       outcome_counts[outcome]++;
       total_samples++;
-      if (outcome === "unresolved") {
+      if (!render_mode && outcome === "unresolved") {
         unresolved_points.push({
           x: Number(seed_re),
           y: Number(seed_im),
@@ -151,6 +180,16 @@ export const calculate_seed_survey = (
           iterations: Number(calculation?.iterations ?? calculation?.iteration) || 0,
         });
       }
+      if (!render_mode && outcome === "escaped") {
+        escaped_points.push({
+          x: Number(seed_re),
+          y: Number(seed_im),
+          iterations: Number(calculation?.iterations ?? calculation?.iteration) || 0,
+        });
+      }
+      let render_status_code = outcome === "escaped" ? 3
+        : outcome === "unresolved" ? 2
+          : 0;
       if (pattern > 1 && status === "cycle_candidate") {
         const orbit_points = detector_result
           ? (calculation?.samples || []).slice(-pattern).map((sample) => ({
@@ -159,42 +198,75 @@ export const calculate_seed_survey = (
             }))
           : (calculation?.orbital_points || []).slice(0, pattern);
         if (orbit_points.length === pattern) {
-          const orbital_magnitude = orbit_points.reduce((maximum, orbit_point) => {
-            const distance = new BigComplex(orbit_point.x, orbit_point.y)
-              .add(negative_Q)
-              .magnitude()
-              .toNumber();
-            return Math.max(maximum, distance);
-          }, 0);
-          minimum_orbital_magnitude = Math.min(
-            minimum_orbital_magnitude,
-            orbital_magnitude,
-          );
-          maximum_orbital_magnitude = Math.max(
-            maximum_orbital_magnitude,
-            orbital_magnitude,
-          );
-          stable_points.push({
-            x: Number(seed_re),
-            y: Number(seed_im),
-            pattern,
-            confidence: Number.isFinite(calculation?.detection?.confidence)
-              ? calculation.detection.confidence
-              : null,
-            iterations: Number(calculation?.iterations ?? calculation?.iteration) || 0,
-          });
+          stable_count++;
+          render_status_code = 1;
+          const confidence = calculation?.detection?.confidence;
+          if (Number.isFinite(confidence)) {
+            minimum_confidence = Math.min(minimum_confidence, confidence);
+            maximum_confidence = Math.max(maximum_confidence, confidence);
+          }
+          if (!render_mode) {
+            const orbital_magnitude = orbit_points.reduce((maximum, orbit_point) => {
+              const distance = new BigComplex(orbit_point.x, orbit_point.y)
+                .add(negative_Q)
+                .magnitude()
+                .toNumber();
+              return Math.max(maximum, distance);
+            }, 0);
+            minimum_orbital_magnitude = Math.min(
+              minimum_orbital_magnitude,
+              orbital_magnitude,
+            );
+            maximum_orbital_magnitude = Math.max(
+              maximum_orbital_magnitude,
+              orbital_magnitude,
+            );
+            stable_points.push({
+              x: Number(seed_re),
+              y: Number(seed_im),
+              pattern,
+              confidence: Number.isFinite(calculation?.detection?.confidence)
+                ? calculation.detection.confidence
+                : null,
+              iterations: Number(calculation?.iterations ?? calculation?.iteration) || 0,
+            });
+          }
         }
       }
-      if (
+      if (render_mode) {
+        const byte_offset = re_step * SEED_SURVEY_RENDER_BYTES_PER_SAMPLE;
+        const render_view = new DataView(
+          render_row_data.buffer,
+          byte_offset,
+          SEED_SURVEY_RENDER_BYTES_PER_SAMPLE,
+        );
+        render_view.setUint8(0, render_status_code);
+        render_view.setUint32(1, pattern, true);
+        render_view.setFloat32(
+          5,
+          Number.isFinite(calculation?.detection?.confidence)
+            ? calculation.detection.confidence
+            : -1,
+          true,
+        );
+        render_view.setUint32(
+          9,
+          Math.max(0, Math.min(0xffffffff,
+            Math.trunc(Number(calculation?.iterations ?? calculation?.iteration) || 0))),
+          true,
+        );
+      }
+      if (!render_mode && (
         total_samples % SEED_SURVEY_PROGRESS_INTERVAL === 0 ||
-        total_samples === SEED_SURVEY_TOTAL_SAMPLES
-      ) {
+        total_samples === total_expected
+      )) {
         on_progress({
           completed: total_samples,
-          total: SEED_SURVEY_TOTAL_SAMPLES,
-          stable_count: stable_points.length,
+          total: total_expected,
+          stable_count,
           stable_points: stable_points.slice(reported_stable_point_count),
           unresolved_points: unresolved_points.slice(reported_unresolved_point_count),
+          escaped_points: escaped_points.slice(reported_escaped_point_count),
           outcome_counts: { ...outcome_counts },
           orbital_magnitude_range: stable_points.length
             ? { min: minimum_orbital_magnitude, max: maximum_orbital_magnitude }
@@ -202,7 +274,22 @@ export const calculate_seed_survey = (
         });
         reported_stable_point_count = stable_points.length;
         reported_unresolved_point_count = unresolved_points.length;
+        reported_escaped_point_count = escaped_points.length;
       }
+    }
+    if (render_mode) {
+      total_samples = (im_step + 1) * resolution;
+      on_progress({
+        completed: total_samples,
+        total: total_expected,
+        stable_count,
+        outcome_counts: { ...outcome_counts },
+        render_row: im_step,
+        render_row_data,
+        confidence_range: Number.isFinite(minimum_confidence)
+          ? { min: minimum_confidence, max: maximum_confidence }
+          : null,
+      });
     }
   }
 
@@ -211,13 +298,21 @@ export const calculate_seed_survey = (
     real_max: SEED_SURVEY_REAL_MAX,
     imaginary_min: SEED_SURVEY_IMAGINARY_MIN,
     imaginary_max: SEED_SURVEY_IMAGINARY_MAX,
-    step: 1 / SEED_SURVEY_STEPS_PER_UNIT,
+    step: render_mode
+      ? (SEED_SURVEY_REAL_MAX - SEED_SURVEY_REAL_MIN) / resolution
+      : 1 / SEED_SURVEY_STEPS_PER_UNIT,
+    resolution,
+    render_mode,
     total_samples,
-    stable_count: stable_points.length,
+    stable_count,
+    confidence_range: Number.isFinite(minimum_confidence)
+      ? { min: minimum_confidence, max: maximum_confidence }
+      : null,
     outcome_counts,
     stable_points,
     unresolved_points,
-    orbital_magnitude_range: stable_points.length
+    escaped_points,
+    orbital_magnitude_range: (stable_points?.length || 0) > 0
       ? {
           min: minimum_orbital_magnitude,
           max: maximum_orbital_magnitude,
@@ -245,24 +340,56 @@ const prune_seed_survey_jobs = () => {
   return true;
 };
 
-const public_seed_survey_job = (job) => ({
-  ...(job.result || {}),
-  job_id: job.id,
-  status: job.status,
-  progress: job.progress,
-  total_samples: job.result?.total_samples || job.progress.total,
-  stable_count: job.result?.stable_count ?? job.progress.stable_count ?? 0,
-  stable_points: job.result?.stable_points ?? job.progress.stable_points ?? [],
-  unresolved_points: job.result?.unresolved_points ?? job.progress.unresolved_points ?? [],
-  outcome_counts: job.result?.outcome_counts ?? job.progress.outcome_counts ?? {},
-  orbital_magnitude_range: job.result?.orbital_magnitude_range ?? job.progress.orbital_magnitude_range ?? null,
-  result: job.result,
-  error: job.error,
-});
+const public_seed_survey_job = (job, after_row = 0) => {
+  const render_row_bytes = job.resolution * SEED_SURVEY_RENDER_BYTES_PER_SAMPLE;
+  const row_start = job.render_mode
+    ? Math.max(0, Math.min(job.render_rows_completed, Math.floor(after_row)))
+    : 0;
+  const row_count = job.render_mode
+    ? Math.min(SEED_SURVEY_RENDER_POLL_ROWS, job.render_rows_completed - row_start)
+    : 0;
+  const render_batch = job.render_mode
+    ? {
+        row_start,
+        row_count,
+        data: job.render_buffer.subarray(
+          row_start * render_row_bytes,
+          (row_start + row_count) * render_row_bytes,
+        ).toString("base64"),
+      }
+    : undefined;
+  return {
+    ...(job.result || {}),
+    job_id: job.id,
+    status: job.status,
+    progress: job.progress,
+    total_samples: job.result?.total_samples || job.progress.total,
+    resolution: job.resolution,
+    render_mode: job.render_mode,
+    render_rows_completed: job.render_rows_completed,
+    render_batch,
+    stable_count: job.result?.stable_count ?? job.progress.stable_count ?? 0,
+    stable_points: job.result?.stable_points ?? job.progress.stable_points ?? [],
+    unresolved_points: job.result?.unresolved_points ?? job.progress.unresolved_points ?? [],
+    escaped_points: job.result?.escaped_points ?? job.progress.escaped_points ?? [],
+    outcome_counts: job.result?.outcome_counts ?? job.progress.outcome_counts ?? {},
+    confidence_range: job.result?.confidence_range ?? job.progress.confidence_range ?? null,
+    orbital_magnitude_range: job.result?.orbital_magnitude_range ?? job.progress.orbital_magnitude_range ?? null,
+    result: job.result,
+    error: job.error,
+  };
+};
 
-export const start_seed_survey_job = (parameter, worker_pool = data_compute_worker_pool) => {
+export const start_seed_survey_job = (
+  parameter,
+  { worker_pool = data_compute_worker_pool, resolution = SEED_SURVEY_PREVIEW_RESOLUTION } = {},
+) => {
+  const render_mode = resolution === SEED_SURVEY_RENDER_RESOLUTION;
+  const normalized_resolution = render_mode
+    ? SEED_SURVEY_RENDER_RESOLUTION
+    : SEED_SURVEY_PREVIEW_RESOLUTION;
   prune_seed_survey_jobs();
-  const focal_key = `${parameter?.x},${parameter?.y}`;
+  const focal_key = `${parameter?.x},${parameter?.y}:${normalized_resolution}`;
   for (const existing_job of seed_survey_jobs.values()) {
     if (existing_job.status !== "queued" && existing_job.status !== "running") continue;
     if (existing_job.focal_key === focal_key) return public_seed_survey_job(existing_job);
@@ -278,34 +405,73 @@ export const start_seed_survey_job = (parameter, worker_pool = data_compute_work
     worker_pool,
     worker_task_id: null,
     status: "queued",
-    progress: { completed: 0, total: SEED_SURVEY_TOTAL_SAMPLES },
+    resolution: normalized_resolution,
+    render_mode,
+    render_buffer: render_mode
+      ? Buffer.alloc(
+          normalized_resolution * normalized_resolution * SEED_SURVEY_RENDER_BYTES_PER_SAMPLE,
+        )
+      : null,
+    render_rows_completed: 0,
+    progress: {
+      completed: 0,
+      total: normalized_resolution * normalized_resolution,
+      confidence_range: null,
+      ...(render_mode ? {} : {
+        stable_points: [],
+        unresolved_points: [],
+        escaped_points: [],
+      }),
+    },
     result: null,
     error: null,
     updated_at: Date.now(),
   };
   seed_survey_jobs.set(id, job);
-  const worker_task = worker_pool.run("orbital_seed_survey", { parameter }, undefined, {
-    task_timeout_ms: 300_000,
-    on_started: () => {
-      if (!seed_survey_jobs.has(id)) return;
-      job.status = "running";
-      job.updated_at = Date.now();
+  const worker_task = worker_pool.run(
+    "orbital_seed_survey",
+    { parameter, resolution: normalized_resolution },
+    undefined,
+    {
+      task_timeout_ms: render_mode ? 3_600_000 : 300_000,
+      on_started: () => {
+        if (!seed_survey_jobs.has(id)) return;
+        job.status = "running";
+        job.updated_at = Date.now();
+      },
+      on_progress: (progress) => {
+        if (!seed_survey_jobs.has(id)) return;
+        job.status = "running";
+        if (render_mode && progress.render_row_data) {
+          const row_bytes = normalized_resolution * SEED_SURVEY_RENDER_BYTES_PER_SAMPLE;
+          Buffer.from(progress.render_row_data).copy(
+            job.render_buffer,
+            progress.render_row * row_bytes,
+          );
+          job.render_rows_completed = Math.max(
+            job.render_rows_completed,
+            progress.render_row + 1,
+          );
+          const { render_row_data, ...summary } = progress;
+          job.progress = summary;
+        } else {
+          const stable_points = job.progress.stable_points || [];
+          const unresolved_points = job.progress.unresolved_points || [];
+          const escaped_points = job.progress.escaped_points || [];
+          stable_points.push(...(progress.stable_points || []));
+          unresolved_points.push(...(progress.unresolved_points || []));
+          escaped_points.push(...(progress.escaped_points || []));
+          job.progress = {
+            ...progress,
+            stable_points,
+            unresolved_points,
+            escaped_points,
+          };
+        }
+        job.updated_at = Date.now();
+      },
     },
-    on_progress: (progress) => {
-      if (!seed_survey_jobs.has(id)) return;
-      job.status = "running";
-      const stable_points = job.progress.stable_points || [];
-      const unresolved_points = job.progress.unresolved_points || [];
-      stable_points.push(...(progress.stable_points || []));
-      unresolved_points.push(...(progress.unresolved_points || []));
-      job.progress = {
-        ...progress,
-        stable_points,
-        unresolved_points,
-      };
-      job.updated_at = Date.now();
-    },
-  });
+  );
   job.worker_task_id = worker_task.task_id ?? null;
   worker_task.then((result) => {
     if (!seed_survey_jobs.has(id)) return;
@@ -334,7 +500,7 @@ export const handle_seed_survey_job = (req, res) => {
   prune_seed_survey_jobs();
   const job = seed_survey_jobs.get(req.params.job_id);
   if (!job) return res.status(404).json({ error: "Seed survey was not found or has expired" });
-  return res.status(200).json(public_seed_survey_job(job));
+  return res.status(200).json(public_seed_survey_job(job, Number(req.query?.after_row) || 0));
 };
 
 const retro_derivation = (point, limit) => {
@@ -447,6 +613,37 @@ export const handle_orbitals = (req, res, dependencies = {}) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+/** Starts only the seeded-plane survey, without calculating the legacy series. */
+export const create_seed_survey_start_handler = (
+  start_survey = start_seed_survey_job,
+) => (req, res) => {
+  const parameter = {
+    x: Number(req.query.re),
+    y: Number(req.query.im),
+  };
+  const resolution = req.query.resolution === undefined
+    ? SEED_SURVEY_PREVIEW_RESOLUTION
+    : Number(req.query.resolution);
+  if (!Number.isFinite(parameter.x) || !Number.isFinite(parameter.y)) {
+    return res.status(400).json({ error: "Finite re and im values are required" });
+  }
+  if (![SEED_SURVEY_PREVIEW_RESOLUTION, SEED_SURVEY_RENDER_RESOLUTION].includes(resolution)) {
+    return res.status(400).json({
+      error: `Survey resolution must be ${SEED_SURVEY_PREVIEW_RESOLUTION} or ${SEED_SURVEY_RENDER_RESOLUTION}`,
+    });
+  }
+  try {
+    return res.status(200).json({ result: start_survey(parameter, { resolution }) });
+  } catch (error) {
+    if (error instanceof WorkerPoolOverloadedError) {
+      return res.status(503).json({ error: "Compute capacity is busy; retry shortly" });
+    }
+    return res.status(500).json({ error: error.message });
+  }
+};
+
+export const handle_seed_survey_start = create_seed_survey_start_handler();
 
 // const test_point = {
 //    x: -0.6897174395111918,

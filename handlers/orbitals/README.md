@@ -32,10 +32,19 @@ before they can be merged into the best-known result:
   magnitudes are calculated. It plots only finite-precision cycle candidates
   with cardinality greater than one. Unresolved results are left blank, so
   this survey is observational evidence rather than proof of stability.
-  The grid runs asynchronously in the bounded worker pool; `/orbitals` returns
-  the legacy series and a job ID immediately, while
-  `GET /orbitals/seed-survey/:job_id` provides progress and the completed
-  survey. Jobs live in process memory for at most 15 minutes. These results can
+  The Assets seed-surveys page also supports a distinct 1024×1024 render over
+  `[-1.5, 1.5]` on both axes. It samples pixel centers at spacing `3/1024` and
+  streams compact per-row status, pattern, and confidence data from the worker;
+  this avoids building a million JavaScript point objects. Render uses the same
+  detector settings as preview and may take up to one hour before the worker
+  task times out. Jobs and render pixels remain in process memory while active
+  and for up to 15 minutes after completion.
+  The grid runs asynchronously in the bounded worker pool. `/orbitals` returns
+  the legacy series and a job ID immediately; `GET /orbitals/seed-survey?re=...&im=...`
+  starts the same survey without calculating the legacy series, while
+  `GET /orbitals/seed-survey/:job_id` provides cumulative progress, including
+  stable, unresolved, and escaping seed coordinates, and the completed survey.
+  Jobs live in process memory for at most 15 minutes. These results can
   disagree with the critical-orbit detector and
   Newton-derived points. The response also reports the minimum and maximum,
   across plotted seeds, of each orbit's largest distance from its points to
