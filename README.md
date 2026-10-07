@@ -129,9 +129,29 @@ These database records are separate from the tile server's compiled in-memory in
 ### Orbitals
 
 - `GET /orbital` calculates one orbital from `re`, `im`, and `limit`.
-- `GET /orbitals` calculates a pro-derived series from `FractoFastCalc.calc()`
-  (with `pattern` unique points plus a closing duplicate) using the same
-  parameters. Detector-driven Newton refinement is provided
+- `GET /orbitals` returns the established `FractoFastCalc.calc()` series
+  (with `pattern` unique points plus a closing duplicate) and a bounded seed
+  survey over both real and imaginary seeds `[-1.5, 1.5]` at 0.025 intervals. The
+  survey uses `FractoCardinality()` with each seed passed through its `seed`
+  option and a fixed 4,096-iteration horizon per sample (adaptive expansion is
+  disabled so the full plane scan remains bounded). For parameters outside
+  the main cardioid, the SDK uses its seeded fast-calculator fallback at
+  `seed_level: 0.00625`. Detected non-singleton
+  candidates are plotted in pattern colors; inconclusive samples are grey,
+  while escapes and singleton results are omitted. Candidates are
+  observational, not mathematical proof.
+  The survey runs in the bounded compute-worker pool so this expensive scan
+  does not delay the legacy chart or block other data-server requests. The
+  initial response includes a survey job ID and progress; poll
+  `GET /orbitals/seed-survey/:job_id` for progress and completion. Progress
+  advances every eight seeds, streaming point deltas that are accumulated for
+  polling clients. A newer focal-point request cancels the older
+  queued or running survey so obsolete scans cannot occupy the bounded pool;
+  repeated requests for the same active focal point reuse its job. Jobs are
+  process-local and expire after 15 minutes. The survey does not alter
+  zero-seed `calc()` behavior. Its response also
+  gives the range of each plotted orbit's maximum distance from its points to
+  `Q`. Detector-driven Newton refinement is provided
   separately by `/orbital_newton` and is not repeated by this endpoint.
 - `GET /circuitry?re=<re>&im=<im>` samples a smooth closed curve around the
   periodic orbit for the Mandelbrot parameter `c = re + im*i`. Optional

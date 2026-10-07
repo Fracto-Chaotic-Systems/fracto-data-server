@@ -22,9 +22,24 @@ candidates, not mathematical proofs.
 Several separate cardinality-like values remain and need an explicit policy
 before they can be merged into the best-known result:
 
-- `/orbitals` returns the `FractoFastCalc.calc().pattern` value for the
-  **legacy iterative** chart. This can disagree with the critical-orbit
-  detector and remains labeled as a legacy result.
+- `/orbitals` returns the established zero-seed `FractoFastCalc.calc()` result
+  for the **legacy iterative** chart and a seed-plane survey sampled from
+  `[-2, 2]` on both axes at 0.05 intervals. The survey uses the separate
+  `FractoFastCalc.calc_big_complex_from_seed()` Decimal path with 64-digit
+  precision, a 10,000-iteration cap, a 5,000-iteration transient, and `1e-30`
+  recurrence tolerance; the experiment does not change `calc()` behavior.
+  Decimal orbit coordinates are retained as strings until display-derived
+  magnitudes are calculated. It plots only finite-precision cycle candidates
+  with cardinality greater than one. Unresolved results are left blank, so
+  this survey is observational evidence rather than proof of stability.
+  The grid runs asynchronously in the bounded worker pool; `/orbitals` returns
+  the legacy series and a job ID immediately, while
+  `GET /orbitals/seed-survey/:job_id` provides progress and the completed
+  survey. Jobs live in process memory for at most 15 minutes. These results can
+  disagree with the critical-orbit detector and
+  Newton-derived points. The response also reports the minimum and maximum,
+  across plotted seeds, of each orbit's largest distance from its points to
+  the parameter's cardioid reference point `Q`.
 - `/orbital` uses the older inverse-square-root `retro_derivation()` and
   detects a repeated BigComplex text state. It is a separate legacy method;
   its response now labels `cardinality_source: "legacy_retro_derivation"`.

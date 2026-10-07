@@ -18,6 +18,14 @@ export class WorkerPoolOverloadedError extends Error {
   }
 }
 
+export class WorkerTaskCancelledError extends Error {
+  constructor() {
+    super("Compute worker task was cancelled");
+    this.name = "WorkerTaskCancelledError";
+    this.code = "WORKER_TASK_CANCELLED";
+  }
+}
+
 /** Bounded task pool for CPU-bound work, with Promise and Node callback APIs. */
 export class WorkerTaskPool {
   constructor({
@@ -40,25 +48,53 @@ export class WorkerTaskPool {
   }
 
   run(task, payload, callback, options = {}) {
-    const { on_progress } = options;
+    const { on_progress, on_started } = options;
+    let task_id = null;
     const promise = new Promise((resolve, reject) => {
       if (this.closed) return reject(new Error("Compute worker pool is closed"));
       if (!this.slots.some((slot) => !slot.job) && this.queue.length >= this.max_queue) {
         this.record_metric("data_worker_task_duration", 0, "overloaded");
         return reject(new WorkerPoolOverloadedError());
       }
+      task_id = this.next_id++;
       this.queue.push({
-        id: this.next_id++, task, payload, queued_at: performance.now(), resolve, reject,
+        id: task_id, task, payload, queued_at: performance.now(), resolve, reject,
         on_progress,
+        on_started,
         task_timeout_ms: bounded_integer(options.task_timeout_ms, this.task_timeout_ms, 1, 300_000),
       });
       this.pump();
     });
+    promise.task_id = task_id;
     if (typeof callback === "function") {
       promise.then((result) => callback(null, result), (error) => callback(error))
         .catch(() => {});
     }
     return promise;
+  }
+
+  /** Cancel a queued task or terminate its worker if it is already running. */
+  cancel(task_id) {
+    if (!Number.isInteger(task_id)) return false;
+    const queued_index = this.queue.findIndex((job) => job.id === task_id);
+    if (queued_index >= 0) {
+      const [job] = this.queue.splice(queued_index, 1);
+      job.reject(new WorkerTaskCancelledError());
+      return true;
+    }
+    const slot = this.slots.find((candidate) => candidate.job?.id === task_id);
+    if (!slot) return false;
+    const job = slot.job;
+    const worker = slot.worker;
+    slot.job = null;
+    slot.worker = null;
+    slot.generation += 1;
+    clearTimeout(job.timer);
+    this.record_metric("data_worker_task_duration", performance.now() - job.started_at, "cancelled");
+    job.reject(new WorkerTaskCancelledError());
+    worker?.terminate();
+    this.pump();
+    return true;
   }
 
   pump() {
@@ -72,6 +108,7 @@ export class WorkerTaskPool {
       slot.job = job;
       job.timer = setTimeout(() => this.timeout(slot, job), job.task_timeout_ms);
       slot.worker.ref?.();
+      job.on_started?.();
       slot.worker.postMessage({ id: job.id, task: job.task, payload: job.payload });
     }
   }

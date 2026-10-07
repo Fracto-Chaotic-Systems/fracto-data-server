@@ -20,14 +20,15 @@ This directory contains the HTTP handlers and calculation helpers used by the Fr
 - `handle_coverage.js` serves tile-coverage information.
 - `handle_ensure_table.js` creates or updates an allowed database table schema.
 - `handle_lore.js` serves lore categories, content, and storage operations.
-- `handle_orbital.js` handles orbital derivation and listing requests.
+- `handle_orbital.js` handles orbital derivation, returns the legacy points
+  series, and starts/polls process-local ordinary-precision seeded survey jobs.
 - `handle_orbital_discovery.js` detects orbital patterns for discovery requests.
 - `handle_orbital_newton.js` computes detector/Newton orbital results and
   applies a two-point FractoFastCalc-cardinality fallback for
   consumers such as the orbital-points Newton-derived chart.
 - `handle_orbital_spectrum.js` generates orbital spectrum and pyramid results.
 - `data_compute_worker.js` runs allowlisted CPU-bound task payloads away from the data-server event loop; HTTP and database objects remain on the main thread.
-- `worker_task_pool.js` provides a bounded worker-thread pool with Promise and callback completion, queue backpressure, timeouts, and aggregate metrics.
+- `worker_task_pool.js` provides a bounded worker-thread pool with Promise and callback completion, queue backpressure, timeouts, cancellation of queued or active work, and aggregate metrics. Cancelling active work terminates and replaces its worker slot so a stale CPU-bound task cannot hold capacity.
 - `handle_query.js` executes the data server's constrained query endpoint.
 - `handle_tile.js` reads and writes individual tile records.
 - `handle_tiles.js` handles tile-list requests.

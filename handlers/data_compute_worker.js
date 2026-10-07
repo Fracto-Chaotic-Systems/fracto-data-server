@@ -1,6 +1,7 @@
 import { parentPort } from "node:worker_threads";
 
 import { calculate_orbital_spectrum } from "./handle_orbital_spectrum.js";
+import { calculate_seed_survey } from "./handle_orbital.js";
 import { calculate_logistic_orbit } from "./logistic_map/calculator.js";
 
 // Keep task names allowlisted. Worker messages contain only cloneable payloads;
@@ -22,6 +23,14 @@ const task_handlers = {
     calculate_orbital_spectrum(query, response);
     return { status: response.status_code, body: response.body };
   },
+  orbital_seed_survey: ({ parameter }, id) => calculate_seed_survey(
+    parameter,
+    undefined,
+    (progress) => parentPort.postMessage({
+      id,
+      progress: { kind: "seed_survey_progress", ...progress },
+    }),
+  ),
   logistic_map_level_one: ({ iteration_cap, transient_limit }, id) => {
     const outcomes = [];
     const started_at = Date.now();

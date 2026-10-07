@@ -69,11 +69,48 @@ test("worker pool applies backpressure when its bounded queue is full", async ()
     create_worker: () => worker,
     record_metric: () => {},
   });
-  const first = pool.run("test", {});
+  let started = false;
+  const first = pool.run("test", {}, undefined, { on_started: () => { started = true; } });
+  assert.equal(started, true);
   await assert.rejects(pool.run("test", {}), { code: "WORKER_POOL_OVERLOADED" });
   worker.emit("message", { id: worker.message.id, result: "complete" });
   assert.equal(await first, "complete");
   await pool.close();
+});
+
+test("worker pool cancels queued and running jobs and releases capacity", async () => {
+  class FakeWorker extends EventEmitter {
+    postMessage(message) { this.message = message; }
+    ref() {}
+    unref() {}
+    async terminate() { this.terminated = true; return 0; }
+  }
+  const workers = [];
+  const pool = new WorkerTaskPool({
+    size: 1,
+    max_queue: 2,
+    create_worker: () => {
+      const worker = new FakeWorker();
+      workers.push(worker);
+      return worker;
+    },
+    record_metric: () => {},
+  });
+  try {
+    const running = pool.run("survey", {});
+    const queued = pool.run("survey", {});
+    assert.equal(pool.cancel(queued.task_id), true);
+    await assert.rejects(queued, { code: "WORKER_TASK_CANCELLED" });
+    assert.equal(pool.cancel(running.task_id), true);
+    await assert.rejects(running, { code: "WORKER_TASK_CANCELLED" });
+
+    const replacement = pool.run("survey", {});
+    assert.equal(workers.length, 2);
+    workers[1].emit("message", { id: workers[1].message.id, result: "complete" });
+    assert.equal(await replacement, "complete");
+  } finally {
+    await pool.close();
+  }
 });
 
 test("worker executes multi-analysis without blocking the HTTP handler thread", async () => {
