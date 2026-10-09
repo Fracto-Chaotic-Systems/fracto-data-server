@@ -113,6 +113,14 @@ export const calculate_seed_survey = (
   const render_imaginary_coordinate = (index) =>
     (SEED_SURVEY_IMAGINARY_MAX - ((index + 0.5) * (SEED_SURVEY_IMAGINARY_MAX - SEED_SURVEY_IMAGINARY_MIN)) / resolution)
       .toFixed(12);
+  const render_real_coordinates = render_mode
+    ? Array.from({ length: resolution }, (_, index) =>
+        render_coordinate(SEED_SURVEY_REAL_MIN, index))
+    : null;
+  const render_imaginary_coordinates = render_mode
+    ? Array.from({ length: resolution }, (_, index) =>
+        render_imaginary_coordinate(index))
+    : null;
   let total_samples = 0;
   let stable_count = 0;
   let reported_stable_point_count = 0;
@@ -123,14 +131,17 @@ export const calculate_seed_survey = (
   const total_expected = axis_count * axis_count;
   for (let im_step = 0; im_step < axis_count; im_step++) {
     const seed_im = render_mode
-      ? render_imaginary_coordinate(im_step)
+      ? render_imaginary_coordinates[im_step]
       : grid_coordinate(SEED_SURVEY_IMAGINARY_MIN, im_step);
     const render_row_data = render_mode
       ? new Uint8Array(resolution * SEED_SURVEY_RENDER_BYTES_PER_SAMPLE)
       : null;
+    const render_row_view = render_mode
+      ? new DataView(render_row_data.buffer)
+      : null;
     for (let re_step = 0; re_step < axis_count; re_step++) {
       const seed_re = render_mode
-        ? render_coordinate(SEED_SURVEY_REAL_MIN, re_step)
+        ? render_real_coordinates[re_step]
         : grid_coordinate(SEED_SURVEY_REAL_MIN, re_step);
       const calculation = calculate(parameter, {
         ...SEED_SURVEY_CALCULATION_SETTINGS,
@@ -235,22 +246,17 @@ export const calculate_seed_survey = (
       }
       if (render_mode) {
         const byte_offset = re_step * SEED_SURVEY_RENDER_BYTES_PER_SAMPLE;
-        const render_view = new DataView(
-          render_row_data.buffer,
-          byte_offset,
-          SEED_SURVEY_RENDER_BYTES_PER_SAMPLE,
-        );
-        render_view.setUint8(0, render_status_code);
-        render_view.setUint32(1, pattern, true);
-        render_view.setFloat32(
-          5,
+        render_row_view.setUint8(byte_offset, render_status_code);
+        render_row_view.setUint32(byte_offset + 1, pattern, true);
+        render_row_view.setFloat32(
+          byte_offset + 5,
           Number.isFinite(calculation?.detection?.confidence)
             ? calculation.detection.confidence
             : -1,
           true,
         );
-        render_view.setUint32(
-          9,
+        render_row_view.setUint32(
+          byte_offset + 9,
           Math.max(0, Math.min(0xffffffff,
             Math.trunc(Number(calculation?.iterations ?? calculation?.iteration) || 0))),
           true,
@@ -585,7 +591,6 @@ export const handle_orbital = (req, res) => {
 };
 
 export const handle_orbitals = (req, res, dependencies = {}) => {
-  console.log("handle_orbitals", req.query);
   try {
     const re = parseFloat(req.query.re);
     const im = parseFloat(req.query.im);

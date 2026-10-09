@@ -23,32 +23,12 @@ Several separate cardinality-like values remain and need an explicit policy
 before they can be merged into the best-known result:
 
 - `/orbitals` returns the established zero-seed `FractoFastCalc.calc()` result
-  for the **legacy iterative** chart and a seed-plane survey sampled from
-  `[-2, 2]` on both axes at 0.05 intervals. The survey uses the separate
-  `FractoFastCalc.calc_big_complex_from_seed()` Decimal path with 64-digit
-  precision, a 10,000-iteration cap, a 5,000-iteration transient, and `1e-30`
-  recurrence tolerance; the experiment does not change `calc()` behavior.
-  Decimal orbit coordinates are retained as strings until display-derived
-  magnitudes are calculated. It plots only finite-precision cycle candidates
-  with cardinality greater than one. Unresolved results are left blank, so
-  this survey is observational evidence rather than proof of stability.
-  The Assets seed-surveys page also supports a distinct 1024×1024 render over
-  `[-1.5, 1.5]` on both axes. It samples pixel centers at spacing `3/1024` and
-  streams compact per-row status, pattern, and confidence data from the worker;
-  this avoids building a million JavaScript point objects. Render uses the same
-  detector settings as preview and may take up to one hour before the worker
-  task times out. Jobs and render pixels remain in process memory while active
-  and for up to 15 minutes after completion.
-  The grid runs asynchronously in the bounded worker pool. `/orbitals` returns
-  the legacy series and a job ID immediately; `GET /orbitals/seed-survey?re=...&im=...`
-  starts the same survey without calculating the legacy series, while
-  `GET /orbitals/seed-survey/:job_id` provides cumulative progress, including
-  stable, unresolved, and escaping seed coordinates, and the completed survey.
-  Jobs live in process memory for at most 15 minutes. These results can
-  disagree with the critical-orbit detector and
-  Newton-derived points. The response also reports the minimum and maximum,
-  across plotted seeds, of each orbit's largest distance from its points to
-  the parameter's cardioid reference point `Q`.
+  for the **legacy iterative** chart and starts the same asynchronous
+  `FractoCardinality` seed survey used by the Assets page. The Assets page
+  starts that survey directly and does not request the legacy series. See
+  “Seed-plane survey contract and imagery” below; the previous description of
+  a 64-digit `calc_big_complex_from_seed()` sweep over `[-2, 2]` does not
+  describe this active survey.
 - `/orbital` uses the older inverse-square-root `retro_derivation()` and
   detects a repeated BigComplex text state. It is a separate legacy method;
   its response now labels `cardinality_source: "legacy_retro_derivation"`.
@@ -101,6 +81,81 @@ starts the detector from `z=0` again and also runs Newton for a detected
 candidate, so the option repeats work rather than incrementally extending one
 orbit sample. It is intended for diagnostic use and can cost substantially
 more than a single request.
+
+## Seed-plane survey contract and imagery
+
+The survey holds the navigator focal point fixed as the Mandelbrot parameter
+`c` and varies the initial orbit value `z0` over the image plane. Each seed is
+passed to `FractoCardinality(c, { seed, iterations: 4096,
+maximum_detection_iterations: 4096, adaptive_detection: false,
+seed_level: 0.00625 })`. Inside the main cardioid this means one ordinary-
+precision 4,096-step horizon per seed; `seed_level` applies only if the focal
+parameter takes the SDK's outside-cardioid seeded compatibility path, where
+the calculation uses `FractoFastCalc.calc_from_seed()`. The SDK guide
+`sdk/FractoCardinality.md` defines input handling, escape counts, return
+evidence, and the limits of these numerical candidates. In that in-cardioid
+path, the fixed parameter and each seed are converted to JavaScript numbers;
+passing coordinate strings does not provide arbitrary precision.
+
+The preview has 121×121 samples spaced 0.025 apart, including the bounds
+`[-1.5, 1.5]`. Render has 1024×1024 pixel-center samples spaced `3/1024` over
+the same bounds. The imaginary coordinate is laid out top-to-bottom in the
+image. Preview returns arrays of stable, unresolved, and escaped point
+records. Render returns one compact record per sample in each streamed row,
+without a million-object result array. The 13-byte little-endian record is:
+
+| Byte offset | Type | Meaning |
+| --- | --- | --- |
+| 0 | `uint8` | Status: 0 blank/other, 1 non-singleton candidate, 2 unresolved, 3 escaped |
+| 1 | `uint32` | Candidate pattern/cardinality |
+| 5 | `float32` | Detection confidence; `-1` when unavailable |
+| 9 | `uint32` | Iteration count reported by the calculation |
+
+The render loop precomputes its fixed-12-decimal coordinate strings once per
+axis and reuses one `DataView` per row. These changes remove repeated
+formatting and per-pixel view allocations without changing seed coordinates or
+detector settings. The dominant cost remains per-seed orbit sampling and return
+analysis: up to 4,097 orbit samples are processed for each of the 1,048,576
+render pixels.
+
+Status 1 is assigned only if the detector reports an integer period greater
+than one and at least that many orbit samples are available to take the final
+pattern-sized suffix. The suffix is used to display one candidate's points;
+this length check does not independently verify recurrence or distinctness.
+Period-one candidates remain blank. Escaped seeds are status 3; an orbit with
+no candidate that did not escape is status 2. Invalid and other outcomes are
+status 0. Detection and escape are separate facts in `FractoCardinality`, but
+the survey classifies a detected integer candidate before considering its
+escape flag. The output is a diagnostic visualization, not proof of stability
+or of a primitive orbit.
+
+Preview responses also report `orbital_magnitude_range`. For each accepted
+non-singleton candidate, the worker takes the last `pattern` samples from the
+bounded orbit, measures each sample's distance from the cardioid fixed point
+`Q`, and retains the maximum as that seed's orbital magnitude. The returned
+range is the minimum and maximum of those per-seed maximum distances across
+the preview's accepted candidates. It is `null` when there are none. Render
+mode omits this calculation to avoid retaining a million orbit point sets.
+
+The Assets page maps status 1 pixels to the existing pattern hue and maps their
+finite confidence scores by empirical rank. The lowest 1% maps to HSL
+lightness 18%, the highest 1% to 88%, and intermediate ranks are spread
+evenly. Confidence is not a probability. Status 2 is grey (`#888888`), status
+3 is currently white (`#ffffff`), and status 0 remains the `#eeeeee` canvas
+background. A separate escape-iteration percentile scale exists in the UI but
+is disabled for now; see the UI assets README for the flag and details.
+
+Both modes run in the bounded worker pool. Preview tasks have a five-minute
+timeout and render tasks a one-hour timeout. Job state and the full render
+buffer are process-local; completed jobs expire after 15 minutes. Starting a
+different active focal-point/resolution job cancels the earlier active survey.
+The render job endpoint accepts an `after_row` cursor and returns at most 16
+rows per poll. Restarting the service discards all job state. The data-server
+route is `GET /orbitals/seed-survey?re=...&im=...&resolution=...`; resolution
+may be omitted for the 121 preview or set to 1024 for render. Poll
+`GET /orbitals/seed-survey/:job_id` for progress and row batches. The top-level
+`GET /orbitals` route also starts the 121 preview alongside its legacy
+iterative result.
 
 Both `/orbital_newton` and `/circuitry` invoke the active
 `two_point_calc_newton_fallback` only when the detector candidate is exactly

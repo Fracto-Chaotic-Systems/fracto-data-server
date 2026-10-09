@@ -24,9 +24,15 @@ This directory contains the HTTP handlers and calculation helpers used by the Fr
   series, and starts/polls process-local seeded survey jobs. The dedicated
   `GET /orbitals/seed-survey?re=...&im=...` route starts only the survey job;
   `GET /orbitals/seed-survey/:job_id` returns cumulative progress and the final
-  result. The optional `resolution=1024` render mode streams compact row data
-  for a 1024×1024 seed grid with `3/1024` spacing, while the default remains the
-  existing preview grid. Render tasks have a bounded one-hour timeout.
+  result. Resolution is 121 by default or 1024 for render. For an in-cardioid
+  focal point, both modes call the SDK's seeded `FractoCardinality` for each
+  seed at a fixed 4,096-iteration horizon with adaptive detection disabled;
+  outside the cardioid, the SDK uses its seeded `FractoFastCalc` compatibility
+  path. Render streams 13-byte-per-pixel
+  row records in batches of up to 16 rows. Job buffers are process-local;
+  preview/render task limits are five minutes/one hour, and completed jobs
+  expire after 15 minutes. See `handlers/orbitals/README.md` and
+  `sdk/FractoCardinality.md` for method, payload, and display semantics.
 - `handle_orbital_discovery.js` detects orbital patterns for discovery requests.
 - `handle_orbital_newton.js` computes detector/Newton orbital results and
   applies a two-point FractoFastCalc-cardinality fallback for
