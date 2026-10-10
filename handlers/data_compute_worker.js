@@ -23,14 +23,14 @@ const task_handlers = {
     calculate_orbital_spectrum(query, response);
     return { status: response.status_code, body: response.body };
   },
-  orbital_seed_survey: ({ parameter, resolution }, id) => calculate_seed_survey(
+  orbital_seed_survey: ({ parameter, resolution, half_span, iteration_limit }, id) => calculate_seed_survey(
     parameter,
     undefined,
     (progress) => parentPort.postMessage({
       id,
       progress: { kind: "seed_survey_progress", ...progress },
     }),
-    { resolution },
+    { resolution, half_span, iteration_limit },
   ),
   logistic_map_level_one: ({ iteration_cap, transient_limit }, id) => {
     const outcomes = [];

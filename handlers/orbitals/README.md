@@ -97,16 +97,26 @@ evidence, and the limits of these numerical candidates. In that in-cardioid
 path, the fixed parameter and each seed are converted to JavaScript numbers;
 passing coordinate strings does not provide arbitrary precision.
 
-The preview has 121×121 samples spaced 0.025 apart, including the bounds
-`[-1.5, 1.5]`. Render has 1024×1024 pixel-center samples spaced `3/1024` over
-the same bounds. The imaginary coordinate is laid out top-to-bottom in the
-image. Preview returns arrays of stable, unresolved, and escaped point
-records. Render returns one compact record per sample in each streamed row,
-without a million-object result array. The 13-byte little-endian record is:
+The preview has 121×121 samples including both bounds. The page supplies a
+`half_span` value, defaulting to `1.5`, that bounds each coordinate from
+`-half_span` through `+half_span`. The header slider spans `2^-11` through
+`2^1` on a logarithmic scale. Preview spacing is `2 × half_span / 120`.
+Render has 1024×1024 pixel-center samples across the same bounds at
+`2 × half_span / 1024` spacing. The imaginary coordinate is laid out
+top-to-bottom in the image. An outside-main-cardioid preview also builds an
+x-major 121×121 `canvas_buffer` whose entries are `[pattern, iteration]` pairs
+for every seed, including escaping seeds (`pattern: 0`). It sends completed
+image rows as progress batches and returns the full buffer when complete.
+Outside-cardioid render likewise streams these pairs in compact row records,
+so both modes use the shared SDK `FractoCanvasBuffer`/`FractoColors` rendering
+path used by the navigator. In-cardioid preview and render retain the
+diagnostic point and confidence/iteration coloring paths. Render returns one
+compact record per sample in each streamed row, without a million-object
+result array. The 13-byte little-endian record is:
 
 | Byte offset | Type | Meaning |
 | --- | --- | --- |
-| 0 | `uint8` | Status: 0 blank/other, 1 non-singleton candidate, 2 unresolved, 3 escaped |
+| 0 | `uint8` | Status: 0 blank/unpainted, 1 non-singleton candidate, 2 unresolved, 3 escaped, 4 nonzero calculator pattern, 5 completed shared-buffer sample |
 | 1 | `uint32` | Candidate pattern/cardinality |
 | 5 | `float32` | Detection confidence; `-1` when unavailable |
 | 9 | `uint32` | Iteration count reported by the calculation |
@@ -115,8 +125,9 @@ The render loop precomputes its fixed-12-decimal coordinate strings once per
 axis and reuses one `DataView` per row. These changes remove repeated
 formatting and per-pixel view allocations without changing seed coordinates or
 detector settings. The dominant cost remains per-seed orbit sampling and return
-analysis: up to 4,097 orbit samples are processed for each of the 1,048,576
-render pixels.
+analysis: the in-cardioid detector processes up to 4,097 orbit samples for
+each of the 1,048,576 render pixels, while outside-cardioid seeded calculator
+calls use their configured 10,000-iteration horizon.
 
 Status 1 is assigned only if the detector reports an integer period greater
 than one and at least that many orbit samples are available to take the final
@@ -150,9 +161,12 @@ timeout and render tasks a one-hour timeout. Job state and the full render
 buffer are process-local; completed jobs expire after 15 minutes. Starting a
 different active focal-point/resolution job cancels the earlier active survey.
 The render job endpoint accepts an `after_row` cursor and returns at most 16
-rows per poll. Restarting the service discards all job state. The data-server
-route is `GET /orbitals/seed-survey?re=...&im=...&resolution=...`; resolution
-may be omitted for the 121 preview or set to 1024 for render. Poll
+rows per poll. Outside-cardioid preview uses the same cursor to return at most
+16 completed canvas-buffer rows per poll. Restarting the service discards all job state. The data-server
+route is `GET /orbitals/seed-survey?re=...&im=...&resolution=...&half_span=...`;
+resolution may be omitted for the 121 preview or set to 1024 for render.
+`half_span` must be between `2^-11` and `2^1`; if omitted, it defaults to
+`1.5`. Poll
 `GET /orbitals/seed-survey/:job_id` for progress and row batches. The top-level
 `GET /orbitals` route also starts the 121 preview alongside its legacy
 iterative result.

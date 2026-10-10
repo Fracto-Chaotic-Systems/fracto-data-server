@@ -28,7 +28,10 @@ This directory contains the HTTP handlers and calculation helpers used by the Fr
   focal point, both modes call the SDK's seeded `FractoCardinality` for each
   seed at a fixed 4,096-iteration horizon with adaptive detection disabled;
   outside the cardioid, the SDK uses its seeded `FractoFastCalc` compatibility
-  path. Render streams 13-byte-per-pixel
+  path and supplies `[pattern, iteration]` data to the shared canvas-color
+  pipeline in both preview and render modes. The request's iteration limit is
+  forwarded as `seed_iteration_limit` to `calc_from_seed()` and defaults to
+  100,000. Render streams 13-byte-per-pixel
   row records in batches of up to 16 rows. Job buffers are process-local;
   preview/render task limits are five minutes/one hour, and completed jobs
   expire after 15 minutes. See `handlers/orbitals/README.md` and

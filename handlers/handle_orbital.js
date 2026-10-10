@@ -1,6 +1,7 @@
 import BigComplex from "@fracto/sdk/math/BigComplex.js";
 import FractoCardinality from "@fracto/sdk/FractoCardinality.js";
 import FractoFastCalc from "@fracto/sdk/FractoFastCalc.js";
+import FractoUtil from "@fracto/sdk/FractoUtil.js";
 import { randomUUID } from "node:crypto";
 import { performance } from "node:perf_hooks";
 import { data_compute_worker_pool, WorkerPoolOverloadedError } from "./worker_task_pool.js";
@@ -46,30 +47,42 @@ const format_result = (point_list, Q_minus, cardinality, iterations) => {
   };
 };
 
-const SEED_SURVEY_REAL_MIN = -1.5;
-const SEED_SURVEY_REAL_MAX = 1.5;
-const SEED_SURVEY_IMAGINARY_MIN = -1.5;
-const SEED_SURVEY_IMAGINARY_MAX = 1.5;
-const SEED_SURVEY_STEPS_PER_UNIT = 40;
-const SEED_SURVEY_REAL_STEPS = Math.round(
-  SEED_SURVEY_STEPS_PER_UNIT * (SEED_SURVEY_REAL_MAX - SEED_SURVEY_REAL_MIN),
-);
-const SEED_SURVEY_IMAGINARY_STEPS = Math.round(
-  SEED_SURVEY_STEPS_PER_UNIT * (SEED_SURVEY_IMAGINARY_MAX - SEED_SURVEY_IMAGINARY_MIN),
-);
-const SEED_SURVEY_TOTAL_SAMPLES =
-  (SEED_SURVEY_REAL_STEPS + 1) * (SEED_SURVEY_IMAGINARY_STEPS + 1);
+const SEED_SURVEY_DEFAULT_HALF_SPAN = 1.5;
+const SEED_SURVEY_MIN_HALF_SPAN = 2 ** -11;
+const SEED_SURVEY_MAX_HALF_SPAN = 2 ** 1;
 const SEED_SURVEY_PROGRESS_INTERVAL = 8;
-const SEED_SURVEY_PREVIEW_RESOLUTION = SEED_SURVEY_REAL_STEPS + 1;
+const SEED_SURVEY_PREVIEW_RESOLUTION = 121;
+const SEED_SURVEY_TOTAL_SAMPLES = SEED_SURVEY_PREVIEW_RESOLUTION ** 2;
 const SEED_SURVEY_RENDER_RESOLUTION = 1024;
 const SEED_SURVEY_RENDER_BYTES_PER_SAMPLE = 13;
 const SEED_SURVEY_RENDER_POLL_ROWS = 16;
+const SEED_SURVEY_MIN_ITERATION_LIMIT = 100_000;
+const SEED_SURVEY_MAX_ITERATION_LIMIT = 10_000_000_000;
+const SEED_SURVEY_DEFAULT_ITERATION_LIMIT = SEED_SURVEY_MIN_ITERATION_LIMIT;
 const SEED_SURVEY_CALCULATION_SETTINGS = {
   detector: "FractoCardinality",
   iterations: 4096,
   maximum_detection_iterations: 4096,
   adaptive_detection: false,
   seed_level: 0.00625,
+};
+
+const normalize_seed_survey_iteration_limit = (value) => {
+  const requested = Number(value);
+  return Number.isFinite(requested) &&
+    requested >= SEED_SURVEY_MIN_ITERATION_LIMIT &&
+    requested <= SEED_SURVEY_MAX_ITERATION_LIMIT
+    ? Math.floor(requested)
+    : SEED_SURVEY_DEFAULT_ITERATION_LIMIT;
+};
+
+const normalize_seed_survey_half_span = (value) => {
+  const requested = Number(value);
+  return Number.isFinite(requested) &&
+    requested >= SEED_SURVEY_MIN_HALF_SPAN &&
+    requested <= SEED_SURVEY_MAX_HALF_SPAN
+    ? requested
+    : SEED_SURVEY_DEFAULT_HALF_SPAN;
 };
 
 /**
@@ -86,10 +99,22 @@ export const calculate_seed_survey = (
   const resolution = options.resolution === SEED_SURVEY_RENDER_RESOLUTION
     ? SEED_SURVEY_RENDER_RESOLUTION
     : SEED_SURVEY_PREVIEW_RESOLUTION;
+  const half_span = normalize_seed_survey_half_span(options.half_span);
+  const iteration_limit = normalize_seed_survey_iteration_limit(options.iteration_limit);
   const render_mode = resolution === SEED_SURVEY_RENDER_RESOLUTION;
+  const outside_main_cardioid = !FractoUtil.point_in_main_cardioid(parameter);
+  const uses_canvas_buffer = outside_main_cardioid;
   const stable_points = render_mode ? null : [];
+  const iteration_points = render_mode ? null : [];
   const unresolved_points = render_mode ? null : [];
   const escaped_points = render_mode ? null : [];
+  const canvas_buffer = uses_canvas_buffer
+    && !render_mode
+    ? Array.from(
+        { length: SEED_SURVEY_PREVIEW_RESOLUTION },
+        () => Array(SEED_SURVEY_PREVIEW_RESOLUTION).fill(null),
+      )
+    : null;
   const outcome_counts = {
     non_singleton_candidate: 0,
     single_point_candidate: 0,
@@ -105,17 +130,17 @@ export const calculate_seed_survey = (
   let maximum_orbital_magnitude = -Infinity;
   let minimum_confidence = Infinity;
   let maximum_confidence = -Infinity;
-  const grid_coordinate = (minimum, step) =>
-    (minimum + step / SEED_SURVEY_STEPS_PER_UNIT).toFixed(3);
-  const render_coordinate = (minimum, index) =>
-    (minimum + ((index + 0.5) * (SEED_SURVEY_REAL_MAX - SEED_SURVEY_REAL_MIN)) / resolution)
+  const grid_coordinate = (index) =>
+    (-half_span + ((2 * half_span * index) / (SEED_SURVEY_PREVIEW_RESOLUTION - 1)))
       .toFixed(12);
+  const render_coordinate = (index) =>
+    (-half_span + ((index + 0.5) * 2 * half_span) / resolution).toFixed(12);
   const render_imaginary_coordinate = (index) =>
-    (SEED_SURVEY_IMAGINARY_MAX - ((index + 0.5) * (SEED_SURVEY_IMAGINARY_MAX - SEED_SURVEY_IMAGINARY_MIN)) / resolution)
+    (half_span - ((index + 0.5) * 2 * half_span) / resolution)
       .toFixed(12);
   const render_real_coordinates = render_mode
     ? Array.from({ length: resolution }, (_, index) =>
-        render_coordinate(SEED_SURVEY_REAL_MIN, index))
+        render_coordinate(index))
     : null;
   const render_imaginary_coordinates = render_mode
     ? Array.from({ length: resolution }, (_, index) =>
@@ -124,6 +149,7 @@ export const calculate_seed_survey = (
   let total_samples = 0;
   let stable_count = 0;
   let reported_stable_point_count = 0;
+  let reported_iteration_point_count = 0;
   let reported_unresolved_point_count = 0;
   let reported_escaped_point_count = 0;
 
@@ -132,7 +158,7 @@ export const calculate_seed_survey = (
   for (let im_step = 0; im_step < axis_count; im_step++) {
     const seed_im = render_mode
       ? render_imaginary_coordinates[im_step]
-      : grid_coordinate(SEED_SURVEY_IMAGINARY_MIN, im_step);
+      : grid_coordinate(SEED_SURVEY_PREVIEW_RESOLUTION - 1 - im_step);
     const render_row_data = render_mode
       ? new Uint8Array(resolution * SEED_SURVEY_RENDER_BYTES_PER_SAMPLE)
       : null;
@@ -142,9 +168,10 @@ export const calculate_seed_survey = (
     for (let re_step = 0; re_step < axis_count; re_step++) {
       const seed_re = render_mode
         ? render_real_coordinates[re_step]
-        : grid_coordinate(SEED_SURVEY_REAL_MIN, re_step);
+        : grid_coordinate(re_step);
       const calculation = calculate(parameter, {
         ...SEED_SURVEY_CALCULATION_SETTINGS,
+        seed_iteration_limit: iteration_limit,
         seed: { re: seed_re, im: seed_im },
       });
       const detector_result = Boolean(calculation?.detection);
@@ -156,6 +183,14 @@ export const calculate_seed_survey = (
             : calculation?.pattern,
         ) || 0,
       );
+      const iteration = Math.max(
+        0,
+        Math.trunc(Number(calculation?.iterations ?? calculation?.iteration) || 0),
+      );
+      if (canvas_buffer) {
+        canvas_buffer[re_step][im_step] = [pattern, iteration];
+      }
+      const fastcalc_pattern = !detector_result && pattern > 0;
       const status = detector_result
         ? calculation.status === "cardinality_detected" && pattern === 1
           ? "single_point_candidate"
@@ -180,7 +215,7 @@ export const calculate_seed_survey = (
         : Object.hasOwn(outcome_counts, status) ? status : "other";
       outcome_counts[outcome]++;
       total_samples++;
-      if (!render_mode && outcome === "unresolved") {
+      if (!render_mode && outcome === "unresolved" && !fastcalc_pattern) {
         unresolved_points.push({
           x: Number(seed_re),
           y: Number(seed_im),
@@ -195,6 +230,14 @@ export const calculate_seed_survey = (
         escaped_points.push({
           x: Number(seed_re),
           y: Number(seed_im),
+          iterations: Number(calculation?.iterations ?? calculation?.iteration) || 0,
+        });
+      }
+      if (!render_mode && fastcalc_pattern) {
+        iteration_points.push({
+          x: Number(seed_re),
+          y: Number(seed_im),
+          pattern,
           iterations: Number(calculation?.iterations ?? calculation?.iteration) || 0,
         });
       }
@@ -216,7 +259,7 @@ export const calculate_seed_survey = (
             minimum_confidence = Math.min(minimum_confidence, confidence);
             maximum_confidence = Math.max(maximum_confidence, confidence);
           }
-          if (!render_mode) {
+          if (!render_mode && detector_result) {
             const orbital_magnitude = orbit_points.reduce((maximum, orbit_point) => {
               const distance = new BigComplex(orbit_point.x, orbit_point.y)
                 .add(negative_Q)
@@ -245,6 +288,8 @@ export const calculate_seed_survey = (
         }
       }
       if (render_mode) {
+        if (fastcalc_pattern) render_status_code = 4;
+        if (uses_canvas_buffer) render_status_code = 5;
         const byte_offset = re_step * SEED_SURVEY_RENDER_BYTES_PER_SAMPLE;
         render_row_view.setUint8(byte_offset, render_status_code);
         render_row_view.setUint32(byte_offset + 1, pattern, true);
@@ -262,8 +307,10 @@ export const calculate_seed_survey = (
           true,
         );
       }
+      const row_complete = re_step === axis_count - 1;
       if (!render_mode && (
-        total_samples % SEED_SURVEY_PROGRESS_INTERVAL === 0 ||
+        (canvas_buffer && row_complete) ||
+        (!canvas_buffer && total_samples % SEED_SURVEY_PROGRESS_INTERVAL === 0) ||
         total_samples === total_expected
       )) {
         on_progress({
@@ -271,14 +318,22 @@ export const calculate_seed_survey = (
           total: total_expected,
           stable_count,
           stable_points: stable_points.slice(reported_stable_point_count),
+          iteration_points: iteration_points.slice(reported_iteration_point_count),
           unresolved_points: unresolved_points.slice(reported_unresolved_point_count),
           escaped_points: escaped_points.slice(reported_escaped_point_count),
+          ...(canvas_buffer ? {
+            canvas_buffer_row: {
+              row_index: im_step,
+              values: canvas_buffer.map((column) => column[im_step]),
+            },
+          } : {}),
           outcome_counts: { ...outcome_counts },
           orbital_magnitude_range: stable_points.length
             ? { min: minimum_orbital_magnitude, max: maximum_orbital_magnitude }
             : null,
         });
         reported_stable_point_count = stable_points.length;
+        reported_iteration_point_count = iteration_points.length;
         reported_unresolved_point_count = unresolved_points.length;
         reported_escaped_point_count = escaped_points.length;
       }
@@ -300,13 +355,17 @@ export const calculate_seed_survey = (
   }
 
   return {
-    real_min: SEED_SURVEY_REAL_MIN,
-    real_max: SEED_SURVEY_REAL_MAX,
-    imaginary_min: SEED_SURVEY_IMAGINARY_MIN,
-    imaginary_max: SEED_SURVEY_IMAGINARY_MAX,
+    real_min: -half_span,
+    real_max: half_span,
+    imaginary_min: -half_span,
+    imaginary_max: half_span,
+    half_span,
+    outside_main_cardioid,
+    uses_canvas_buffer,
+    canvas_buffer,
     step: render_mode
-      ? (SEED_SURVEY_REAL_MAX - SEED_SURVEY_REAL_MIN) / resolution
-      : 1 / SEED_SURVEY_STEPS_PER_UNIT,
+      ? (2 * half_span) / resolution
+      : (2 * half_span) / (SEED_SURVEY_PREVIEW_RESOLUTION - 1),
     resolution,
     render_mode,
     total_samples,
@@ -316,6 +375,7 @@ export const calculate_seed_survey = (
       : null,
     outcome_counts,
     stable_points,
+    iteration_points,
     unresolved_points,
     escaped_points,
     orbital_magnitude_range: (stable_points?.length || 0) > 0
@@ -325,7 +385,11 @@ export const calculate_seed_survey = (
         }
       : null,
     elapsed_ms: performance.now() - started,
-    calculation_settings: SEED_SURVEY_CALCULATION_SETTINGS,
+    iteration_limit,
+    calculation_settings: {
+      ...SEED_SURVEY_CALCULATION_SETTINGS,
+      seed_iteration_limit: iteration_limit,
+    },
   };
 };
 
@@ -362,6 +426,24 @@ const public_seed_survey_job = (job, after_row = 0) => {
           row_start * render_row_bytes,
           (row_start + row_count) * render_row_bytes,
         ).toString("base64"),
+    }
+    : undefined;
+  const preview_row_start = job.uses_canvas_buffer
+    ? Math.max(0, Math.min(job.preview_rows_completed, Math.floor(after_row)))
+    : 0;
+  const preview_row_count = job.uses_canvas_buffer
+    ? Math.min(SEED_SURVEY_RENDER_POLL_ROWS, job.preview_rows_completed - preview_row_start)
+    : 0;
+  const canvas_buffer_batch = job.uses_canvas_buffer
+    ? {
+        row_start: preview_row_start,
+        row_count: preview_row_count,
+        rows: job.canvas_buffer_rows
+          .slice(preview_row_start, preview_row_start + preview_row_count)
+          .map((values, offset) => ({
+            row_index: preview_row_start + offset,
+            values,
+          })),
       }
     : undefined;
   return {
@@ -371,11 +453,18 @@ const public_seed_survey_job = (job, after_row = 0) => {
     progress: job.progress,
     total_samples: job.result?.total_samples || job.progress.total,
     resolution: job.resolution,
+    half_span: job.half_span,
+    iteration_limit: job.iteration_limit,
+    outside_main_cardioid: job.outside_main_cardioid,
+    uses_canvas_buffer: job.uses_canvas_buffer,
     render_mode: job.render_mode,
     render_rows_completed: job.render_rows_completed,
     render_batch,
+    preview_rows_completed: job.preview_rows_completed,
+    canvas_buffer_batch,
     stable_count: job.result?.stable_count ?? job.progress.stable_count ?? 0,
     stable_points: job.result?.stable_points ?? job.progress.stable_points ?? [],
+    iteration_points: job.result?.iteration_points ?? job.progress.iteration_points ?? [],
     unresolved_points: job.result?.unresolved_points ?? job.progress.unresolved_points ?? [],
     escaped_points: job.result?.escaped_points ?? job.progress.escaped_points ?? [],
     outcome_counts: job.result?.outcome_counts ?? job.progress.outcome_counts ?? {},
@@ -388,14 +477,23 @@ const public_seed_survey_job = (job, after_row = 0) => {
 
 export const start_seed_survey_job = (
   parameter,
-  { worker_pool = data_compute_worker_pool, resolution = SEED_SURVEY_PREVIEW_RESOLUTION } = {},
+  {
+    worker_pool = data_compute_worker_pool,
+    resolution = SEED_SURVEY_PREVIEW_RESOLUTION,
+    half_span = SEED_SURVEY_DEFAULT_HALF_SPAN,
+    iteration_limit = SEED_SURVEY_DEFAULT_ITERATION_LIMIT,
+  } = {},
 ) => {
   const render_mode = resolution === SEED_SURVEY_RENDER_RESOLUTION;
+  const normalized_half_span = normalize_seed_survey_half_span(half_span);
+  const normalized_iteration_limit = normalize_seed_survey_iteration_limit(iteration_limit);
   const normalized_resolution = render_mode
     ? SEED_SURVEY_RENDER_RESOLUTION
     : SEED_SURVEY_PREVIEW_RESOLUTION;
   prune_seed_survey_jobs();
-  const focal_key = `${parameter?.x},${parameter?.y}:${normalized_resolution}`;
+  const outside_main_cardioid = !FractoUtil.point_in_main_cardioid(parameter);
+  const uses_canvas_buffer = outside_main_cardioid;
+  const focal_key = `${parameter?.x},${parameter?.y}:${normalized_resolution}:${normalized_half_span}:${normalized_iteration_limit}`;
   for (const existing_job of seed_survey_jobs.values()) {
     if (existing_job.status !== "queued" && existing_job.status !== "running") continue;
     if (existing_job.focal_key === focal_key) return public_seed_survey_job(existing_job);
@@ -412,6 +510,10 @@ export const start_seed_survey_job = (
     worker_task_id: null,
     status: "queued",
     resolution: normalized_resolution,
+    half_span: normalized_half_span,
+    iteration_limit: normalized_iteration_limit,
+    outside_main_cardioid,
+    uses_canvas_buffer,
     render_mode,
     render_buffer: render_mode
       ? Buffer.alloc(
@@ -419,12 +521,15 @@ export const start_seed_survey_job = (
         )
       : null,
     render_rows_completed: 0,
+    preview_rows_completed: 0,
+    canvas_buffer_rows: uses_canvas_buffer ? [] : null,
     progress: {
       completed: 0,
       total: normalized_resolution * normalized_resolution,
       confidence_range: null,
       ...(render_mode ? {} : {
         stable_points: [],
+        iteration_points: [],
         unresolved_points: [],
         escaped_points: [],
       }),
@@ -436,7 +541,12 @@ export const start_seed_survey_job = (
   seed_survey_jobs.set(id, job);
   const worker_task = worker_pool.run(
     "orbital_seed_survey",
-    { parameter, resolution: normalized_resolution },
+    {
+      parameter,
+      resolution: normalized_resolution,
+      half_span: normalized_half_span,
+      iteration_limit: normalized_iteration_limit,
+    },
     undefined,
     {
       task_timeout_ms: render_mode ? 3_600_000 : 300_000,
@@ -461,15 +571,26 @@ export const start_seed_survey_job = (
           const { render_row_data, ...summary } = progress;
           job.progress = summary;
         } else {
+          const { canvas_buffer_row, ...summary } = progress;
+          if (canvas_buffer_row && uses_canvas_buffer) {
+            job.canvas_buffer_rows[canvas_buffer_row.row_index] = canvas_buffer_row.values;
+            job.preview_rows_completed = Math.max(
+              job.preview_rows_completed,
+              canvas_buffer_row.row_index + 1,
+            );
+          }
           const stable_points = job.progress.stable_points || [];
+          const iteration_points = job.progress.iteration_points || [];
           const unresolved_points = job.progress.unresolved_points || [];
           const escaped_points = job.progress.escaped_points || [];
           stable_points.push(...(progress.stable_points || []));
+          iteration_points.push(...(progress.iteration_points || []));
           unresolved_points.push(...(progress.unresolved_points || []));
           escaped_points.push(...(progress.escaped_points || []));
           job.progress = {
-            ...progress,
+            ...summary,
             stable_points,
+            iteration_points,
             unresolved_points,
             escaped_points,
           };
@@ -608,6 +729,7 @@ export const handle_orbitals = (req, res, dependencies = {}) => {
         total_samples: SEED_SURVEY_TOTAL_SAMPLES,
         stable_count: 0,
         stable_points: [],
+        iteration_points: [],
         error: "Compute capacity is busy; retry shortly",
       };
     }
@@ -630,6 +752,12 @@ export const create_seed_survey_start_handler = (
   const resolution = req.query.resolution === undefined
     ? SEED_SURVEY_PREVIEW_RESOLUTION
     : Number(req.query.resolution);
+  const half_span = req.query.half_span === undefined
+    ? SEED_SURVEY_DEFAULT_HALF_SPAN
+    : Number(req.query.half_span);
+  const iteration_limit = req.query.iteration_limit === undefined
+    ? SEED_SURVEY_DEFAULT_ITERATION_LIMIT
+    : Number(req.query.iteration_limit);
   if (!Number.isFinite(parameter.x) || !Number.isFinite(parameter.y)) {
     return res.status(400).json({ error: "Finite re and im values are required" });
   }
@@ -638,8 +766,28 @@ export const create_seed_survey_start_handler = (
       error: `Survey resolution must be ${SEED_SURVEY_PREVIEW_RESOLUTION} or ${SEED_SURVEY_RENDER_RESOLUTION}`,
     });
   }
+  if (
+    !Number.isFinite(half_span) ||
+    half_span < SEED_SURVEY_MIN_HALF_SPAN ||
+    half_span > SEED_SURVEY_MAX_HALF_SPAN
+  ) {
+    return res.status(400).json({
+      error: `Survey half_span must be between ${SEED_SURVEY_MIN_HALF_SPAN} and ${SEED_SURVEY_MAX_HALF_SPAN}`,
+    });
+  }
+  if (
+    !Number.isFinite(iteration_limit) ||
+    iteration_limit < SEED_SURVEY_MIN_ITERATION_LIMIT ||
+    iteration_limit > SEED_SURVEY_MAX_ITERATION_LIMIT
+  ) {
+    return res.status(400).json({
+      error: `Survey iteration_limit must be between ${SEED_SURVEY_MIN_ITERATION_LIMIT} and ${SEED_SURVEY_MAX_ITERATION_LIMIT}`,
+    });
+  }
   try {
-    return res.status(200).json({ result: start_survey(parameter, { resolution }) });
+    return res.status(200).json({
+      result: start_survey(parameter, { resolution, half_span, iteration_limit }),
+    });
   } catch (error) {
     if (error instanceof WorkerPoolOverloadedError) {
       return res.status(503).json({ error: "Compute capacity is busy; retry shortly" });
