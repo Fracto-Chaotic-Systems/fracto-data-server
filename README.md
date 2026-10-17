@@ -257,3 +257,38 @@ Common failures:
 - **Unexpected calculation latency:** reduce resolution/limits and inspect the dated service log.
 
 This service currently has permissive CORS and no authentication middleware. Keep it behind a trusted boundary until authorization, validation, and hardened SQL construction are added.
+
+## Independent survey grid and canvas dimensions
+
+`GET /orbitals/seed-survey` accepts independent square dimensions:
+
+- `grid_size`: positive integer samples per side, default `121`.
+- `canvas_size`: positive integer display pixels per side, default `grid_size`.
+  This is response metadata; it never changes sample count or coordinates.
+- `sampling`: `bounds` (default) includes both seed bounds, or `centers` samples
+  cell centers. A 1×1 grid samples `(0, 0)` with zero step in either mode.
+- `encoding`: `rows` (default) streams decoded pattern/iteration rows, or
+  `packed` streams the established 13-byte records. Either works at any grid size.
+
+For example, `?re=0&im=0&grid_size=157&canvas_size=350` computes 24,649 values
+for a 350×350 display. `grid_size=157&canvas_size=80` computes the same grid.
+The browser scales the grid using the shared SDK renderer; the data service
+never resamples the numerical data to match the display.
+
+`resolution` remains a grid-size alias; conflicting `resolution` and `grid_size`
+values return HTTP 400. Legacy `resolution=1024` requests without `grid_size`
+retain center sampling and packed encoding unless explicitly overridden.
+New `grid_size` requests have no size-dependent sampling or encoding behavior.
+Job start, polling, and final results report `grid_size`, `resolution`,
+`canvas_size`, `sampling`, and `encoding`. The job identity includes these
+options. Existing polling field names (`render_batch`, `canvas_buffer_batch`,
+`render_mode`) remain compatible; `render_mode` now means packed encoding.
+
+All integer sizes within configured capacity are accepted rather than a fixed
+list. `FRACTO_SURVEY_MAX_GRID_SIZE` defaults to `1024`;
+`FRACTO_SURVEY_MAX_CANVAS_SIZE` defaults to `16384`. Set these environment
+variables to fit installation capacity; both Compose application targets forward
+them. Oversized, zero, negative, fractional, and non-finite dimensions are rejected
+before work is submitted or buffers allocated. Existing worker queue, timeout,
+and job-retention controls remain in effect. Raising the grid limit increases
+sample count quadratically.

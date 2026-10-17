@@ -23,15 +23,17 @@ const task_handlers = {
     calculate_orbital_spectrum(query, response);
     return { status: response.status_code, body: response.body };
   },
-  orbital_seed_survey: ({ parameter, resolution, half_span, iteration_limit }, id) => calculate_seed_survey(
-    parameter,
-    undefined,
-    (progress) => parentPort.postMessage({
-      id,
-      progress: { kind: "seed_survey_progress", ...progress },
-    }),
-    { resolution, half_span, iteration_limit },
-  ),
+  orbital_seed_survey: ({ parameter, ...options }, id) =>
+    calculate_seed_survey(
+      parameter,
+      undefined,
+      (progress) =>
+        parentPort.postMessage({
+          id,
+          progress: { kind: "seed_survey_progress", ...progress },
+        }),
+      options,
+    ),
   logistic_map_level_one: ({ iteration_cap, transient_limit }, id) => {
     const outcomes = [];
     const started_at = Date.now();
@@ -52,17 +54,18 @@ const task_handlers = {
         iteration_cap,
         transient_limit,
         retain_sample: false,
-        on_progress: ({ iterations_completed }) => parentPort.postMessage({
-          id,
-          progress: {
-            kind: "iteration_progress",
-            completed: outcomes.length,
-            total: 256,
-            index,
-            r,
-            iterations_completed,
-          },
-        }),
+        on_progress: ({ iterations_completed }) =>
+          parentPort.postMessage({
+            id,
+            progress: {
+              kind: "iteration_progress",
+              completed: outcomes.length,
+              total: 256,
+              index,
+              r,
+              iterations_completed,
+            },
+          }),
       });
       const outcome = {
         index,
@@ -70,13 +73,19 @@ const task_handlers = {
         status: calculation.status,
         reason_code: calculation.reason?.code ?? null,
         period: calculation.cycle?.period ?? null,
-        iterations_completed: calculation.iteration_counts?.iterations_completed ?? 0,
+        iterations_completed:
+          calculation.iteration_counts?.iterations_completed ?? 0,
         timing: calculation.timing,
       };
       outcomes.push(outcome);
       parentPort.postMessage({
         id,
-        progress: { kind: "parameter_completed", completed: outcomes.length, total: 256, outcome },
+        progress: {
+          kind: "parameter_completed",
+          completed: outcomes.length,
+          total: 256,
+          outcome,
+        },
       });
     }
     return { started_at, completed_at: Date.now(), outcomes };

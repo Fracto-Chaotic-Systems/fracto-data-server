@@ -24,7 +24,11 @@ This directory contains the HTTP handlers and calculation helpers used by the Fr
   series, and starts/polls process-local seeded survey jobs. The dedicated
   `GET /orbitals/seed-survey?re=...&im=...` route starts only the survey job;
   `GET /orbitals/seed-survey/:job_id` returns cumulative progress and the final
-  result. Resolution is 121 by default or 1024 for render. Regardless of the
+  result. Independent `grid_size` and `canvas_size` accept positive integers
+  within configurable capacity; `resolution` is a compatibility grid alias.
+  `sampling=bounds|centers` and `encoding=rows|packed` are independent of size.
+  See the service README for defaults, validation, and environment limits.
+  Regardless of the
   focal point's domain, preview rows contain `[pattern, iteration]` pairs and
   render rows use the compact row protocol consumed by the same
   `FractoCanvasBuffer`/`FractoColors` renderer. Pattern-zero pixels retain
@@ -34,7 +38,7 @@ This directory contains the HTTP handlers and calculation helpers used by the Fr
   request's iteration limit is forwarded as `seed_iteration_limit` and defaults
   to 100,000. Render streams 13-byte-per-pixel
   row records in batches of up to 16 rows. Job buffers are process-local;
-  preview/render task limits are five minutes/one hour, and completed jobs
+  decoded/packed task limits are five minutes/one hour, and completed jobs
   expire after 15 minutes. See `handlers/orbitals/README.md` and
   `sdk/FractoCardinality.md` for method, payload, and display semantics.
 - `handle_orbital_discovery.js` detects orbital patterns for discovery requests.

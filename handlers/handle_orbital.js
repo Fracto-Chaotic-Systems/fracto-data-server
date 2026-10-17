@@ -4,7 +4,10 @@ import FractoFastCalc from "@fracto/sdk/FractoFastCalc.js";
 import FractoUtil from "@fracto/sdk/FractoUtil.js";
 import { randomUUID } from "node:crypto";
 import { performance } from "node:perf_hooks";
-import { data_compute_worker_pool, WorkerPoolOverloadedError } from "./worker_task_pool.js";
+import {
+  data_compute_worker_pool,
+  WorkerPoolOverloadedError,
+} from "./worker_task_pool.js";
 
 const seed_survey_jobs = new Map();
 const SEED_SURVEY_JOB_TTL_MS = 15 * 60 * 1_000;
@@ -54,6 +57,63 @@ const SEED_SURVEY_PROGRESS_INTERVAL = 8;
 const SEED_SURVEY_PREVIEW_RESOLUTION = 121;
 const SEED_SURVEY_TOTAL_SAMPLES = SEED_SURVEY_PREVIEW_RESOLUTION ** 2;
 const SEED_SURVEY_RENDER_RESOLUTION = 1024;
+const dimension_limit = (name, fallback) => {
+  const value = Number(process.env[name] ?? fallback);
+  if (
+    !Number.isSafeInteger(value) ||
+    value < 1 ||
+    !Number.isSafeInteger(value ** 2)
+  ) {
+    throw new Error(`${name} must be a positive integer with a safe square`);
+  }
+  return value;
+};
+export const survey_dimensions = (options = {}) => {
+  const grid_size = Number(
+    options.grid_size ?? options.resolution ?? SEED_SURVEY_PREVIEW_RESOLUTION,
+  );
+  const canvas_size = Number(options.canvas_size ?? grid_size);
+  const max_grid = dimension_limit("FRACTO_SURVEY_MAX_GRID_SIZE", 1024);
+  const max_canvas = dimension_limit("FRACTO_SURVEY_MAX_CANVAS_SIZE", 16384);
+  if (
+    !Number.isSafeInteger(grid_size) ||
+    grid_size < 1 ||
+    grid_size > max_grid
+  ) {
+    throw new Error(
+      `Survey grid_size must be an integer between 1 and ${max_grid}`,
+    );
+  }
+  if (
+    !Number.isSafeInteger(canvas_size) ||
+    canvas_size < 1 ||
+    canvas_size > max_canvas
+  ) {
+    throw new Error(
+      `Survey canvas_size must be an integer between 1 and ${max_canvas}`,
+    );
+  }
+  if (
+    options.grid_size !== undefined &&
+    options.resolution !== undefined &&
+    Number(options.resolution) !== grid_size
+  ) {
+    throw new Error(
+      "Survey grid_size and resolution must agree when both are supplied",
+    );
+  }
+  // Preserve the old 1024 request contract; explicit options are size-independent.
+  const legacy_packed =
+    options.grid_size === undefined &&
+    grid_size === SEED_SURVEY_RENDER_RESOLUTION;
+  const sampling = options.sampling ?? (legacy_packed ? "centers" : "bounds");
+  const encoding = options.encoding ?? (legacy_packed ? "packed" : "rows");
+  if (!["bounds", "centers"].includes(sampling))
+    throw new Error("Survey sampling must be bounds or centers");
+  if (!["rows", "packed"].includes(encoding))
+    throw new Error("Survey encoding must be rows or packed");
+  return { grid_size, resolution: grid_size, canvas_size, sampling, encoding };
+};
 const SEED_SURVEY_RENDER_BYTES_PER_SAMPLE = 13;
 const SEED_SURVEY_RENDER_POLL_ROWS = 16;
 const SEED_SURVEY_MIN_ITERATION_LIMIT = 100_000;
@@ -96,12 +156,13 @@ export const calculate_seed_survey = (
   options = {},
 ) => {
   const started = performance.now();
-  const resolution = options.resolution === SEED_SURVEY_RENDER_RESOLUTION
-    ? SEED_SURVEY_RENDER_RESOLUTION
-    : SEED_SURVEY_PREVIEW_RESOLUTION;
+  const dimensions = survey_dimensions(options);
+  const { resolution, sampling, encoding } = dimensions;
   const half_span = normalize_seed_survey_half_span(options.half_span);
-  const iteration_limit = normalize_seed_survey_iteration_limit(options.iteration_limit);
-  const render_mode = resolution === SEED_SURVEY_RENDER_RESOLUTION;
+  const iteration_limit = normalize_seed_survey_iteration_limit(
+    options.iteration_limit,
+  );
+  const render_mode = encoding === "packed";
   const outside_main_cardioid = !FractoUtil.point_in_main_cardioid(parameter);
   // Seed surveys use the same pattern/iteration renderer in every domain.
   // Pattern zero retains the iteration count so FractoColors can shade escapes.
@@ -111,10 +172,7 @@ export const calculate_seed_survey = (
   const unresolved_points = render_mode ? null : [];
   const escaped_points = render_mode ? null : [];
   const canvas_buffer = !render_mode
-    ? Array.from(
-        { length: SEED_SURVEY_PREVIEW_RESOLUTION },
-        () => Array(SEED_SURVEY_PREVIEW_RESOLUTION).fill(null),
-      )
+    ? Array.from({ length: resolution }, () => Array(resolution).fill(null))
     : null;
   const outcome_counts = {
     non_singleton_candidate: 0,
@@ -132,21 +190,26 @@ export const calculate_seed_survey = (
   let minimum_confidence = Infinity;
   let maximum_confidence = -Infinity;
   const grid_coordinate = (index) =>
-    (-half_span + ((2 * half_span * index) / (SEED_SURVEY_PREVIEW_RESOLUTION - 1)))
-      .toFixed(12);
+    (resolution === 1
+      ? 0
+      : -half_span + (2 * half_span * index) / (resolution - 1)
+    ).toFixed(12);
   const render_coordinate = (index) =>
     (-half_span + ((index + 0.5) * 2 * half_span) / resolution).toFixed(12);
   const render_imaginary_coordinate = (index) =>
-    (half_span - ((index + 0.5) * 2 * half_span) / resolution)
-      .toFixed(12);
-  const render_real_coordinates = render_mode
-    ? Array.from({ length: resolution }, (_, index) =>
-        render_coordinate(index))
-    : null;
-  const render_imaginary_coordinates = render_mode
-    ? Array.from({ length: resolution }, (_, index) =>
-        render_imaginary_coordinate(index))
-    : null;
+    (half_span - ((index + 0.5) * 2 * half_span) / resolution).toFixed(12);
+  const render_real_coordinates =
+    sampling === "centers"
+      ? Array.from({ length: resolution }, (_, index) =>
+          render_coordinate(index),
+        )
+      : null;
+  const render_imaginary_coordinates =
+    sampling === "centers"
+      ? Array.from({ length: resolution }, (_, index) =>
+          render_imaginary_coordinate(index),
+        )
+      : null;
   let total_samples = 0;
   let stable_count = 0;
   let reported_stable_point_count = 0;
@@ -154,12 +217,13 @@ export const calculate_seed_survey = (
   let reported_unresolved_point_count = 0;
   let reported_escaped_point_count = 0;
 
-  const axis_count = render_mode ? resolution : SEED_SURVEY_PREVIEW_RESOLUTION;
+  const axis_count = resolution;
   const total_expected = axis_count * axis_count;
   for (let im_step = 0; im_step < axis_count; im_step++) {
-    const seed_im = render_mode
-      ? render_imaginary_coordinates[im_step]
-      : grid_coordinate(SEED_SURVEY_PREVIEW_RESOLUTION - 1 - im_step);
+    const seed_im =
+      sampling === "centers"
+        ? render_imaginary_coordinates[im_step]
+        : grid_coordinate(resolution - 1 - im_step);
     const render_row_data = render_mode
       ? new Uint8Array(resolution * SEED_SURVEY_RENDER_BYTES_PER_SAMPLE)
       : null;
@@ -167,9 +231,10 @@ export const calculate_seed_survey = (
       ? new DataView(render_row_data.buffer)
       : null;
     for (let re_step = 0; re_step < axis_count; re_step++) {
-      const seed_re = render_mode
-        ? render_real_coordinates[re_step]
-        : grid_coordinate(re_step);
+      const seed_re =
+        sampling === "centers"
+          ? render_real_coordinates[re_step]
+          : grid_coordinate(re_step);
       const calculation = calculate(parameter, {
         ...SEED_SURVEY_CALCULATION_SETTINGS,
         seed_iteration_limit: iteration_limit,
@@ -186,7 +251,9 @@ export const calculate_seed_survey = (
       );
       const iteration = Math.max(
         0,
-        Math.trunc(Number(calculation?.iterations ?? calculation?.iteration) || 0),
+        Math.trunc(
+          Number(calculation?.iterations ?? calculation?.iteration) || 0,
+        ),
       );
       if (canvas_buffer) {
         canvas_buffer[re_step][im_step] = [pattern, iteration];
@@ -211,9 +278,14 @@ export const calculate_seed_survey = (
               : pattern > 1
                 ? "cycle_candidate"
                 : "other";
-      const outcome = status === "cycle_candidate"
-        ? pattern > 1 ? "non_singleton_candidate" : "single_point_candidate"
-        : Object.hasOwn(outcome_counts, status) ? status : "other";
+      const outcome =
+        status === "cycle_candidate"
+          ? pattern > 1
+            ? "non_singleton_candidate"
+            : "single_point_candidate"
+          : Object.hasOwn(outcome_counts, status)
+            ? status
+            : "other";
       outcome_counts[outcome]++;
       total_samples++;
       if (!render_mode && outcome === "unresolved" && !fastcalc_pattern) {
@@ -224,14 +296,16 @@ export const calculate_seed_survey = (
           confidence: Number.isFinite(calculation?.detection?.confidence)
             ? calculation.detection.confidence
             : null,
-          iterations: Number(calculation?.iterations ?? calculation?.iteration) || 0,
+          iterations:
+            Number(calculation?.iterations ?? calculation?.iteration) || 0,
         });
       }
       if (!render_mode && outcome === "escaped") {
         escaped_points.push({
           x: Number(seed_re),
           y: Number(seed_im),
-          iterations: Number(calculation?.iterations ?? calculation?.iteration) || 0,
+          iterations:
+            Number(calculation?.iterations ?? calculation?.iteration) || 0,
         });
       }
       if (!render_mode && fastcalc_pattern) {
@@ -239,12 +313,12 @@ export const calculate_seed_survey = (
           x: Number(seed_re),
           y: Number(seed_im),
           pattern,
-          iterations: Number(calculation?.iterations ?? calculation?.iteration) || 0,
+          iterations:
+            Number(calculation?.iterations ?? calculation?.iteration) || 0,
         });
       }
-      let render_status_code = outcome === "escaped" ? 3
-        : outcome === "unresolved" ? 2
-          : 0;
+      let render_status_code =
+        outcome === "escaped" ? 3 : outcome === "unresolved" ? 2 : 0;
       if (pattern > 1 && status === "cycle_candidate") {
         const orbit_points = detector_result
           ? (calculation?.samples || []).slice(-pattern).map((sample) => ({
@@ -261,13 +335,16 @@ export const calculate_seed_survey = (
             maximum_confidence = Math.max(maximum_confidence, confidence);
           }
           if (!render_mode && detector_result) {
-            const orbital_magnitude = orbit_points.reduce((maximum, orbit_point) => {
-              const distance = new BigComplex(orbit_point.x, orbit_point.y)
-                .add(negative_Q)
-                .magnitude()
-                .toNumber();
-              return Math.max(maximum, distance);
-            }, 0);
+            const orbital_magnitude = orbit_points.reduce(
+              (maximum, orbit_point) => {
+                const distance = new BigComplex(orbit_point.x, orbit_point.y)
+                  .add(negative_Q)
+                  .magnitude()
+                  .toNumber();
+                return Math.max(maximum, distance);
+              },
+              0,
+            );
             minimum_orbital_magnitude = Math.min(
               minimum_orbital_magnitude,
               orbital_magnitude,
@@ -283,7 +360,8 @@ export const calculate_seed_survey = (
               confidence: Number.isFinite(calculation?.detection?.confidence)
                 ? calculation.detection.confidence
                 : null,
-              iterations: Number(calculation?.iterations ?? calculation?.iteration) || 0,
+              iterations:
+                Number(calculation?.iterations ?? calculation?.iteration) || 0,
             });
           }
         }
@@ -303,31 +381,46 @@ export const calculate_seed_survey = (
         );
         render_row_view.setUint32(
           byte_offset + 9,
-          Math.max(0, Math.min(0xffffffff,
-            Math.trunc(Number(calculation?.iterations ?? calculation?.iteration) || 0))),
+          Math.max(
+            0,
+            Math.min(
+              0xffffffff,
+              Math.trunc(
+                Number(calculation?.iterations ?? calculation?.iteration) || 0,
+              ),
+            ),
+          ),
           true,
         );
       }
       const row_complete = re_step === axis_count - 1;
-      if (!render_mode && (
-        (canvas_buffer && row_complete) ||
-        (!canvas_buffer && total_samples % SEED_SURVEY_PROGRESS_INTERVAL === 0) ||
-        total_samples === total_expected
-      )) {
+      if (
+        !render_mode &&
+        ((canvas_buffer && row_complete) ||
+          (!canvas_buffer &&
+            total_samples % SEED_SURVEY_PROGRESS_INTERVAL === 0) ||
+          total_samples === total_expected)
+      ) {
         on_progress({
           completed: total_samples,
           total: total_expected,
           stable_count,
           stable_points: stable_points.slice(reported_stable_point_count),
-          iteration_points: iteration_points.slice(reported_iteration_point_count),
-          unresolved_points: unresolved_points.slice(reported_unresolved_point_count),
+          iteration_points: iteration_points.slice(
+            reported_iteration_point_count,
+          ),
+          unresolved_points: unresolved_points.slice(
+            reported_unresolved_point_count,
+          ),
           escaped_points: escaped_points.slice(reported_escaped_point_count),
-          ...(canvas_buffer ? {
-            canvas_buffer_row: {
-              row_index: im_step,
-              values: canvas_buffer.map((column) => column[im_step]),
-            },
-          } : {}),
+          ...(canvas_buffer
+            ? {
+                canvas_buffer_row: {
+                  row_index: im_step,
+                  values: canvas_buffer.map((column) => column[im_step]),
+                },
+              }
+            : {}),
           outcome_counts: { ...outcome_counts },
           orbital_magnitude_range: stable_points.length
             ? { min: minimum_orbital_magnitude, max: maximum_orbital_magnitude }
@@ -364,10 +457,13 @@ export const calculate_seed_survey = (
     outside_main_cardioid,
     uses_canvas_buffer,
     canvas_buffer,
-    step: render_mode
-      ? (2 * half_span) / resolution
-      : (2 * half_span) / (SEED_SURVEY_PREVIEW_RESOLUTION - 1),
-    resolution,
+    step:
+      resolution === 1
+        ? 0
+        : sampling === "centers"
+          ? (2 * half_span) / resolution
+          : (2 * half_span) / (resolution - 1),
+    ...dimensions,
     render_mode,
     total_samples,
     stable_count,
@@ -379,12 +475,13 @@ export const calculate_seed_survey = (
     iteration_points,
     unresolved_points,
     escaped_points,
-    orbital_magnitude_range: (stable_points?.length || 0) > 0
-      ? {
-          min: minimum_orbital_magnitude,
-          max: maximum_orbital_magnitude,
-        }
-      : null,
+    orbital_magnitude_range:
+      (stable_points?.length || 0) > 0
+        ? {
+            min: minimum_orbital_magnitude,
+            max: maximum_orbital_magnitude,
+          }
+        : null,
     elapsed_ms: performance.now() - started,
     iteration_limit,
     calculation_settings: {
@@ -397,13 +494,17 @@ export const calculate_seed_survey = (
 const prune_seed_survey_jobs = () => {
   const now = Date.now();
   for (const [id, job] of seed_survey_jobs) {
-    if (job.status !== "queued" && job.status !== "running" && now - job.updated_at > SEED_SURVEY_JOB_TTL_MS) {
+    if (
+      job.status !== "queued" &&
+      job.status !== "running" &&
+      now - job.updated_at > SEED_SURVEY_JOB_TTL_MS
+    ) {
       seed_survey_jobs.delete(id);
     }
   }
   while (seed_survey_jobs.size >= SEED_SURVEY_MAX_JOBS) {
-    const oldest_finished = [...seed_survey_jobs.entries()].find(([, job]) =>
-      job.status !== "queued" && job.status !== "running",
+    const oldest_finished = [...seed_survey_jobs.entries()].find(
+      ([, job]) => job.status !== "queued" && job.status !== "running",
     );
     if (!oldest_finished) return false;
     seed_survey_jobs.delete(oldest_finished[0]);
@@ -417,23 +518,31 @@ const public_seed_survey_job = (job, after_row = 0) => {
     ? Math.max(0, Math.min(job.render_rows_completed, Math.floor(after_row)))
     : 0;
   const row_count = job.render_mode
-    ? Math.min(SEED_SURVEY_RENDER_POLL_ROWS, job.render_rows_completed - row_start)
+    ? Math.min(
+        SEED_SURVEY_RENDER_POLL_ROWS,
+        job.render_rows_completed - row_start,
+      )
     : 0;
   const render_batch = job.render_mode
     ? {
         row_start,
         row_count,
-        data: job.render_buffer.subarray(
-          row_start * render_row_bytes,
-          (row_start + row_count) * render_row_bytes,
-        ).toString("base64"),
-    }
+        data: job.render_buffer
+          .subarray(
+            row_start * render_row_bytes,
+            (row_start + row_count) * render_row_bytes,
+          )
+          .toString("base64"),
+      }
     : undefined;
   const preview_row_start = job.uses_canvas_buffer
     ? Math.max(0, Math.min(job.preview_rows_completed, Math.floor(after_row)))
     : 0;
   const preview_row_count = job.uses_canvas_buffer
-    ? Math.min(SEED_SURVEY_RENDER_POLL_ROWS, job.preview_rows_completed - preview_row_start)
+    ? Math.min(
+        SEED_SURVEY_RENDER_POLL_ROWS,
+        job.preview_rows_completed - preview_row_start,
+      )
     : 0;
   const canvas_buffer_batch = job.uses_canvas_buffer
     ? {
@@ -454,6 +563,10 @@ const public_seed_survey_job = (job, after_row = 0) => {
     progress: job.progress,
     total_samples: job.result?.total_samples || job.progress.total,
     resolution: job.resolution,
+    grid_size: job.resolution,
+    canvas_size: job.canvas_size,
+    sampling: job.sampling,
+    encoding: job.encoding,
     half_span: job.half_span,
     iteration_limit: job.iteration_limit,
     outside_main_cardioid: job.outside_main_cardioid,
@@ -464,13 +577,22 @@ const public_seed_survey_job = (job, after_row = 0) => {
     preview_rows_completed: job.preview_rows_completed,
     canvas_buffer_batch,
     stable_count: job.result?.stable_count ?? job.progress.stable_count ?? 0,
-    stable_points: job.result?.stable_points ?? job.progress.stable_points ?? [],
-    iteration_points: job.result?.iteration_points ?? job.progress.iteration_points ?? [],
-    unresolved_points: job.result?.unresolved_points ?? job.progress.unresolved_points ?? [],
-    escaped_points: job.result?.escaped_points ?? job.progress.escaped_points ?? [],
-    outcome_counts: job.result?.outcome_counts ?? job.progress.outcome_counts ?? {},
-    confidence_range: job.result?.confidence_range ?? job.progress.confidence_range ?? null,
-    orbital_magnitude_range: job.result?.orbital_magnitude_range ?? job.progress.orbital_magnitude_range ?? null,
+    stable_points:
+      job.result?.stable_points ?? job.progress.stable_points ?? [],
+    iteration_points:
+      job.result?.iteration_points ?? job.progress.iteration_points ?? [],
+    unresolved_points:
+      job.result?.unresolved_points ?? job.progress.unresolved_points ?? [],
+    escaped_points:
+      job.result?.escaped_points ?? job.progress.escaped_points ?? [],
+    outcome_counts:
+      job.result?.outcome_counts ?? job.progress.outcome_counts ?? {},
+    confidence_range:
+      job.result?.confidence_range ?? job.progress.confidence_range ?? null,
+    orbital_magnitude_range:
+      job.result?.orbital_magnitude_range ??
+      job.progress.orbital_magnitude_range ??
+      null,
     result: job.result,
     error: job.error,
   };
@@ -480,24 +602,36 @@ export const start_seed_survey_job = (
   parameter,
   {
     worker_pool = data_compute_worker_pool,
-    resolution = SEED_SURVEY_PREVIEW_RESOLUTION,
+    resolution,
+    grid_size,
+    canvas_size,
+    sampling,
+    encoding,
     half_span = SEED_SURVEY_DEFAULT_HALF_SPAN,
     iteration_limit = SEED_SURVEY_DEFAULT_ITERATION_LIMIT,
   } = {},
 ) => {
-  const render_mode = resolution === SEED_SURVEY_RENDER_RESOLUTION;
+  const dimensions = survey_dimensions({
+    resolution,
+    grid_size,
+    canvas_size,
+    sampling,
+    encoding,
+  });
+  const render_mode = dimensions.encoding === "packed";
   const normalized_half_span = normalize_seed_survey_half_span(half_span);
-  const normalized_iteration_limit = normalize_seed_survey_iteration_limit(iteration_limit);
-  const normalized_resolution = render_mode
-    ? SEED_SURVEY_RENDER_RESOLUTION
-    : SEED_SURVEY_PREVIEW_RESOLUTION;
+  const normalized_iteration_limit =
+    normalize_seed_survey_iteration_limit(iteration_limit);
+  const normalized_resolution = dimensions.grid_size;
   prune_seed_survey_jobs();
   const outside_main_cardioid = !FractoUtil.point_in_main_cardioid(parameter);
   const uses_canvas_buffer = true;
-  const focal_key = `${parameter?.x},${parameter?.y}:${normalized_resolution}:${normalized_half_span}:${normalized_iteration_limit}`;
+  const focal_key = `${parameter?.x},${parameter?.y}:${normalized_resolution}:${normalized_half_span}:${normalized_iteration_limit}:${dimensions.canvas_size}:${dimensions.sampling}:${dimensions.encoding}`;
   for (const existing_job of seed_survey_jobs.values()) {
-    if (existing_job.status !== "queued" && existing_job.status !== "running") continue;
-    if (existing_job.focal_key === focal_key) return public_seed_survey_job(existing_job);
+    if (existing_job.status !== "queued" && existing_job.status !== "running")
+      continue;
+    if (existing_job.focal_key === focal_key)
+      return public_seed_survey_job(existing_job);
     existing_job.worker_pool?.cancel?.(existing_job.worker_task_id);
   }
   if (seed_survey_jobs.size >= SEED_SURVEY_MAX_JOBS) {
@@ -510,7 +644,7 @@ export const start_seed_survey_job = (
     worker_pool,
     worker_task_id: null,
     status: "queued",
-    resolution: normalized_resolution,
+    ...dimensions,
     half_span: normalized_half_span,
     iteration_limit: normalized_iteration_limit,
     outside_main_cardioid,
@@ -518,7 +652,9 @@ export const start_seed_survey_job = (
     render_mode,
     render_buffer: render_mode
       ? Buffer.alloc(
-          normalized_resolution * normalized_resolution * SEED_SURVEY_RENDER_BYTES_PER_SAMPLE,
+          normalized_resolution *
+            normalized_resolution *
+            SEED_SURVEY_RENDER_BYTES_PER_SAMPLE,
         )
       : null,
     render_rows_completed: 0,
@@ -528,12 +664,14 @@ export const start_seed_survey_job = (
       completed: 0,
       total: normalized_resolution * normalized_resolution,
       confidence_range: null,
-      ...(render_mode ? {} : {
-        stable_points: [],
-        iteration_points: [],
-        unresolved_points: [],
-        escaped_points: [],
-      }),
+      ...(render_mode
+        ? {}
+        : {
+            stable_points: [],
+            iteration_points: [],
+            unresolved_points: [],
+            escaped_points: [],
+          }),
     },
     result: null,
     error: null,
@@ -544,7 +682,7 @@ export const start_seed_survey_job = (
     "orbital_seed_survey",
     {
       parameter,
-      resolution: normalized_resolution,
+      ...dimensions,
       half_span: normalized_half_span,
       iteration_limit: normalized_iteration_limit,
     },
@@ -560,7 +698,8 @@ export const start_seed_survey_job = (
         if (!seed_survey_jobs.has(id)) return;
         job.status = "running";
         if (render_mode && progress.render_row_data) {
-          const row_bytes = normalized_resolution * SEED_SURVEY_RENDER_BYTES_PER_SAMPLE;
+          const row_bytes =
+            normalized_resolution * SEED_SURVEY_RENDER_BYTES_PER_SAMPLE;
           Buffer.from(progress.render_row_data).copy(
             job.render_buffer,
             progress.render_row * row_bytes,
@@ -574,7 +713,8 @@ export const start_seed_survey_job = (
         } else {
           const { canvas_buffer_row, ...summary } = progress;
           if (canvas_buffer_row && uses_canvas_buffer) {
-            job.canvas_buffer_rows[canvas_buffer_row.row_index] = canvas_buffer_row.values;
+            job.canvas_buffer_rows[canvas_buffer_row.row_index] =
+              canvas_buffer_row.values;
             job.preview_rows_completed = Math.max(
               job.preview_rows_completed,
               canvas_buffer_row.row_index + 1,
@@ -601,34 +741,42 @@ export const start_seed_survey_job = (
     },
   );
   job.worker_task_id = worker_task.task_id ?? null;
-  worker_task.then((result) => {
-    if (!seed_survey_jobs.has(id)) return;
-    job.status = "completed";
-    job.result = result;
-    job.updated_at = Date.now();
-  }).catch((error) => {
-    if (!seed_survey_jobs.has(id)) return;
-    if (error?.code === "WORKER_TASK_CANCELLED") {
-      job.status = "cancelled";
+  worker_task
+    .then((result) => {
+      if (!seed_survey_jobs.has(id)) return;
+      job.status = "completed";
+      job.result = result;
       job.updated_at = Date.now();
-      return;
-    }
-    job.status = "failed";
-    job.error = error instanceof WorkerPoolOverloadedError
-      ? "Compute capacity is busy; retry shortly"
-      : error.message === "Compute worker task timed out"
-        ? "Seed survey exceeded its worker time limit"
-        : "Seed survey worker failed";
-    job.updated_at = Date.now();
-  });
+    })
+    .catch((error) => {
+      if (!seed_survey_jobs.has(id)) return;
+      if (error?.code === "WORKER_TASK_CANCELLED") {
+        job.status = "cancelled";
+        job.updated_at = Date.now();
+        return;
+      }
+      job.status = "failed";
+      job.error =
+        error instanceof WorkerPoolOverloadedError
+          ? "Compute capacity is busy; retry shortly"
+          : error.message === "Compute worker task timed out"
+            ? "Seed survey exceeded its worker time limit"
+            : "Seed survey worker failed";
+      job.updated_at = Date.now();
+    });
   return public_seed_survey_job(job);
 };
 
 export const handle_seed_survey_job = (req, res) => {
   prune_seed_survey_jobs();
   const job = seed_survey_jobs.get(req.params.job_id);
-  if (!job) return res.status(404).json({ error: "Seed survey was not found or has expired" });
-  return res.status(200).json(public_seed_survey_job(job, Number(req.query?.after_row) || 0));
+  if (!job)
+    return res
+      .status(404)
+      .json({ error: "Seed survey was not found or has expired" });
+  return res
+    .status(200)
+    .json(public_seed_survey_job(job, Number(req.query?.after_row) || 0));
 };
 
 const retro_derivation = (point, limit) => {
@@ -743,59 +891,67 @@ export const handle_orbitals = (req, res, dependencies = {}) => {
 };
 
 /** Starts only the seeded-plane survey, without calculating the legacy series. */
-export const create_seed_survey_start_handler = (
-  start_survey = start_seed_survey_job,
-) => (req, res) => {
-  const parameter = {
-    x: Number(req.query.re),
-    y: Number(req.query.im),
-  };
-  const resolution = req.query.resolution === undefined
-    ? SEED_SURVEY_PREVIEW_RESOLUTION
-    : Number(req.query.resolution);
-  const half_span = req.query.half_span === undefined
-    ? SEED_SURVEY_DEFAULT_HALF_SPAN
-    : Number(req.query.half_span);
-  const iteration_limit = req.query.iteration_limit === undefined
-    ? SEED_SURVEY_DEFAULT_ITERATION_LIMIT
-    : Number(req.query.iteration_limit);
-  if (!Number.isFinite(parameter.x) || !Number.isFinite(parameter.y)) {
-    return res.status(400).json({ error: "Finite re and im values are required" });
-  }
-  if (![SEED_SURVEY_PREVIEW_RESOLUTION, SEED_SURVEY_RENDER_RESOLUTION].includes(resolution)) {
-    return res.status(400).json({
-      error: `Survey resolution must be ${SEED_SURVEY_PREVIEW_RESOLUTION} or ${SEED_SURVEY_RENDER_RESOLUTION}`,
-    });
-  }
-  if (
-    !Number.isFinite(half_span) ||
-    half_span < SEED_SURVEY_MIN_HALF_SPAN ||
-    half_span > SEED_SURVEY_MAX_HALF_SPAN
-  ) {
-    return res.status(400).json({
-      error: `Survey half_span must be between ${SEED_SURVEY_MIN_HALF_SPAN} and ${SEED_SURVEY_MAX_HALF_SPAN}`,
-    });
-  }
-  if (
-    !Number.isFinite(iteration_limit) ||
-    iteration_limit < SEED_SURVEY_MIN_ITERATION_LIMIT ||
-    iteration_limit > SEED_SURVEY_MAX_ITERATION_LIMIT
-  ) {
-    return res.status(400).json({
-      error: `Survey iteration_limit must be between ${SEED_SURVEY_MIN_ITERATION_LIMIT} and ${SEED_SURVEY_MAX_ITERATION_LIMIT}`,
-    });
-  }
-  try {
-    return res.status(200).json({
-      result: start_survey(parameter, { resolution, half_span, iteration_limit }),
-    });
-  } catch (error) {
-    if (error instanceof WorkerPoolOverloadedError) {
-      return res.status(503).json({ error: "Compute capacity is busy; retry shortly" });
+export const create_seed_survey_start_handler =
+  (start_survey = start_seed_survey_job) =>
+  (req, res) => {
+    const parameter = {
+      x: Number(req.query.re),
+      y: Number(req.query.im),
+    };
+    let dimensions;
+    try {
+      dimensions = survey_dimensions(req.query);
+    } catch (error) {
+      return res.status(400).json({ error: error.message });
     }
-    return res.status(500).json({ error: error.message });
-  }
-};
+    const half_span =
+      req.query.half_span === undefined
+        ? SEED_SURVEY_DEFAULT_HALF_SPAN
+        : Number(req.query.half_span);
+    const iteration_limit =
+      req.query.iteration_limit === undefined
+        ? SEED_SURVEY_DEFAULT_ITERATION_LIMIT
+        : Number(req.query.iteration_limit);
+    if (!Number.isFinite(parameter.x) || !Number.isFinite(parameter.y)) {
+      return res
+        .status(400)
+        .json({ error: "Finite re and im values are required" });
+    }
+    if (
+      !Number.isFinite(half_span) ||
+      half_span < SEED_SURVEY_MIN_HALF_SPAN ||
+      half_span > SEED_SURVEY_MAX_HALF_SPAN
+    ) {
+      return res.status(400).json({
+        error: `Survey half_span must be between ${SEED_SURVEY_MIN_HALF_SPAN} and ${SEED_SURVEY_MAX_HALF_SPAN}`,
+      });
+    }
+    if (
+      !Number.isFinite(iteration_limit) ||
+      iteration_limit < SEED_SURVEY_MIN_ITERATION_LIMIT ||
+      iteration_limit > SEED_SURVEY_MAX_ITERATION_LIMIT
+    ) {
+      return res.status(400).json({
+        error: `Survey iteration_limit must be between ${SEED_SURVEY_MIN_ITERATION_LIMIT} and ${SEED_SURVEY_MAX_ITERATION_LIMIT}`,
+      });
+    }
+    try {
+      return res.status(200).json({
+        result: start_survey(parameter, {
+          ...dimensions,
+          half_span,
+          iteration_limit,
+        }),
+      });
+    } catch (error) {
+      if (error instanceof WorkerPoolOverloadedError) {
+        return res
+          .status(503)
+          .json({ error: "Compute capacity is busy; retry shortly" });
+      }
+      return res.status(500).json({ error: error.message });
+    }
+  };
 
 export const handle_seed_survey_start = create_seed_survey_start_handler();
 

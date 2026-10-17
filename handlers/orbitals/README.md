@@ -97,22 +97,22 @@ evidence, and the limits of these numerical candidates. In that in-cardioid
 path, the fixed parameter and each seed are converted to JavaScript numbers;
 passing coordinate strings does not provide arbitrary precision.
 
-The preview has 121×121 samples including both bounds. The page supplies a
-`half_span` value, defaulting to `1.5`, that bounds each coordinate from
-`-half_span` through `+half_span`. The header slider spans `2^-11` through
-`2^1` on a logarithmic scale. Preview spacing is `2 × half_span / 120`.
-Render has 1024×1024 pixel-center samples across the same bounds at
-`2 × half_span / 1024` spacing. The imaginary coordinate is laid out
-top-to-bottom in the image. An outside-main-cardioid preview also builds an
-x-major 121×121 `canvas_buffer` whose entries are `[pattern, iteration]` pairs
-for every seed, including escaping seeds (`pattern: 0`). It sends completed
-image rows as progress batches and returns the full buffer when complete.
-Outside-cardioid render likewise streams these pairs in compact row records,
-so both modes use the shared SDK `FractoCanvasBuffer`/`FractoColors` rendering
-path used by the navigator. In-cardioid preview and render retain the
-diagnostic point and confidence/iteration coloring paths. Render returns one
-compact record per sample in each streamed row, without a million-object
-result array. The 13-byte little-endian record is:
+The current UI chooses 121×121 bound samples for a 255×255 preview,
+150×150 bound samples for a 350×350 detect canvas, or 1024×1024 center samples
+for a 1024×1024 render. These are caller choices, not service restrictions.
+The service accepts independent `grid_size` and `canvas_size` values, with
+`sampling=bounds|centers` and `encoding=rows|packed`. Bound spacing is
+`2 × half_span / (grid_size - 1)`; center spacing is `2 × half_span / grid_size`.
+A one-sample grid uses the center and reports step zero. Imaginary coordinates
+run top-to-bottom. The UI supplies half-span (default `1.5`) and iteration cap.
+
+In every focal-point domain, decoded grids contain `[pattern, iteration]` for
+every seed, including escapes (`pattern: 0`), and stream completed image rows.
+Packed encoding streams the same values in compact records. Both use the shared
+SDK `FractoCanvasBuffer`/`FractoColors` renderer; diagnostic histogram coloring
+has been removed from the UI. Packed results avoid a large per-point object array.
+
+The 13-byte little-endian record is:
 
 | Byte offset | Type | Meaning |
 | --- | --- | --- |
@@ -161,10 +161,12 @@ timeout and render tasks a one-hour timeout. Job state and the full render
 buffer are process-local; completed jobs expire after 15 minutes. Starting a
 different active focal-point/resolution job cancels the earlier active survey.
 The render job endpoint accepts an `after_row` cursor and returns at most 16
-rows per poll. Outside-cardioid preview uses the same cursor to return at most
+rows per poll. Decoded grids use the same cursor to return at most
 16 completed canvas-buffer rows per poll. Restarting the service discards all job state. The data-server
-route is `GET /orbitals/seed-survey?re=...&im=...&resolution=...&half_span=...`;
-resolution may be omitted for the 121 preview or set to 1024 for render.
+route is `GET /orbitals/seed-survey?re=...&im=...&grid_size=...&canvas_size=...`.
+Grid size defaults to 121 and canvas size defaults to grid size. The legacy
+`resolution` grid alias remains supported. See the service README for sampling,
+encoding, compatibility defaults, and configurable dimension capacity limits.
 `half_span` must be between `2^-11` and `2^1`; if omitted, it defaults to
 `1.5`. Poll
 `GET /orbitals/seed-survey/:job_id` for progress and row batches. The top-level
