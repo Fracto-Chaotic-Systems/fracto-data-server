@@ -24,14 +24,15 @@ This directory contains the HTTP handlers and calculation helpers used by the Fr
   series, and starts/polls process-local seeded survey jobs. The dedicated
   `GET /orbitals/seed-survey?re=...&im=...` route starts only the survey job;
   `GET /orbitals/seed-survey/:job_id` returns cumulative progress and the final
-  result. Resolution is 121 by default or 1024 for render. For an in-cardioid
-  focal point, both modes call the SDK's seeded `FractoCardinality` for each
-  seed at a fixed 4,096-iteration horizon with adaptive detection disabled;
-  outside the cardioid, the SDK uses its seeded `FractoFastCalc` compatibility
-  path and supplies `[pattern, iteration]` data to the shared canvas-color
-  pipeline in both preview and render modes. The request's iteration limit is
-  forwarded as `seed_iteration_limit` to `calc_from_seed()` and defaults to
-  100,000. Render streams 13-byte-per-pixel
+  result. Resolution is 121 by default or 1024 for render. Regardless of the
+  focal point's domain, preview rows contain `[pattern, iteration]` pairs and
+  render rows use the compact row protocol consumed by the same
+  `FractoCanvasBuffer`/`FractoColors` renderer. Pattern-zero pixels retain
+  their iteration count so escapes receive the shared adaptive grey treatment.
+  The SDK selects the calculation method for each seed; the domain flag is
+  retained as metadata and does not select a different canvas renderer. The
+  request's iteration limit is forwarded as `seed_iteration_limit` and defaults
+  to 100,000. Render streams 13-byte-per-pixel
   row records in batches of up to 16 rows. Job buffers are process-local;
   preview/render task limits are five minutes/one hour, and completed jobs
   expire after 15 minutes. See `handlers/orbitals/README.md` and

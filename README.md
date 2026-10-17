@@ -241,7 +241,7 @@ Invoke-WebRequest -UseBasicParsing http://127.0.0.1:3002/
 
 Stop the launcher with Ctrl+C afterward.
 
-The service's own `npm test` command is currently a placeholder and intentionally fails. Database integration tests and endpoint contract tests remain future work.
+The service's `npm test` command runs its Node test suite. Review coverage for the endpoint or worker being changed; passing unit tests do not establish live MySQL integration or complete endpoint-contract coverage.
 
 ## Logs and troubleshooting
 

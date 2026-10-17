@@ -103,13 +103,14 @@ export const calculate_seed_survey = (
   const iteration_limit = normalize_seed_survey_iteration_limit(options.iteration_limit);
   const render_mode = resolution === SEED_SURVEY_RENDER_RESOLUTION;
   const outside_main_cardioid = !FractoUtil.point_in_main_cardioid(parameter);
-  const uses_canvas_buffer = outside_main_cardioid;
+  // Seed surveys use the same pattern/iteration renderer in every domain.
+  // Pattern zero retains the iteration count so FractoColors can shade escapes.
+  const uses_canvas_buffer = true;
   const stable_points = render_mode ? null : [];
   const iteration_points = render_mode ? null : [];
   const unresolved_points = render_mode ? null : [];
   const escaped_points = render_mode ? null : [];
-  const canvas_buffer = uses_canvas_buffer
-    && !render_mode
+  const canvas_buffer = !render_mode
     ? Array.from(
         { length: SEED_SURVEY_PREVIEW_RESOLUTION },
         () => Array(SEED_SURVEY_PREVIEW_RESOLUTION).fill(null),
@@ -492,7 +493,7 @@ export const start_seed_survey_job = (
     : SEED_SURVEY_PREVIEW_RESOLUTION;
   prune_seed_survey_jobs();
   const outside_main_cardioid = !FractoUtil.point_in_main_cardioid(parameter);
-  const uses_canvas_buffer = outside_main_cardioid;
+  const uses_canvas_buffer = true;
   const focal_key = `${parameter?.x},${parameter?.y}:${normalized_resolution}:${normalized_half_span}:${normalized_iteration_limit}`;
   for (const existing_job of seed_survey_jobs.values()) {
     if (existing_job.status !== "queued" && existing_job.status !== "running") continue;
@@ -522,7 +523,7 @@ export const start_seed_survey_job = (
       : null,
     render_rows_completed: 0,
     preview_rows_completed: 0,
-    canvas_buffer_rows: uses_canvas_buffer ? [] : null,
+    canvas_buffer_rows: [],
     progress: {
       completed: 0,
       total: normalized_resolution * normalized_resolution,
