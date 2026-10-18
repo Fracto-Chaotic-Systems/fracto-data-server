@@ -334,7 +334,7 @@ export const calculate_seed_survey = (
             minimum_confidence = Math.min(minimum_confidence, confidence);
             maximum_confidence = Math.max(maximum_confidence, confidence);
           }
-          if (!render_mode && detector_result) {
+          if (!render_mode) {
             const orbital_magnitude = orbit_points.reduce(
               (maximum, orbit_point) => {
                 const distance = new BigComplex(orbit_point.x, orbit_point.y)
@@ -354,6 +354,9 @@ export const calculate_seed_survey = (
               orbital_magnitude,
             );
             stable_points.push({
+              cardinality_source: detector_result
+                ? "sdk_seeded_return_detector"
+                : "fracto_fast_calc_seeded",
               x: Number(seed_re),
               y: Number(seed_im),
               pattern,

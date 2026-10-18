@@ -70,6 +70,17 @@ consumer, so the two-point fallback is currently orchestrated separately by
 the HTTP handler and circuitry pipeline. Consolidating that policy is a
 future modularity improvement.
 
+For points outside the main cardioid, the SDK deliberately returns the raw
+`FractoFastCalc` result rather than its detector/Newton envelope. The HTTP
+handler adapts a positive, non-estimated calculator pattern by invoking the
+SDK's low-level native and/or BigComplex Newton solver with that period.
+The response retains `cardinality_source: fracto_fast_calc_outside_cardioid`
+and `detection.status: calculator_pattern_detected`; this is calculator-derived
+candidate provenance, not return-detector evidence or proof. Escaped and
+estimated results are not promoted. This adapter does not change the SDK or
+shared circuitry detection contract. For example, `0.2693785307+0.5397724687i`
+returns four refined points for the orbital-points page.
+
 The HTTP `/orbital_newton` route returns HTTP 200 for an inconclusive detector
 result, with a diagnostic status; invalid coordinates return HTTP 400. Its
 default detector horizon is 4,096 iterations. `adaptive_detection=true` may
@@ -523,3 +534,21 @@ state, the validator should:
 Only a candidate that returns after the proposed cardinality, does not return
 earlier, and remains stable under increased precision should be promoted to a
 discovered orbital.
+
+Seed-survey chart records in `stable_points` include valid non-singleton
+calculator-derived candidates as well as detector-derived candidates. Their
+`cardinality_source` is `fracto_fast_calc_seeded` or `sdk_seeded_return_detector`.
+Calculator records have null confidence; their maximum-distance-to-Q values
+still contribute to the survey magnitude range. This keeps the orbital-points
+page populated outside the main cardioid without changing Assets canvas colors.
+
+The orbital-points page supplies the positive legacy-iterative cardinality to
+`/orbital_newton?cardinality=N&cardinality_source=legacy_iterative`. This route
+validates an integer period in `[1, 5000]` (the calculator's orbital horizon),
+then calls the requested low-level Newton solver directly in either domain.
+It does not redetect or apply the two-point fallback to a supplied period.
+Responses preserve the supplied source and `detection.status` is
+`supplied_cardinality`; detector iterations are zero. `caller_supplied` is the
+other accepted explicit source. Requests without cardinality keep the existing
+detection/outside-cardioid adapter behavior. Direct supplied-period refinement
+caps Newton iterations at 100. These supplied counts remain numerical candidates.

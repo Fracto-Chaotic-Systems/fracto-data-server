@@ -89,3 +89,15 @@ This directory contains the HTTP handlers and calculation helpers used by the Fr
 - `logistic_map/` contains the logistic-map request/result contract, bounded standalone orbit calculator, cautious numerical cycle candidates, and design notes; higher-precision validation, persistence, and HTTP integration are planned next.
 
 Keep route-specific validation and access rules near the handler that enforces them. Add or update the relevant entry here when a handler file or its responsibility changes.
+
+`handle_orbital_newton.js` adapts positive non-estimated calculator patterns
+outside the main cardioid into an explicit Newton response using the SDK's
+low-level solvers. It preserves calculator provenance and leaves the SDK's
+raw outside-domain return contract intact. `handle_orbital.js` includes these
+seeded candidates in `stable_points` and its magnitude range, alongside their
+existing pattern/iteration buffer values. See `orbitals/README.md`.
+
+`/orbital_newton` also accepts a supplied `cardinality` (1–5000) with source
+`legacy_iterative` or `caller_supplied`; this path skips detection and refines
+that exact candidate in either domain. The orbital-points UI uses its existing
+legacy-iterative cardinality for this request. See the orbital pipeline README.

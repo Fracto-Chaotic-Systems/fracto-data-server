@@ -292,3 +292,12 @@ them. Oversized, zero, negative, fractional, and non-finite dimensions are rejec
 before work is submitted or buffers allocated. Existing worker queue, timeout,
 and job-retention controls remain in effect. Raising the grid limit increases
 sample count quadratically.
+
+### Outside-cardioid orbital charts
+
+`/orbital_newton` refines positive non-estimated calculator periods outside the
+main cardioid with the requested Newton mode, labeling their source
+`fracto_fast_calc_outside_cardioid`. Seeded non-singleton calculator results
+also populate the survey's `stable_points` and magnitude range, so the orbital
+points page can display both charts at points such as
+`0.2693785307+0.5397724687i`. These remain numerical candidates, not period proofs.
