@@ -13,7 +13,8 @@ test("passes a detected cardinality into both Newton implementations", () => {
     newton_limit: 1,
     newton_mode: "both",
   });
-  assert.equal(result.status, "cardinality_passed_to_newton");
+  assert.equal(result.status, "closure_not_reached");
+  assert.equal(result.closure_reached, false);
   assert.equal(result.detection.candidate_cardinality, 9);
   assert.equal(result.newton_native.cardinality_supplied, true);
   assert.equal(result.newton_big_complex.cardinality_supplied, true);
@@ -39,8 +40,10 @@ test("detects and forwards a second known cardinality", () => {
     newton_limit: 1,
     newton_mode: "native",
   });
-  assert.equal(result.status, "cardinality_passed_to_newton");
+  assert.equal(result.status, "closure_not_reached");
+  assert.equal(result.closure_reached, false);
   assert.equal(result.detection.candidate_cardinality, 7);
   assert.equal(result.newton.cardinality_supplied, true);
-  assert.equal(result.newton.cardinality, 7);
+  assert.equal(result.newton.cardinality, 0);
+  assert.deepEqual(result.newton.point_list, []);
 });

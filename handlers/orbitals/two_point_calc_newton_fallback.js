@@ -74,7 +74,9 @@ export const run_two_point_calc_newton_fallback = (
     cardinality_source: "fracto_fast_calc_two_point_fallback",
   });
   const newton_result = refinement.newton_big_complex;
-  const points = (newton_result?.point_list || []).map((point) => ({
+  diagnostics.newton_closure_error = newton_result?.closure_error ?? null;
+  diagnostics.newton_closure_tolerance = newton_result?.closure_tolerance;
+  const points = (newton_result?.closure_reached === true ? newton_result.point_list : []).map((point) => ({
     re: Number(point.re),
     im: Number(point.im),
   }));

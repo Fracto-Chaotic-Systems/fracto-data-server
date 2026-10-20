@@ -86,6 +86,7 @@ const get_orbital_points = (focal_point, options = {}) => {
     .filter((point) => Number.isFinite(point.re) && Number.isFinite(point.im));
   if (
     detected.status === "cardinality_passed_to_newton" &&
+    detected.newton_big_complex?.closure_reached === true &&
     refined_points?.length >= 2
   ) {
     const pattern = detected.detection.candidate_cardinality;

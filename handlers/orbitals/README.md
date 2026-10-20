@@ -552,3 +552,19 @@ Responses preserve the supplied source and `detection.status` is
 other accepted explicit source. Requests without cardinality keep the existing
 detection/outside-cardioid adapter behavior. Direct supplied-period refinement
 caps Newton iterations at 100. These supplied counts remain numerical candidates.
+
+Newton results now explicitly report `closure_reached`, `closure_error`, and
+`closure_tolerance` (1e-7). Closure checks every transition, including wraparound;
+BigComplex checks use its decimal precision. Failure has status
+`closure_not_reached`, an empty `point_list`, and accepted `cardinality: 0`.
+The supplied estimate remains `candidate_cardinality` for diagnostics only.
+Callers must require `closure_reached === true`; an iteration-limit approximation
+must never be rendered or counted as an orbital. Closure does not prove the
+supplied primitive period or dynamical stability.
+
+Best-iterate selection in BigComplex uses Decimal comparisons, not JavaScript
+object comparisons, and saves the updated root estimate. This corrects stale
+approximations caused by exponent-form comparisons and avoids constructing the
+saved cycle from the pre-update iterated point. The formerly reported six-point
+99.74% example now closes within tolerance after this correction; an insufficient
+iteration budget remains explicitly rejected.

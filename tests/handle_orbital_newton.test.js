@@ -32,7 +32,9 @@ test("orbital Newton endpoint returns detector and Newton data", () => {
     newton_mode: "native",
   });
   assert.equal(response.code, 200);
-  assert.equal(response.body.status, "cardinality_passed_to_newton");
+  assert.equal(response.body.status, "closure_not_reached");
+  assert.equal(response.body.closure_reached, false);
+  assert.deepEqual(response.body.newton.point_list, []);
   assert.equal(response.body.detection.candidate_cardinality, 7);
   assert.equal(response.body.newton.cardinality_supplied, true);
 });
@@ -74,11 +76,12 @@ test("orbital Newton HTTP response omits investigation-only diagnostics", () => 
       ambiguous: true,
     },
     newton_big_complex: {
+      closure_reached: true,
       point_list,
       cardinality: 37,
       diagnostics: { least_newton_step: "0" },
     },
-    newton: { point_list, cardinality: 37, diagnostics: { verbose: true } },
+    newton: { closure_reached: true, point_list, cardinality: 37, diagnostics: { verbose: true } },
   };
   const response = summarize_orbital_newton_response(result);
   assert.deepEqual(response.detection, {
@@ -138,15 +141,15 @@ test("two-point fallback passes numeric coordinates to FractoFastCalc", () => {
   );
   assert.equal(
     response.body.two_point_calc_newton_fallback.newton_cardinality,
-    calculator_result.pattern,
+    0,
   );
   assert.equal(
     response.body.newton_big_complex.cardinality,
-    calculator_result.pattern,
+    0,
   );
   assert.equal(
     response.body.newton_big_complex.point_list.length,
-    calculator_result.pattern,
+    0,
   );
 });
 
@@ -172,4 +175,16 @@ test("orbital Newton defaults to the shared adaptive candidate for the circuitry
   assert.equal(response.code, 200);
   assert.equal(response.body.detection.candidate_cardinality, 92);
   assert.equal(response.body.iterations, 16384);
+});
+
+test("HTTP summary strips rejected Newton points and preserves closure diagnostics", () => {
+  const result=summarize_orbital_newton_response({
+    status:"closure_not_reached",closure_reached:false,detection:{candidate_cardinality:6},
+    newton_big_complex:{closure_reached:false,status:"closure_not_reached",closure_error:0.5,closure_tolerance:1e-7,cardinality:6,point_list:[{re:1,im:2}]},
+  });
+  assert.equal(result.closure_reached,false);
+  assert.equal(result.newton_big_complex.closure_reached,false);
+  assert.equal(result.newton_big_complex.closure_error,0.5);
+  assert.equal(result.newton_big_complex.cardinality,0);
+  assert.deepEqual(result.newton_big_complex.point_list,[]);
 });

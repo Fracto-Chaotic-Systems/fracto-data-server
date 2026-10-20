@@ -21,8 +21,13 @@ const summarize_detection = (detection) =>
 const summarize_newton = (newton) =>
   newton
     ? {
-        cardinality: newton.cardinality,
-        point_list: newton.point_list,
+        status: newton.status,
+        closure_reached: newton.closure_reached,
+        closure_error: newton.closure_error,
+        closure_tolerance: newton.closure_tolerance,
+        candidate_cardinality: newton.candidate_cardinality,
+        cardinality: newton.closure_reached === true ? newton.cardinality : 0,
+        point_list: newton.closure_reached === true ? newton.point_list : [],
         cycles: newton.cycles,
         time: newton.time,
         cardinality_supplied: newton.cardinality_supplied,
@@ -41,12 +46,14 @@ export const summarize_orbital_newton_response = (result) => {
   const fallback = result.two_point_calc_newton_fallback;
   return {
     status: result.status,
+    closure_reached: result.closure_reached,
     point: result.point,
     domain: result.domain,
     iterations: result.iterations,
     escaped: result.escaped,
     detection: summarize_detection(result.detection),
     cardinality: result.cardinality,
+    candidate_cardinality: result.candidate_cardinality,
     cardinality_source: result.cardinality_source,
     newton_native: summarize_newton(result.newton_native),
     newton_big_complex: summarize_newton(result.newton_big_complex),
@@ -150,6 +157,12 @@ export const refine_supplied_cardinality = (
       : mode === "big_complex"
         ? result.newton_big_complex
         : null;
+  result.closure_reached = [result.newton_native, result.newton_big_complex].filter(Boolean).every(value => value.closure_reached === true);
+  if (!result.closure_reached) {
+    result.status = "closure_not_reached";
+    result.candidate_cardinality = result.cardinality;
+    result.cardinality = 0;
+  }
   return result;
 };
 
@@ -257,6 +270,10 @@ export const handle_orbital_newton = (req, res) => {
       if (fallback.status === "newton_points_available") {
         result.newton_big_complex = {
           ...(result.newton_big_complex || {}),
+          status: "closure_reached",
+          closure_reached: true,
+          closure_error: fallback.diagnostics.newton_closure_error,
+          closure_tolerance: fallback.diagnostics.newton_closure_tolerance,
           cardinality: fallback.cardinality,
           point_list: fallback.points.map(({ re: point_re, im: point_im }) => ({
             re: String(point_re),
@@ -270,6 +287,10 @@ export const handle_orbital_newton = (req, res) => {
             source: "two_point_calc_newton_fallback",
           },
         };
+        result.status = "cardinality_passed_to_newton";
+        result.closure_reached = true;
+        result.cardinality = fallback.cardinality;
+        result.newton = result.newton_big_complex;
         result.two_point_calc_newton_fallback.used_for_newton = true;
       }
     }
