@@ -1,3 +1,4 @@
+import { MINIBROT_LIST_COLUMNS } from "./minibrots.js";
 import { db_connect, db_disconnect, select } from "../mysql.js";
 
 const TABLES = new Set([
@@ -22,6 +23,7 @@ export const handle_query = (req, res) => {
     connection,
     {
       table,
+      columns: table === "free_bailiwicks" ? MINIBROT_LIST_COLUMNS : undefined,
       limit: 1000,
       offset: 0,
       order: "id DESC",

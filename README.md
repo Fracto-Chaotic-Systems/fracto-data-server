@@ -82,7 +82,7 @@ The local start script uses `nodemon`; the root supervisor runs `index.js` direc
 
 ## HTTP behavior
 
-The server accepts JSON and URL-encoded request bodies and currently allows CORS requests from any origin. Most successful database responses use `{ "result": ... }`; error handling is not yet uniform across handlers. All routes are registered in `index.js`.
+The server accepts JSON and URL-encoded request bodies. Credentialed CORS is allowed for the configured UI origin (or explicitly enabled origins); other origins receive non-credentialed wildcard responses. Most successful database responses use `{ "result": ... }`; error handling is not yet uniform across handlers. All routes are registered in `index.js`.
 
 ### Health and logs
 
@@ -107,10 +107,21 @@ Calculation endpoints can be CPU intensive. Validate numeric inputs and use cons
 
 - `GET /minibrots` filters records with optional `is_node` and `is_inline` query parameters. `limit` may request up to 20,000 records per category (the default is 5,000), which is useful for randomized detector benchmarks.
 
+- `PUT /minibrot` inserts a minibrot using a JSON request body; it does not update an existing record.
+- `GET /minibrot/:id/ray-paths` lazily retrieves the selected record's versioned ray cache.
+- `PUT /minibrot/:id/ray-paths` saves one calculated group using a row-locked quality merge.
+
+Ray geometry is excluded from both `/minibrots` and generic `/query?table=free_bailiwicks` lists.
+The new routes retain the normal enabled-user middleware when authentication is configured.
+Migration 003 adds a nullable JSON field; missing schema returns an explanatory 503.
+Large caches are asynchronously compressed transparently inside that field. Saves
+preserve record core/period and explicitly retain the minibrot's `updated_at`.
+See [the shared cache contract](../../sdk/orbitals/RAY_CACHE.md) for payloads,
+limits, versioning, cache eligibility, rollout and the published ray-theory basis.
+
 ### Experimental pyramid detector
 
 `GET /orbital_pyramid?re=<real>&im=<imaginary>` invokes the derivative-pyramid-only cardinality detector. The equivalent `GET /orbital_spectrum?...&detection_mode=pyramid_only` form is also supported, with `detection_mode=pyramid` retained as a compatibility alias. This path is experimental and is intended for measurement only; production Newton and circuitry workflows continue to use the established spectral/return detection paths.
-- `PUT /minibrot` inserts or updates a minibrot using a JSON request body.
 
 ### Assets
 
@@ -256,7 +267,7 @@ Common failures:
 - **Repository update blocked:** commit, stash, or revert tracked changes in this repository.
 - **Unexpected calculation latency:** reduce resolution/limits and inspect the dated service log.
 
-This service currently has permissive CORS and no authentication middleware. Keep it behind a trusted boundary until authorization, validation, and hardened SQL construction are added.
+The normal service middleware requires an enabled user when `FRACTO_AUTH_REQUIRED=true`; internal service calls may use the configured private token. Administrative routes have additional administrator checks. Do not describe this service as having no authentication middleware.
 
 ## Independent survey grid and canvas dimensions
 

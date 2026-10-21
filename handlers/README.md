@@ -101,3 +101,13 @@ existing pattern/iteration buffer values. See `orbitals/README.md`.
 `legacy_iterative` or `caller_supplied`; this path skips detection and refines
 that exact candidate in either domain. The orbital-points UI uses its existing
 legacy-iterative cardinality for this request. See the orbital pipeline README.
+
+`minibrot_ray_paths.js` owns lazy ray-cache reads and transactional per-group
+writes to `free_bailiwicks.ray_paths`. `minibrot_ray_codec.js` asynchronously
+compresses large documents and bounds decompression. Both minibrot list handlers
+and generic free_bailiwicks queries use `MINIBROT_LIST_COLUMNS` so large geometry
+is fetched only through the dedicated record endpoint. Existing minibrot writes
+insert records; the new cache route is a separate update operation. See
+[the cache guide](../../../sdk/orbitals/RAY_CACHE.md) for contracts, deployment
+and the retained published mathematical basis. Endpoints inherit configured
+service authentication and protect changed record identities with a 409 response.

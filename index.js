@@ -2,7 +2,10 @@ import express from "express";
 import chalk from "chalk";
 import path from "path";
 import { require_administrator } from "../../utils/admin_authorization.js";
-import { require_enabled_user_if_configured, require_internal_service } from "../../utils/service_authorization.js";
+import {
+  require_enabled_user_if_configured,
+  require_internal_service,
+} from "../../utils/service_authorization.js";
 
 const FRACTO_DATA_PORT = Number(process.env.FRACTO_DATA_PORT || 3002);
 
@@ -15,6 +18,10 @@ import {
 } from "./handlers/radial_points.js";
 import { handle_fracto_calc } from "./handlers/fracto_calc.js";
 import { handle_farey_sequence } from "./handlers/utils.js";
+import {
+  handle_minibrot_rays_get,
+  handle_minibrot_rays_put,
+} from "./handlers/minibrot_ray_paths.js";
 import { handle_minibrot, handle_minibrots } from "./handlers/minibrots.js";
 import { handle_asset, handle_assets } from "./handlers/handle_asset.js";
 import { handle_video } from "./handlers/handle_video.js";
@@ -79,8 +86,12 @@ export const app = express();
 
 app.use((req, res, next) => {
   const origin = req.headers.origin;
-  const ui_origin = process.env.FRACTO_UI_ORIGIN || `http://localhost:${process.env.FRACTO_UI_PORT || 3006}`;
-  const credentialed = origin && (origin === ui_origin || process.env.FRACTO_ALLOW_CORS_ALL === "true");
+  const ui_origin =
+    process.env.FRACTO_UI_ORIGIN ||
+    `http://localhost:${process.env.FRACTO_UI_PORT || 3006}`;
+  const credentialed =
+    origin &&
+    (origin === ui_origin || process.env.FRACTO_ALLOW_CORS_ALL === "true");
   res.setHeader("Access-Control-Allow-Origin", credentialed ? origin : "*");
   res.vary("Origin");
   if (credentialed) res.setHeader("Access-Control-Allow-Credentials", "true");
@@ -88,7 +99,10 @@ app.use((req, res, next) => {
     "Access-Control-Allow-Methods",
     "GET, POST, PUT, DELETE, OPTIONS",
   ); // Specify allowed methods
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, X-Requested-With");
+  res.setHeader(
+    "Access-Control-Allow-Headers",
+    "Content-Type, X-Requested-With",
+  );
   if (req.method === "OPTIONS") return res.status(204).end();
   next();
 });
@@ -112,12 +126,16 @@ await initialize_user_tables().catch((error) => {
 });
 await initialize_logistic_map_span_catalog().catch((error) => {
   console.error(
-    chalk.red(`logistic-map span catalog initialization failed: ${error.message}`),
+    chalk.red(
+      `logistic-map span catalog initialization failed: ${error.message}`,
+    ),
   );
 });
 await initialize_logistic_map_span_review_sample().catch((error) => {
   console.error(
-    chalk.red(`logistic-map review-sample initialization failed: ${error.message}`),
+    chalk.red(
+      `logistic-map review-sample initialization failed: ${error.message}`,
+    ),
   );
 });
 
@@ -132,13 +150,20 @@ app.listen(FRACTO_DATA_PORT, () => {
 app.get("/", handle_main_status);
 app.get("/healthz", handle_health);
 app.use((req, res, next) => {
-  if (req.path === "/" || req.path === "/healthz" ||
-      (req.method === "GET" && req.path === "/assets" &&
-        Object.keys(req.query).length === 3 && req.query.asset_type === "image" &&
-        req.query.width === "4800" && req.query.height === "4800") ||
-      req.path.startsWith("/user/session/") ||
-      ["/login_event", "/user/bootstrap", "/user/upsert"].includes(req.path) ||
-      req.path === "/ensure_table") return next();
+  if (
+    req.path === "/" ||
+    req.path === "/healthz" ||
+    (req.method === "GET" &&
+      req.path === "/assets" &&
+      Object.keys(req.query).length === 3 &&
+      req.query.asset_type === "image" &&
+      req.query.width === "4800" &&
+      req.query.height === "4800") ||
+    req.path.startsWith("/user/session/") ||
+    ["/login_event", "/user/bootstrap", "/user/upsert"].includes(req.path) ||
+    req.path === "/ensure_table"
+  )
+    return next();
   return require_enabled_user_if_configured(req, res, next);
 });
 app.get("/logs", handle_logs);
@@ -151,6 +176,8 @@ app.put("/radial_point", handle_put_radial_point);
 
 app.get("/minibrots", handle_minibrots);
 app.put("/minibrot", handle_minibrot);
+app.get("/minibrot/:id/ray-paths", handle_minibrot_rays_get);
+app.put("/minibrot/:id/ray-paths", handle_minibrot_rays_put);
 
 app.get("/asset", handle_asset);
 app.get("/assets", handle_assets);
@@ -163,8 +190,14 @@ app.get("/tile_coverage", handle_tile_coverage);
 app.get("/tile", handle_tile_get);
 app.put("/tile", handle_tile);
 app.post("/backup", require_administrator, handle_backup);
-app.get("/query", (req, res, next) => req.query.table === "users"
-  ? require_administrator(req, res, next) : next(), handle_query);
+app.get(
+  "/query",
+  (req, res, next) =>
+    req.query.table === "users"
+      ? require_administrator(req, res, next)
+      : next(),
+  handle_query,
+);
 app.get("/user/session/:id", handle_session_user);
 app.get("/users", require_administrator, handle_users);
 app.get("/login_events", require_administrator, handle_login_events);
@@ -172,15 +205,23 @@ app.post("/login_event", handle_login_event);
 app.post("/user/bootstrap", create_user_bootstrap_route());
 app.post("/user/upsert", create_user_upsert_route());
 app.put("/user/:id", require_administrator, handle_user_update);
-app.post("/ensure_table", (req, res, next) => {
-  if (["users", "login_events"].includes(`${req.body?.table || ""}`.toLowerCase())) {
-    return require_administrator(req, res, next);
-  }
-  if (process.env.FRACTO_AUTH_REQUIRED === "true") {
-    return require_internal_service(req, res, next);
-  }
-  return next();
-}, handle_ensure_table);
+app.post(
+  "/ensure_table",
+  (req, res, next) => {
+    if (
+      ["users", "login_events"].includes(
+        `${req.body?.table || ""}`.toLowerCase(),
+      )
+    ) {
+      return require_administrator(req, res, next);
+    }
+    if (process.env.FRACTO_AUTH_REQUIRED === "true") {
+      return require_internal_service(req, res, next);
+    }
+    return next();
+  },
+  handle_ensure_table,
+);
 app.get("/automation", handle_automation);
 app.post("/automation", handle_automation_create);
 app.post("/automation/claim", handle_claim_automation);
