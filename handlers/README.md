@@ -1,5 +1,10 @@
 # Data server handlers
 
+`minibrot_terrain_region.js` implements GET `/minibrot/:id/terrain-region`.
+It reads ID and saved display settings from the selected freeform
+`free_bailiwicks` record using a bound query, omitting all other record data.
+The tiles service uses it when planning terrain-cache test jobs.
+
 This directory contains the HTTP handlers and calculation helpers used by the Fracto data server. Route registration is in the parent `index.js`; authentication and data access behavior should be documented alongside the handler that owns it.
 
 ## Files

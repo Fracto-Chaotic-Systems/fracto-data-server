@@ -23,6 +23,7 @@ import {
   handle_minibrot_rays_put,
 } from "./handlers/minibrot_ray_paths.js";
 import { handle_minibrot, handle_minibrots } from "./handlers/minibrots.js";
+import { handle_minibrot_terrain_region } from "./handlers/minibrot_terrain_region.js";
 import { handle_asset, handle_assets } from "./handlers/handle_asset.js";
 import { handle_video } from "./handlers/handle_video.js";
 import { handle_video_get } from "./handlers/handle_video_get.js";
@@ -175,6 +176,7 @@ app.get("/radian_data", handle_radian_data);
 app.put("/radial_point", handle_put_radial_point);
 
 app.get("/minibrots", handle_minibrots);
+app.get("/minibrot/:id/terrain-region", handle_minibrot_terrain_region);
 app.put("/minibrot", handle_minibrot);
 app.get("/minibrot/:id/ray-paths", handle_minibrot_rays_get);
 app.put("/minibrot/:id/ray-paths", handle_minibrot_rays_put);
