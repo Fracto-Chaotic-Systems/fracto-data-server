@@ -4,6 +4,10 @@
 It reads ID and saved display settings from the selected freeform
 `free_bailiwicks` record using a bound query, omitting all other record data.
 The tiles service uses it when planning terrain-cache test jobs.
+Database helpers are imported lazily when a valid production request needs them.
+Importing the handler or supplying mock connect/disconnect functions does not
+load `config/mysql.json`, so terrain-cache unit tests run on hosts without
+production database configuration.
 
 This directory contains the HTTP handlers and calculation helpers used by the Fracto data server. Route registration is in the parent `index.js`; authentication and data access behavior should be documented alongside the handler that owns it.
 
