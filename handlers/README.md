@@ -120,3 +120,13 @@ insert records; the new cache route is a separate update operation. See
 [the cache guide](../../../sdk/orbitals/RAY_CACHE.md) for contracts, deployment
 and the retained published mathematical basis. Endpoints inherit configured
 service authentication and protect changed record identities with a 409 response.
+
+## WordNet mappings
+
+`wordnet_mappings.js` serves GET `/wordnet_mappings` behind the normal enabled-user
+gate. It returns `{result: [...]}` with all mapping rows ordered by cardinality,
+using an explicit field allowlist and no caching. Database failures return a generic
+503. Apply root migration 004 before use; no schema is created at request time.
+
+The mappings response includes world_name (migration 005). Names are stored
+separately from WordNet sense labels and definitions.

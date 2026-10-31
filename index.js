@@ -1,3 +1,4 @@
+import { handle_wordnet_mappings } from "./handlers/wordnet_mappings.js";
 import express from "express";
 import chalk from "chalk";
 import path from "path";
@@ -174,6 +175,8 @@ app.get("/fracto_calc", handle_fracto_calc);
 app.get("/utils/farey_sequence", handle_farey_sequence);
 app.get("/radian_data", handle_radian_data);
 app.put("/radial_point", handle_put_radial_point);
+
+app.get("/wordnet_mappings", handle_wordnet_mappings);
 
 app.get("/minibrots", handle_minibrots);
 app.get("/minibrot/:id/terrain-region", handle_minibrot_terrain_region);

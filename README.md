@@ -312,3 +312,9 @@ main cardioid with the requested Newton mode, labeling their source
 also populate the survey's `stable_points` and magnitude range, so the orbital
 points page can display both charts at points such as
 `0.2693785307+0.5397724687i`. These remain numerical candidates, not period proofs.
+
+The worlds page reads GET `/wordnet_mappings` from this service. Apply root migration
+004 first. Associations remain read-only; this endpoint does not update notes.
+
+Apply root migration 005 for world_name before deploying the updated mappings
+endpoint. The all worlds name column reads that database field.
