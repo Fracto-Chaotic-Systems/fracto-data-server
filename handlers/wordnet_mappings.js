@@ -1,5 +1,5 @@
 // Explicit projection keeps unrelated database fields outside this API.
-const FIELDS = [
+export const WORDNET_MAPPING_FIELDS = [
   "cardinality",
   "synset_id",
   "wordnet_version",
@@ -22,12 +22,14 @@ export function create_wordnet_mappings_handler({ connect, disconnect } = {}) {
       const [rows] = await connection
         .promise()
         .query(
-          `SELECT ${FIELDS.join(", ")} FROM wordnet_mappings ORDER BY cardinality ASC`,
+          `SELECT ${WORDNET_MAPPING_FIELDS.join(", ")} FROM wordnet_mappings ORDER BY cardinality ASC`,
         );
       res.setHeader("Cache-Control", "no-store");
       return res.json({
         result: rows.map((row) =>
-          Object.fromEntries(FIELDS.map((field) => [field, row[field]])),
+          Object.fromEntries(
+            WORDNET_MAPPING_FIELDS.map((field) => [field, row[field]]),
+          ),
         ),
       });
     } catch {

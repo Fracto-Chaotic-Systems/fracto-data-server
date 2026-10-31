@@ -130,3 +130,12 @@ using an explicit field allowlist and no caching. Database failures return a gen
 
 The mappings response includes world_name (migration 005). Names are stored
 separately from WordNet sense labels and definitions.
+
+`data_requests/` owns reusable POST /data/request validation, the table registry,
+private access and transactional updates. See its README. It is the editorial
+write path for world_name and notes; GET /wordnet_mappings remains read-only.
+
+world_notes.js adapts trusted-origin browser note edits to the same transactional
+editor. PUT /wordnet_mappings/:cardinality/notes accepts exactly notes and
+expected_notes; it cannot alter names, associations, keys or other tables. Normal
+configured service authentication still applies.

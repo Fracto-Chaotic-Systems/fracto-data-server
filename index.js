@@ -1,3 +1,9 @@
+import {
+  handle_world_notes,
+  require_world_notes_origin,
+} from "./handlers/world_notes.js";
+import { handle_data_request } from "./handlers/data_requests/handler.js";
+import { require_data_editor } from "./handlers/data_requests/authorization.js";
 import { handle_wordnet_mappings } from "./handlers/wordnet_mappings.js";
 import express from "express";
 import chalk from "chalk";
@@ -177,6 +183,12 @@ app.get("/radian_data", handle_radian_data);
 app.put("/radial_point", handle_put_radial_point);
 
 app.get("/wordnet_mappings", handle_wordnet_mappings);
+app.post("/data/request", require_data_editor, handle_data_request);
+app.put(
+  "/wordnet_mappings/:cardinality/notes",
+  require_world_notes_origin,
+  handle_world_notes,
+);
 
 app.get("/minibrots", handle_minibrots);
 app.get("/minibrot/:id/terrain-region", handle_minibrot_terrain_region);

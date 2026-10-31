@@ -318,3 +318,10 @@ The worlds page reads GET `/wordnet_mappings` from this service. Apply root migr
 
 Apply root migration 005 for world_name before deploying the updated mappings
 endpoint. The all worlds name column reads that database field.
+
+## Incremental data edits
+
+POST /data/request provides registered single-record reads and updates, initially
+for world_name and notes in wordnet_mappings. Ordinary record edits need no
+migration. See handlers/data_requests/README.md for curl examples, expected-value
+checks, private access and adding more tables/types. Apply schema migrations first.
