@@ -86,8 +86,13 @@ The server accepts JSON and URL-encoded request bodies. Credentialed CORS is all
 
 ### Health and logs
 
-- `GET /` returns a plain-text welcome message and serves as the health endpoint.
-- `GET /logs` has no active response implementation and should not be used yet.
+- `GET /` returns a plain-text welcome message.
+- `GET /healthz` is the supervisor's database-aware health endpoint. It opens a
+  MySQL connection and runs `SELECT 1`, returning HTTP 200 when successful or
+  HTTP 503 with a redacted error code when the check fails.
+- `GET /logs` returns the service log through the shared `process_logfile`
+  handler. The root `GET /logs?service=data` endpoint also provides centralized
+  access to these records.
 
 ### Fractal calculations
 
