@@ -1,5 +1,10 @@
 # Data service tests
 
+`controlled_corrections.test.js` covers the separate registered-snapshot owner:
+independent proposal validation, explicit approvals, atomic apply/audit, retries,
+conflicts, revocation, rollback revisions and source-file/CLI isolation. All
+datasets are disposable; no live application records or MySQL configuration are used.
+
 Node test suites cover handlers, validation and numerical helpers. Run `npm test`
 from this service directory. `wordnet_mappings.test.js` checks ordered retrieval,
 explicit response fields, connection cleanup and sanitized database failures.

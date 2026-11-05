@@ -18,6 +18,12 @@ Configuration files may contain credentials and are intentionally excluded from 
 
 ## Installation
 
+Controlled corrections for explicitly registered local environment/asset snapshots
+are documented in [corrections/README.md](corrections/README.md). The data service
+independently validates AI proposals and owns explicit approvals, transactional
+application, audit and version-checked rollback. This optional Node >=22.19 CLI
+does not write existing live MySQL records or expose a new HTTP endpoint.
+
 From the root repository:
 
 ```powershell

@@ -146,3 +146,4 @@ php/response
 
 # Generated logistic-map render packets (persistence strategy pending)
 handlers/logistic_map/render_packets/
+runtime/
