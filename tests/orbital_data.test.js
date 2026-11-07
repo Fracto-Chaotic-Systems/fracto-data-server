@@ -12,6 +12,14 @@ import {
   focal_identity,
 } from "../handlers/orbital_data_contract.js";
 import express from "express";
+import { initial_checkpoint } from "../handlers/orbital_data_checkpoint.js";
+const claimed = () => ({
+  owned: true,
+  token: "test",
+  checkpoint: initial_checkpoint(),
+  source: { id: "55", pattern: 1, parameter: { x: "0", y: "0" } },
+  settings: discovery_request({ free_bailiwick_id: 55 }).settings,
+});
 import { create_orbital_data_router } from "../handlers/orbital_data_routes.js";
 import { create_data_request_authorizer } from "../handlers/data_requests/authorization.js";
 import { OrbitalDiscoveryJobs } from "../handlers/orbital_data_jobs.js";
@@ -293,7 +301,10 @@ test("worker admission failures become durable terminal outcomes without saving 
       pattern: 1,
       parameter: { x: "0", y: "0" },
     }),
+    lookup_run: async () => null,
     create_run: async () => ({ id: "run", reused: false }),
+    claim_run: async () => claimed(),
+    save_checkpoint: async () => {},
     get_run: async () => ({ ...row }),
     checkpoint: async (_id, stage, progress, status = "running", error_code) =>
       Object.assign(row, { stage, progress, status, error_code }),
@@ -314,6 +325,70 @@ test("worker admission failures become durable terminal outcomes without saving 
   assert.equal(row.progress.all_orbitals_discovered, false);
 });
 
+test("each landing search publishes fresh counters before entering the worker queue", async () => {
+  const row = { id: "run", status: "queued" };
+  let saved = 0;
+  const starts = [];
+  const store = {
+    source: async () => ({
+      id: "55",
+      pattern: 1,
+      parameter: { x: "0", y: "0" },
+    }),
+    lookup_run: async () => null,
+    create_run: async () => ({ id: "run", reused: false }),
+    claim_run: async () => {
+      const result = claimed();
+      result.checkpoint.stage = "rays";
+      result.checkpoint.orbitals = [
+        { id: "1", period: 1, points: [] },
+        { id: "2", period: 1, points: [] },
+      ];
+      Object.assign(result.checkpoint.progress, {
+        ray_families_processed: 0,
+        ray_families_total: 0,
+      });
+      return result;
+    },
+    save_checkpoint: async () => {},
+    get_run: async () => ({ ...row }),
+    checkpoint: async (_id, stage, progress, status = "running") =>
+      Object.assign(row, { stage, progress: { ...progress }, status }),
+    save_orbital: async () => ({ id: String(++saved), period: 1, points: [] }),
+    save_rays: async () => {},
+  };
+  const pool = {
+    run: (name, _payload, _callback, options) => {
+      if (name === "orbital_survey_discovery")
+        return Promise.resolve({
+          candidates: [{}, {}],
+          attempts: 2,
+          samples: 4,
+          sampled_candidates: 2,
+        });
+      starts.push({
+        processed: row.progress.ray_families_processed,
+        total: row.progress.ray_families_total,
+      });
+      options.on_progress({ phase: "rays", processed: 1024, total: 1024 });
+      return Promise.resolve({
+        ratios: [],
+        status: "attracting",
+        metadata: {},
+      });
+    },
+  };
+  const jobs = new OrbitalDiscoveryJobs({ store, pool });
+  await jobs.start(discovery_request({ free_bailiwick_id: 55 }));
+  while (jobs.active.size)
+    await new Promise((resolve) => setImmediate(resolve));
+  assert.equal(row.status, "completed");
+  assert.deepEqual(starts, [
+    { processed: 0, total: 0 },
+    { processed: 0, total: 0 },
+  ]);
+});
+
 test("run deadline cancels a task even while it waits in the shared worker queue", async () => {
   const row = { id: "run", status: "queued" };
   let reject_task,
@@ -324,7 +399,10 @@ test("run deadline cancels a task even while it waits in the shared worker queue
       pattern: 1,
       parameter: { x: "0", y: "0" },
     }),
+    lookup_run: async () => null,
     create_run: async () => ({ id: "run", reused: false }),
+    claim_run: async () => claimed(),
+    save_checkpoint: async () => {},
     get_run: async () => ({ ...row }),
     checkpoint: async (_id, stage, progress, status = "running", error_code) =>
       Object.assign(row, { stage, progress, status, error_code }),
@@ -352,4 +430,66 @@ test("run deadline cancels a task even while it waits in the shared worker queue
   assert.equal(cancelled, true);
   assert.equal(row.status, "failed");
   assert.equal(row.error_code, "discovery_time_limit");
+});
+
+test("browser resume/cancel bind the job to its bailiwick and reject unsafe origins and payloads", async () => {
+  const calls = [],
+    id = "11111111-1111-4111-8111-111111111111";
+  const app = express();
+  app.use(express.json());
+  app.use(
+    "/orbital-data",
+    create_orbital_data_router({
+      jobs: {
+        latest: async (source) => ({
+          id,
+          source_bailiwick_id: source,
+          resumable: true,
+        }),
+        store: { get_run: async () => ({ id, source_bailiwick_id: "55" }) },
+        resume: async (job) => {
+          calls.push(["resume", job]);
+          return { id: job };
+        },
+        cancel: async (job) => {
+          calls.push(["cancel", job]);
+          return { id: job };
+        },
+      },
+    }),
+  );
+  const server = await new Promise((resolve) => {
+    const s = app.listen(0, "127.0.0.1", () => resolve(s));
+  });
+  const base = `http://127.0.0.1:${server.address().port}/orbital-data`;
+  const origin =
+    process.env.FRACTO_UI_ORIGIN ||
+    `http://localhost:${process.env.FRACTO_UI_PORT || 3006}`;
+  const send = (source, action, body = {}, request_origin = origin) =>
+    fetch(`${base}/bailiwicks/${source}/discovery-jobs/${id}/${action}`, {
+      method: "POST",
+      headers: { origin: request_origin, "content-type": "application/json" },
+      body: JSON.stringify(body),
+    });
+  try {
+    for (const action of ["resume", "cancel"]) {
+      assert.equal(
+        (await send("55", action, {}, "https://untrusted.example")).status,
+        403,
+      );
+      assert.equal((await send("56", action)).status, 404);
+      assert.equal((await send("55", action, { checkpoint: {} })).status, 400);
+    }
+    assert.equal(calls.length, 0);
+    assert.equal((await send("55", "resume")).status, 202);
+    assert.equal((await send("55", "cancel")).status, 200);
+    assert.deepEqual(calls, [
+      ["resume", id],
+      ["cancel", id],
+    ]);
+    const response = await fetch(`${base}/bailiwicks/55/discovery-job`);
+    assert.equal((await response.json()).result.resumable, true);
+  } finally {
+    await new Promise((resolve) => server.close(resolve));
+  }
 });

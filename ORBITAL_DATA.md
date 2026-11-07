@@ -6,10 +6,11 @@ The data service runs it in the existing compute worker pool, stores each
 independent cycle, then calculates its Julia external-ray landing ratios.
 Only the selected `free_bailiwicks.core_point` is processed. No backfill runs.
 
-Apply migrations 007, 008 and `009_orbital-survey-metadata.sql` through the
+Apply migrations 007–010 through the
 normal database runner. Migration 009 adds nullable confirmation metadata to
 headers and run memberships; it does not alter historical points or ratios.
-The five data-service-owned tables are documented in `SCHEMA.md`.
+Migration 010 adds durable checkpoints and execution fencing without backfill.
+The data-service-owned tables are documented in `SCHEMA.md`.
 
 ## Shared numerical workflow
 
@@ -113,9 +114,73 @@ a header, its points and run membership atomically, and complete ray results
 atomically. A per-focal MySQL advisory lock serializes cycle comparison and
 insertion; a run-row lock guards cancellation. Run leases renew every 20 seconds;
 polling an expired 120-second lease reports interruption. Restart never silently
-resumes abandoned work. New explicit runs reuse existing cycles.
+resumes stopped work without an explicit start/resume action. The browser offers
+Resume for canceled/interrupted/failed checkpointed jobs, including jobs with
+already stored results. It reattaches to active work after page reload.
+
+Checkpoints commit before the next work unit: eight survey rows, sixteen positive
+seed refinements, or one complete angle family. A restart may repeat the current
+unfinished unit. Completed units are never counted twice. The full scan grouping
+state (including groups outside the top 100), tested pixels, Decimal point
+strings and stable group IDs are retained until final ranking. Final candidates
+and persistence indices then replace the raw survey/scan buffers.
+
+For rays, the checkpoint retains the numerical assessment, exact family cursor,
+accepted complete families and rejection counters. Completed orbital calculations
+are checkpointed before SQL publication; a crash during publication replays the
+idempotent save, not the ray calculation. Finished orbitals are skipped.
+
+An atomic run-row claim issues a fresh private execution token. All checkpoint,
+progress, point, ratio and heartbeat writes require that token and a live lease.
+A stale worker cannot publish after a new owner claims the run. Concurrent resume
+requests receive one admission and HTTP 409 `bailiwick_busy` for competitors.
+Canceled work stays stopped until explicitly resumed.
+A dead process's ownership expires after at most 120 seconds; there is no takeover
+of a live lease. Every resumed attempt receives a fresh bounded runtime budget.
+
+Checkpoint format 1 uses bounded gzip JSON (64 MiB raw, under 16 MiB compressed),
+with both a calculation-profile signature and the run input fingerprint. Changed
+settings, focal parameters, or incompatible calculation versions cannot silently
+mix with saved progress. Older jobs without checkpoints retain their stored data
+but must start a fresh run; unavailable/incompatible checkpoints return 409.
+
+POST `/orbital-data/discovery-jobs/:uuid/resume` is private and accepts only
+`{}`. Reposting an existing request key also resumes unfinished checkpointed
+work when idle. A fresh private request key starts a separate calculation only
+when that bailiwick has no active lease. Browser start without a key resumes an
+unfinished checkpoint for the same bailiwick ID, retaining its original source
+snapshot/settings, otherwise creates a new run. Coordinates and settings do not
+define job identity. GET lookup can monitor an active job; start/resume cannot
+take it over. Admission and claiming serialize across servers on a per-bailiwick
+MySQL advisory lock, released after the short database operation.
+
+The first compute batch reserves a physical pool worker for the entire execution,
+including gaps for checkpoint and database writes. All subsequent survey, scan,
+and ray batches use that worker. Different bailiwicks may use other workers or
+wait in the bounded queue. Failure ends the execution rather than silently
+moving batches; explicit resume may assign a replacement using its durable
+checkpoint. Completion, cancellation, and failure release the reservation.
+
+GET `/orbital-data/bailiwicks/:id/discovery-job` returns the latest matching
+unfinished job or null. Browser POST
+`/orbital-data/bailiwicks/:id/discovery-jobs/:uuid/resume` and `.../cancel`
+require configured UI Origin, an empty body, and a matching source ID. Run
+responses add `resumable`, `resume_count`, and `checkpoint_phase`; private
+execution tokens and checkpoint payloads are never returned.
+
+Completed/ordinary bounded-partial work is not automatically recalculated.
+Partial work caused by interruption/error remains resumable. No catalog scan,
+source edit, or checkpoint backfill is performed.
 
 ## Verification
+
+`node scripts/verify_orbital_resume.js` from the root tests one real pattern-7
+source in a disposable schema: cancel/resume during scanning, hard process death
+during ray tracing, concurrent resume, worker affinity, competing settings for
+one ID, concurrent distinct bailiwicks, stale-owner rejection across all write
+paths, finalization recovery, and exact discovery/ray parity. Application rows
+are read only. Evidence is saved to `logs/orbital_resume_verification.json`.
+
 
 `node --test tests/orbital_data.test.js tests/orbital_survey_parity.test.js`
 from the data service tests contracts and actual worker parity without MySQL.

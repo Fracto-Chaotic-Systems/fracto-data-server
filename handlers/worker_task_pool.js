@@ -44,15 +44,19 @@ export class WorkerTaskPool {
     this.queue = [];
     this.next_id = 1;
     this.closed = false;
-    this.slots = Array.from({ length: Math.max(1, size) }, () => ({ worker: null, job: null, generation: 0 }));
+    this.failed_affinities = new Set();
+    this.slots = Array.from({ length: Math.max(1, size) }, () => ({ worker: null, job: null, generation: 0, affinity: null }));
   }
 
   run(task, payload, callback, options = {}) {
-    const { on_progress, on_started } = options;
+    const { on_progress, on_started, affinity = null } = options;
     let task_id = null;
     const promise = new Promise((resolve, reject) => {
       if (this.closed) return reject(new Error("Compute worker pool is closed"));
-      if (!this.slots.some((slot) => !slot.job) && this.queue.length >= this.max_queue) {
+      if (affinity && this.failed_affinities.has(affinity)) return reject(new Error("Assigned compute worker failed; resume the job"));
+      const assigned = affinity && this.slots.find((slot) => slot.affinity === affinity);
+      const available = assigned ? !assigned.job : this.slots.some((slot) => !slot.job && !slot.affinity);
+      if (!available && this.queue.length >= this.max_queue) {
         this.record_metric("data_worker_task_duration", 0, "overloaded");
         return reject(new WorkerPoolOverloadedError());
       }
@@ -61,6 +65,7 @@ export class WorkerTaskPool {
         id: task_id, task, payload, queued_at: performance.now(), resolve, reject,
         on_progress,
         on_started,
+        affinity,
         task_timeout_ms: bounded_integer(options.task_timeout_ms, this.task_timeout_ms, 1, 3_600_000),
       });
       this.pump();
@@ -71,6 +76,17 @@ export class WorkerTaskPool {
         .catch(() => {});
     }
     return promise;
+  }
+
+  /** Keep a worker reserved across checkpoint writes until its execution ends. */
+  release(affinity) {
+    for (const slot of this.slots) {
+      if (slot.affinity !== affinity) continue;
+      if (slot.job) throw new Error("Cannot release an active compute worker");
+      slot.affinity = null;
+    }
+    this.failed_affinities.delete(affinity);
+    this.pump();
   }
 
   /** Cancel a queued task or terminate its worker if it is already running. */
@@ -89,6 +105,7 @@ export class WorkerTaskPool {
     slot.job = null;
     slot.worker = null;
     slot.generation += 1;
+    if (slot.affinity) this.failed_affinities.add(slot.affinity);
     clearTimeout(job.timer);
     this.record_metric("data_worker_task_duration", performance.now() - job.started_at, "cancelled");
     job.reject(new WorkerTaskCancelledError());
@@ -101,14 +118,23 @@ export class WorkerTaskPool {
     if (this.closed) return;
     for (const slot of this.slots) {
       if (slot.job || !this.queue.length) continue;
-      const job = this.queue.shift();
+      const index = this.queue.findIndex((job) => slot.affinity
+        ? job.affinity === slot.affinity
+        : !job.affinity || !this.slots.some((other) => other.affinity === job.affinity));
+      if (index < 0) continue;
+      const [job] = this.queue.splice(index, 1);
+      if (job.affinity && this.failed_affinities.has(job.affinity)) {
+        job.reject(new Error("Assigned compute worker failed; resume the job"));
+        continue;
+      }
+      slot.affinity = job.affinity;
       this.ensure_worker(slot);
       job.started_at = performance.now();
       this.record_metric("data_worker_task_wait", job.started_at - job.queued_at, "started");
       slot.job = job;
       job.timer = setTimeout(() => this.timeout(slot, job), job.task_timeout_ms);
       slot.worker.ref?.();
-      job.on_started?.();
+      job.on_started?.({ thread_id: slot.worker.threadId, generation: slot.generation });
       slot.worker.postMessage({ id: job.id, task: job.task, payload: job.payload });
     }
   }
@@ -143,7 +169,7 @@ export class WorkerTaskPool {
     worker.on("exit", (code) => {
       if (slot.generation !== generation || this.closed) return;
       slot.worker = null;
-      if (slot.job) this.fail(slot, generation, `Compute worker exited (${code})`);
+      this.fail(slot, generation, `Compute worker exited (${code})`);
       this.pump();
     });
   }
@@ -154,6 +180,7 @@ export class WorkerTaskPool {
     slot.job = null;
     slot.worker = null;
     slot.generation += 1;
+    if (slot.affinity) this.failed_affinities.add(slot.affinity);
     this.record_metric("data_worker_task_duration", performance.now() - job.started_at, "timeout");
     job.reject(new Error("Compute worker task timed out"));
     worker?.terminate();
@@ -163,8 +190,12 @@ export class WorkerTaskPool {
   fail(slot, generation, message) {
     if (slot.generation !== generation || this.closed) return;
     const job = slot.job;
+    const worker = slot.worker;
+    slot.generation += 1;
+    if (slot.affinity) this.failed_affinities.add(slot.affinity);
     slot.job = null;
     slot.worker = null;
+    worker?.terminate();
     if (job) {
       clearTimeout(job.timer);
       this.record_metric("data_worker_task_duration", performance.now() - job.started_at, "error");

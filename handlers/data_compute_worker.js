@@ -3,7 +3,11 @@ import { parentPort } from "node:worker_threads";
 import { calculate_orbital_spectrum } from "./handle_orbital_spectrum.js";
 import { calculate_seed_survey } from "./handle_orbital.js";
 import { calculate_logistic_orbit } from "./logistic_map/calculator.js";
-import { calculate_orbital_survey_discovery } from "./orbital_data_scan.js";
+import {
+  calculate_orbital_survey_discovery,
+  calculate_orbital_survey_rows,
+  calculate_orbital_survey_scan,
+} from "./orbital_data_scan.js";
 import {
   discover_orbital_batch,
   discover_orbital_ray_batch,
@@ -13,10 +17,24 @@ import {
 // Keep task names allowlisted. Worker messages contain only cloneable payloads;
 // HTTP request/response objects and database connections stay on the main thread.
 const task_handlers = {
-  orbital_survey_discovery: (payload, id) => calculate_orbital_survey_discovery(payload, (progress) => parentPort.postMessage({ id, progress })),
+  orbital_survey_rows: (payload, id) =>
+    calculate_orbital_survey_rows(payload, (progress) =>
+      parentPort.postMessage({ id, progress }),
+    ),
+  orbital_survey_scan: (payload, id) =>
+    calculate_orbital_survey_scan(payload, (progress) =>
+      parentPort.postMessage({ id, progress }),
+    ),
+  orbital_survey_discovery: (payload, id) =>
+    calculate_orbital_survey_discovery(payload, (progress) =>
+      parentPort.postMessage({ id, progress }),
+    ),
   orbital_discovery_batch: discover_orbital_batch,
   orbital_discovery_ray_batch: discover_orbital_ray_batch,
-  orbital_landing_ratios: (payload, id) => calculate_orbital_landing_ratios(payload, (progress) => parentPort.postMessage({ id, progress })),
+  orbital_landing_ratios: (payload, id) =>
+    calculate_orbital_landing_ratios(payload, (progress) =>
+      parentPort.postMessage({ id, progress }),
+    ),
   orbital_spectrum: ({ query }) => {
     const response = {
       status_code: 200,

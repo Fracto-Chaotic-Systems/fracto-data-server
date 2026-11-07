@@ -428,6 +428,8 @@ shape; there is no prior orbital-storage format to normalize or backfill.
 | `status`, `stage` | `VARCHAR(32)` | required | Lifecycle and execution stage; enumerated in the protocol. |
 | `progress` | `JSON` | required | Progress object described below; initially `{}`. |
 | `error_code` | `VARCHAR(64)` | nullable | Sanitized failure code; null on ordinary bounded completion. |
+| `execution_token` | ASCII binary `CHAR(36)` | nullable | Private owner generation; migration 010. Every worker publication and heartbeat is fenced by this value and the lease. |
+| `resume_count` | `INT UNSIGNED` | no / `0` | Number of actual ownership resumptions; simultaneous attachments do not increment it. |
 | `cancel_requested` | `TINYINT(1)` | no / `0` | Publication guard set during cancellation. |
 | `lease_expires_at` | `DATETIME(3)` | nullable | Database-clock recovery lease, initially/renewed 120 seconds ahead. |
 | `created_at` | `DATETIME(3)` | no / current timestamp | Creation time. |
@@ -554,11 +556,38 @@ Composite primary key `(run_id,orbital_id)` preserves many-to-many provenance
 across repeated discoveries. No personal/user fields are stored. Verification
 is the opt-in disposable-MySQL command documented in `ORBITAL_DATA.md`.
 
+## `orbital_discovery_checkpoints` table
+
+Introduced by migration 010, InnoDB. No historical checkpoint rows are created.
+
+| Field | Type | Null/default | Meaning |
+| --- | --- | --- | --- |
+| run_id | ASCII binary CHAR(36) | required, primary key/FK | Owning orbital_discovery_runs row. |
+| format_version | INT UNSIGNED | required | Checkpoint format, currently 1. |
+| phase | VARCHAR(32) | required | survey, scan, persisting, rays, or done. |
+| payload | MEDIUMBLOB | required | Bounded gzip JSON, below 16 MiB compressed and 64 MiB inflated. |
+| updated_at | DATETIME(3) | current timestamp, auto-update | Last committed durable unit. |
+
+The payload stores version, profile signature, input_hash (run request_hash),
+phase, logical progress, survey rows, complete scan groups and tested pixels,
+final ranked candidates, persisted orbital records/indices, current ray-family
+cursor and assessment, completed families, and a completed ray result pending
+publication. Raw survey/scan state is released after final ranking. Completed
+orbitals and ray results are retained until finalization. Codec failures and
+version/input mismatches fail closed; older run rows normalize to no checkpoint
+and resumable=false. Format does not contain executable code or renderer geometry.
+
+The run row is locked when claiming or committing a checkpoint. Execution tokens
+fence progress, heartbeats, orbital saves and ray saves as well as checkpoints.
+A new generation resets cancel_requested and error_code while restoring durable
+progress, preserving the same UUID and immutable parameter/settings snapshots.
+No new source/focal point is created by resumption.
+
 ## Version history
 
 | Version | Document | Change | Migration notes |
 | --- | --- | --- | --- |
-| - | - | No persisted schema version has been established yet. | - |
+| 010 | Orbital checkpoint format 1 | Durable resumable discovery and fenced execution. | Additive columns/table; no backfill. |
 
 ## Schema maintenance
 

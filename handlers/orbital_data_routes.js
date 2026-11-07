@@ -10,6 +10,15 @@ import {
 import { OrbitalDiscoveryJobs } from "./orbital_data_jobs.js";
 import { trusted_mutation_origin } from "../../../utils/auth_request_origin.js";
 
+const require_empty_body = (body) => {
+  if (
+    !body ||
+    typeof body !== "object" ||
+    Array.isArray(body) ||
+    Object.keys(body).length
+  )
+    throw fail("invalid_request");
+};
 const safe = (handler) => async (req, res) => {
   try {
     await handler(req, res);
@@ -41,6 +50,50 @@ export const create_orbital_data_router = ({
   const router = express.Router();
   // Narrow browser action. Global enabled-user middleware precedes this router;
   // the browser supplies only an ID and cannot widen the server's compute limits.
+  router.get(
+    "/bailiwicks/:id/discovery-job",
+    safe(async (req, res) => {
+      res.json({ result: await jobs.latest(positive_id(req.params.id)) });
+    }),
+  );
+  router.post(
+    "/bailiwicks/:id/discovery-jobs/:job/cancel",
+    (req, res, next) => {
+      if (trusted_mutation_origin(req, res)) next();
+    },
+    safe(async (req, res) => {
+      require_empty_body(req.body);
+      const id = run_id(req.params.job);
+      const run = await jobs.store.get_run(id);
+      if (run.source_bailiwick_id !== positive_id(req.params.id))
+        throw fail("discovery_job_not_found", 404);
+      res.json({ result: await jobs.cancel(id) });
+    }),
+  );
+  router.post(
+    "/bailiwicks/:id/discovery-jobs/:job/resume",
+    (req, res, next) => {
+      if (trusted_mutation_origin(req, res)) next();
+    },
+    safe(async (req, res) => {
+      require_empty_body(req.body);
+      const id = run_id(req.params.job),
+        run = await jobs.store.get_run(id);
+      if (run.source_bailiwick_id !== positive_id(req.params.id))
+        throw fail("discovery_job_not_found", 404);
+      res.status(202).json({ result: await jobs.resume(id) });
+    }),
+  );
+  router.post(
+    "/discovery-jobs/:id/resume",
+    authorize,
+    safe(async (req, res) => {
+      require_empty_body(req.body);
+      res
+        .status(202)
+        .json({ result: await jobs.resume(run_id(req.params.id)) });
+    }),
+  );
   router.post(
     "/bailiwicks/:id/discovery-jobs",
     (req, res, next) => {

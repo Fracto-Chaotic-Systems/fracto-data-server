@@ -119,7 +119,7 @@ Calculation endpoints can be CPU intensive. Validate numeric inputs and use cons
 `/orbital-data` starts bounded discovery jobs from one selected
 `free_bailiwicks.core_point` (freeform, inline, or nodal), stores independent ordered cycles and exact Julia
 landing ratios, and retrieves joined progressions. It uses the existing SDK
-solvers/ray calculations and data-worker pool. Apply root migrations 007–009 first;
+solvers/ray calculations and data-worker pool. Apply root migrations 007–010 first;
 there is no automatic backfill. See [ORBITAL_DATA.md](ORBITAL_DATA.md) for the
 request contract, authorization, numerical limits, recovery, and the opt-in
 single-core-point MySQL verification.
@@ -350,3 +350,20 @@ POST /data/request provides registered single-record reads and updates, initiall
 for world_name and notes in wordnet_mappings. Ordinary record edits need no
 migration. See handlers/data_requests/README.md for curl examples, expected-value
 checks, private access and adding more tables/types. Apply schema migrations first.
+
+Orbital jobs now have durable work-unit checkpoints and fenced execution tokens.
+Canceled/interrupted work resumes from the last committed unit with unchanged
+counts/rankings and completed ray work. The UI reattaches to active jobs and
+exposes Cancel/Resume; legacy jobs without checkpoints need one fresh run.
+
+Each active execution reserves one physical compute worker across survey, scan,
+checkpoint writes, and landing-ray batches. Worker failure ends that execution;
+resuming claims a new fenced token and may use a replacement worker. A healthy
+execution is never moved between workers. Reservations are released at termination.
+
+Calculation exclusivity uses `source_bailiwick_id`, independent of coordinates,
+settings, request keys, or clients. Start/claim operations serialize on a MySQL
+bailiwick advisory lock and reject competing active leases with HTTP 409
+`bailiwick_busy`. Other bailiwicks can run concurrently. Read-only job lookup still
+returns the active job for monitoring. A resumed checkpoint keeps its original
+input snapshot and settings. This needs no additional schema migration or backfill.

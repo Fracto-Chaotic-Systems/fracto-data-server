@@ -1,5 +1,12 @@
 import { randomUUID } from "node:crypto";
 import {
+  CHECKPOINT_VERSION,
+  initial_checkpoint,
+  encode_checkpoint,
+  decode_checkpoint,
+  checkpoint_stage,
+} from "./orbital_data_checkpoint.js";
+import {
   ORBITAL_CALCULATION_VERSION,
   canonical_orbital,
   same_orbital_cycle,
@@ -11,12 +18,13 @@ import {
   json_value,
   hash,
   focal_identity,
+  discovery_request,
 } from "./orbital_data_contract.js";
 import { create_orbital_database_pool } from "./orbital_data_database.js";
 export { open_orbital_database } from "./orbital_data_database.js";
 const terminal = ["completed", "partial", "cancelled", "failed", "interrupted"];
 const run_fields =
-  "id, source_bailiwick_id, focal_re, focal_im, source_pattern, settings, calculation_version, status, stage, progress, error_code, cancel_requested, created_at, updated_at";
+  "id, source_bailiwick_id, focal_re, focal_im, source_pattern, settings, calculation_version, status, stage, progress, error_code, cancel_requested, resume_count, created_at, updated_at";
 const header_fields =
   "id, free_bailiwick_id, focal_re, focal_im, period, precision_digits, closure_error, closure_tolerance, identity_tolerance, calculation_version, ray_status, ray_metadata, discovery_metadata";
 const points_for = async (db, id) => {
@@ -25,6 +33,29 @@ const points_for = async (db, id) => {
     [id],
   );
   return rows;
+};
+
+const request_digest = (source, request) =>
+  hash([
+    ORBITAL_CALCULATION_VERSION,
+    source.id,
+    source.parameter,
+    source.pattern,
+    request.settings,
+  ]);
+const restartable_sql =
+  "SELECT r.id FROM orbital_discovery_runs r LEFT JOIN orbital_discovery_checkpoints c ON c.run_id=r.id WHERE r.source_bailiwick_id=? AND (c.run_id IS NOT NULL OR r.status IN ('queued','running')) AND (c.phase<>'done' OR r.status IN ('queued','running','cancelled','interrupted','failed')) AND r.status IN ('queued','running','interrupted','cancelled','failed','partial') ORDER BY (r.status IN ('queued','running') AND r.lease_expires_at>NOW(3)) DESC,r.created_at DESC,r.id DESC LIMIT 1";
+
+const bailiwick_lock = (id) => hash(["orbital_bailiwick", String(id)]);
+
+// Called under the bailiwick's database lock when admitting or claiming work.
+// Leases remain authoritative, including for runs created by older servers.
+const assert_bailiwick_idle = async (db, source_id, except_id = "") => {
+  const [rows] = await db.execute(
+    "SELECT id FROM orbital_discovery_runs WHERE source_bailiwick_id=? AND id<>? AND status IN ('queued','running') AND cancel_requested=0 AND lease_expires_at>NOW(3) LIMIT 1",
+    [source_id, except_id],
+  );
+  if (rows.length) throw fail("bailiwick_busy", 409);
 };
 
 /** All calculations stay outside connections/transactions; opens are injectable. */
@@ -78,14 +109,13 @@ export class OrbitalDataStore {
     }, this.source_open);
   }
   async create_run(source, request) {
-    const request_hash = hash([
-      ORBITAL_CALCULATION_VERSION,
-      source.id,
-      source.parameter,
-      source.pattern,
-      request.settings,
-    ]);
+    const request_hash = request_digest(source, request);
+    const initial = initial_checkpoint(request_hash),
+      payload = await encode_checkpoint(initial);
     return this.with_db(async (db) => {
+      let locked = false,
+        transaction = false;
+      const lock_key = bailiwick_lock(source.id);
       const existing = async () => {
         const [rows] = await db.execute(
           "SELECT id,request_hash FROM orbital_discovery_runs WHERE request_key=?",
@@ -96,16 +126,26 @@ export class OrbitalDataStore {
           throw fail("request_key_conflict", 409);
         return { id: rows[0].id, reused: true };
       };
-      if (request.request_key) {
-        const found = await existing();
-        if (found) return found;
-      }
-      const id = randomUUID();
       try {
+        const [locks] = await db.execute("SELECT GET_LOCK(?,10) AS acquired", [
+          lock_key,
+        ]);
+        if (Number(locks[0].acquired) !== 1)
+          throw fail("focal_point_busy", 503);
+        locked = true;
+        await assert_bailiwick_idle(db, source.id);
+        if (request.request_key) {
+          const found = await existing();
+          if (found) return found;
+        } else {
+          const [rows] = await db.execute(restartable_sql, [source.id]);
+          if (rows.length) return { id: rows[0].id, reused: true };
+        }
+        const id = randomUUID();
+        await db.beginTransaction();
+        transaction = true;
         await db.execute(
-          `INSERT INTO orbital_discovery_runs
-          (id,request_key,request_hash,source_bailiwick_id,focal_key,focal_re,focal_im,source_pattern,settings,calculation_version,status,stage,progress,lease_expires_at)
-          VALUES (?,?,?,?,?,?,?,?,?,?,'queued','queued','{}',DATE_ADD(NOW(3),INTERVAL 120 SECOND))`,
+          "INSERT INTO orbital_discovery_runs (id,request_key,request_hash,source_bailiwick_id,focal_key,focal_re,focal_im,source_pattern,settings,calculation_version,status,stage,progress,lease_expires_at) VALUES (?,?,?,?,?,?,?,?,?,?,'queued','queued','{}',DATE_ADD(NOW(3),INTERVAL 120 SECOND))",
           [
             id,
             request.request_key,
@@ -119,12 +159,158 @@ export class OrbitalDataStore {
             ORBITAL_CALCULATION_VERSION,
           ],
         );
+        await db.execute(
+          "INSERT INTO orbital_discovery_checkpoints (run_id,format_version,phase,payload) VALUES (?,?,?,?)",
+          [id, CHECKPOINT_VERSION, initial.stage, payload],
+        );
+        await db.commit();
+        transaction = false;
+        return { id, reused: false };
       } catch (error) {
+        if (transaction) await db.rollback();
         if (request.request_key && error.code === "ER_DUP_ENTRY")
           return existing();
         throw error;
+      } finally {
+        if (locked) {
+          try { await db.execute("SELECT RELEASE_LOCK(?)", [lock_key]); }
+          catch (error) { db.destroy(); throw error; }
+        }
       }
-      return { id, reused: false };
+    });
+  }
+  async lookup_run(source, request) {
+    return this.with_db(async (db) => {
+      await assert_bailiwick_idle(db, source.id);
+      if (!request.request_key) {
+        const [rows] = await db.execute(restartable_sql, [
+          source.id,
+        ]);
+        return rows[0]?.id || null;
+      }
+      const [rows] = await db.execute(
+        "SELECT id,request_hash FROM orbital_discovery_runs WHERE request_key=?",
+        [request.request_key],
+      );
+      if (
+        rows.length &&
+        rows[0].request_hash !== request_digest(source, request)
+      )
+        throw fail("request_key_conflict", 409);
+      return rows[0]?.id || null;
+    });
+  }
+  async latest_job(source, request) {
+    const id = await this.with_db(async (db) => {
+      const [rows] = await db.execute(restartable_sql, [
+        source.id,
+      ]);
+      return rows[0]?.id;
+    });
+    return id ? this.get_run(id) : null;
+  }
+  async claim_run(id) {
+    return this.with_db(async (db) => {
+      const [sources] = await db.execute("SELECT source_bailiwick_id FROM orbital_discovery_runs WHERE id=?", [id]);
+      if (!sources.length) throw fail("discovery_job_not_found", 404);
+      const source_id = String(sources[0].source_bailiwick_id);
+      const lock_key = bailiwick_lock(source_id);
+      const [locks] = await db.execute("SELECT GET_LOCK(?,10) AS acquired", [lock_key]);
+      if (Number(locks[0].acquired) !== 1) throw fail("bailiwick_busy", 409);
+      try {
+        await db.beginTransaction();
+        await assert_bailiwick_idle(db, source_id, id);
+        const [rows] = await db.execute(
+          "SELECT *,lease_expires_at>NOW(3) AS lease_active FROM orbital_discovery_runs WHERE id=? FOR UPDATE",
+          [id],
+        );
+        if (!rows.length) throw fail("discovery_job_not_found", 404);
+        const row = rows[0];
+        if (row.calculation_version !== ORBITAL_CALCULATION_VERSION)
+          throw fail("checkpoint_version_mismatch", 409);
+        if (["completed"].includes(row.status)) {
+          await db.commit();
+          return { owned: false };
+        }
+        if (
+          ["queued", "running"].includes(row.status) &&
+          row.execution_token &&
+          Number(row.lease_active) === 1
+        ) {
+          throw fail("bailiwick_busy", 409);
+        }
+        const [checkpoints] = await db.execute(
+          "SELECT payload FROM orbital_discovery_checkpoints WHERE run_id=?",
+          [id],
+        );
+        if (!checkpoints.length) throw fail("checkpoint_unavailable", 409);
+        const checkpoint = await decode_checkpoint(checkpoints[0].payload);
+        const source = {
+          id: String(row.source_bailiwick_id),
+          pattern: Number(row.source_pattern),
+          ...focal_identity({ x: row.focal_re, y: row.focal_im }),
+        };
+        const request = discovery_request({
+          free_bailiwick_id: source.id,
+          settings: json_value(row.settings),
+        });
+        if (
+          checkpoint.input_hash !== row.request_hash ||
+          request_digest(source, request) !== row.request_hash
+        )
+          throw fail("checkpoint_input_mismatch", 409);
+        if (checkpoint.stage === "done" && row.status === "partial") {
+          await db.commit();
+          return { owned: false };
+        }
+        const token = randomUUID();
+        const resumed = row.execution_token != null || row.status !== "queued";
+        await db.execute(
+          "UPDATE orbital_discovery_runs SET execution_token=?,resume_count=resume_count+?,cancel_requested=0,status='queued',stage='queued',error_code=NULL,progress=?,lease_expires_at=DATE_ADD(NOW(3),INTERVAL 120 SECOND) WHERE id=?",
+          [token, resumed ? 1 : 0, JSON.stringify(checkpoint.progress), id],
+        );
+        await db.commit();
+        return {
+          owned: true,
+          token,
+          checkpoint,
+          settings: request.settings,
+          source,
+        };
+      } catch (error) {
+        await db.rollback();
+        throw error;
+      } finally {
+        try { await db.execute("SELECT RELEASE_LOCK(?)", [lock_key]); }
+        catch (error) { db.destroy(); throw error; }
+      }
+    });
+  }
+  async save_checkpoint(id, checkpoint, token) {
+    const payload = await encode_checkpoint(checkpoint);
+    return this.with_db(async (db) => {
+      await db.beginTransaction();
+      try {
+        const owner = await this.assert_active(db, id, token);
+        if (checkpoint.input_hash !== owner.request_hash)
+          throw fail("checkpoint_input_mismatch", 409);
+        await db.execute(
+          "UPDATE orbital_discovery_checkpoints SET phase=?,format_version=?,payload=? WHERE run_id=?",
+          [checkpoint.stage, CHECKPOINT_VERSION, payload, id],
+        );
+        await db.execute(
+          "UPDATE orbital_discovery_runs SET stage=?,progress=?,lease_expires_at=DATE_ADD(NOW(3),INTERVAL 120 SECOND) WHERE id=?",
+          [
+            checkpoint_stage(checkpoint),
+            JSON.stringify(checkpoint.progress),
+            id,
+          ],
+        );
+        await db.commit();
+      } catch (error) {
+        await db.rollback();
+        throw error;
+      }
     });
   }
   async get_run(id) {
@@ -140,12 +326,25 @@ export class OrbitalDataStore {
       );
       if (!rows.length) throw fail("discovery_job_not_found", 404);
       const row = rows[0];
+      const [checkpoints] = await db.execute(
+        "SELECT phase,updated_at FROM orbital_discovery_checkpoints WHERE run_id=?",
+        [id],
+      );
       const [results] = await db.execute(
         "SELECT orbital_id,disposition,discovery_method,discovery_metadata FROM orbital_discovery_results WHERE run_id=? ORDER BY orbital_id",
         [id],
       );
       return {
         ...row,
+        resume_count: Number(row.resume_count || 0),
+        resumable: Boolean(
+          checkpoints.length &&
+          ["cancelled", "interrupted", "failed", "partial"].includes(
+            row.status,
+          ) &&
+          (checkpoints[0].phase !== "done" || row.status !== "partial"),
+        ),
+        checkpoint_phase: checkpoints[0]?.phase || null,
         source_bailiwick_id: String(row.source_bailiwick_id),
         settings: json_value(row.settings),
         progress: json_value(row.progress),
@@ -158,23 +357,30 @@ export class OrbitalDataStore {
       };
     });
   }
-  async checkpoint(id, stage, progress, status = "running", error_code = null) {
+  async checkpoint(
+    id,
+    stage,
+    progress,
+    status = "running",
+    error_code = null,
+    token = null,
+  ) {
     return this.with_db(async (db) => {
       const [result] = await db.execute(
         `UPDATE orbital_discovery_runs SET stage=?,status=?,progress=?,error_code=?,
         lease_expires_at=DATE_ADD(NOW(3),INTERVAL 120 SECOND)
-        WHERE id=? AND cancel_requested=0 AND status IN ('queued','running')`,
-        [stage, status, JSON.stringify(progress), error_code, id],
+        WHERE id=? AND cancel_requested=0 AND status IN ('queued','running') AND execution_token<=>? AND lease_expires_at>=NOW(3)`,
+        [stage, status, JSON.stringify(progress), error_code, id, token],
       );
       if (!result.affectedRows) throw fail("job_not_active", 409);
     });
   }
-  async heartbeat(id) {
+  async heartbeat(id, token = null) {
     return this.with_db(async (db) => {
       const [result] = await db.execute(
         `UPDATE orbital_discovery_runs SET lease_expires_at=DATE_ADD(NOW(3),INTERVAL 120 SECOND)
-        WHERE id=? AND cancel_requested=0 AND status IN ('queued','running')`,
-        [id],
+        WHERE id=? AND cancel_requested=0 AND status IN ('queued','running') AND execution_token<=>? AND lease_expires_at>=NOW(3)`,
+        [id, token],
       );
       if (!result.affectedRows) throw fail("job_not_active", 409);
     });
@@ -189,19 +395,22 @@ export class OrbitalDataStore {
     );
     return this.get_run(id);
   }
-  async assert_active(db, id) {
+  async assert_active(db, id, token = null) {
     const [rows] = await db.execute(
-      "SELECT status,cancel_requested FROM orbital_discovery_runs WHERE id=? FOR UPDATE",
+      "SELECT status,cancel_requested,execution_token,request_hash,lease_expires_at>NOW(3) AS lease_active FROM orbital_discovery_runs WHERE id=? FOR UPDATE",
       [id],
     );
     if (
       !rows.length ||
       terminal.includes(rows[0].status) ||
-      rows[0].cancel_requested
+      rows[0].cancel_requested ||
+      (rows[0].execution_token ?? null) !== token ||
+      Number(rows[0].lease_active) !== 1
     )
       throw fail("job_not_active", 409);
+    return rows[0];
   }
-  async save_orbital(run, source, candidate) {
+  async save_orbital(run, source, candidate, token = null) {
     const checked = canonical_orbital(
       source.parameter,
       candidate.points,
@@ -224,7 +433,7 @@ export class OrbitalDataStore {
         if (Number(lock[0].acquired) !== 1) throw fail("focal_point_busy", 503);
         locked = true;
         await db.beginTransaction();
-        await this.assert_active(db, run);
+        await this.assert_active(db, run, token);
         const [headers] = await db.execute(
           `SELECT ${header_fields} FROM orbital_progressions WHERE focal_key=? AND period=?`,
           [source.focal_key, checked.period],
@@ -323,12 +532,12 @@ export class OrbitalDataStore {
       }
     });
   }
-  async save_rays(run, orbital, result) {
+  async save_rays(run, orbital, result, token = null) {
     validate_landing_families(result.ratios, orbital.period);
     return this.with_db(async (db) => {
       await db.beginTransaction();
       try {
-        await this.assert_active(db, run);
+        await this.assert_active(db, run, token);
         const [headers] = await db.execute(
           "SELECT id,ray_status FROM orbital_progressions WHERE id=? FOR UPDATE",
           [orbital.id],

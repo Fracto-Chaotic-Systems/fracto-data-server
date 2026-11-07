@@ -219,7 +219,16 @@ export const calculate_seed_survey = (
 
   const axis_count = resolution;
   const total_expected = axis_count * axis_count;
-  for (let im_step = 0; im_step < axis_count; im_step++) {
+  const row_start = Math.max(
+    0,
+    Math.min(axis_count, Math.floor(options.row_start ?? 0)),
+  );
+  const row_end = Math.max(
+    row_start,
+    Math.min(axis_count, Math.floor(options.row_end ?? axis_count)),
+  );
+  total_samples = row_start * axis_count;
+  for (let im_step = row_start; im_step < row_end; im_step++) {
     const seed_im =
       sampling === "centers"
         ? render_imaginary_coordinates[im_step]
