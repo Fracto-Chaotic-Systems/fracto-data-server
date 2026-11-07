@@ -75,6 +75,7 @@ import {
   handle_orbital_pyramid,
 } from "./handlers/handle_orbital_spectrum.js";
 import { handle_orbital_newton } from "./handlers/handle_orbital_newton.js";
+import { create_orbital_data_router } from "./handlers/orbital_data_routes.js";
 import {
   handle_logistic_map_job_status,
   handle_logistic_map_level_one_start,
@@ -191,6 +192,7 @@ app.put(
 );
 
 app.get("/minibrots", handle_minibrots);
+app.use("/orbital-data", create_orbital_data_router());
 app.get("/minibrot/:id/terrain-region", handle_minibrot_terrain_region);
 app.put("/minibrot", handle_minibrot);
 app.get("/minibrot/:id/ray-paths", handle_minibrot_rays_get);

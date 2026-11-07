@@ -13,6 +13,14 @@ This directory contains the HTTP handlers and calculation helpers used by the Fr
 
 ## Files
 
+- `orbital_data_contract.js`, `orbital_data_jobs.js`, `orbital_data_store.js`,
+  `orbital_data_database.js`, and `orbital_data_routes.js` implement durable bounded orbital discovery,
+  transactional progression/ratio storage, cancellation, and joined retrieval.
+  See [../ORBITAL_DATA.md](../ORBITAL_DATA.md). The three new numerical task
+  names remain allowlisted in `data_compute_worker.js`; no DB objects enter workers.
+  The selected-bailiwick browser action also checks the configured UI Origin;
+  private start/cancel endpoints keep their private authorizer. Migration 008
+  adds the indexed primary source ID to new or rediscovered orbital headers.
 - `beast_mode.js` approximates points along the configured polynomial orbit.
 - `beast_mode_data.js` stores coefficient sets used by beast-mode calculations.
 - `claim_automation.js` claims the next eligible automation job for a worker.
@@ -139,3 +147,9 @@ world_notes.js adapts trusted-origin browser note edits to the same transactiona
 editor. PUT /wordnet_mappings/:cardinality/notes accepts exactly notes and
 expected_notes; it cannot alter names, associations, keys or other tables. Normal
 configured service authentication still applies.
+
+`orbital_data_scan.js` runs the shared Seed Surveys scan through worker task
+`orbital_survey_discovery`, using the existing seed-survey calculation.
+`orbital_data_jobs.js` persists its ranked candidates before scheduling
+`orbital_landing_ratios`; legacy worker tasks remain available. See
+[the persistent protocol](../ORBITAL_DATA.md) for v2 bounds and migration 009.

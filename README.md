@@ -114,6 +114,20 @@ Calculation endpoints can be CPU intensive. Validate numeric inputs and use cons
 - `GET /radian_data` reads stored radial data using `theta_num`, `theta_den`, and `precision`.
 - `PUT /radial_point` stores radial-point information. Supported fields include rational radius and angle components, point and seed coordinates, cardinality, iterations, magnitude, resolution, and focal coordinates.
 
+### Persistent orbital discovery
+
+`/orbital-data` starts bounded discovery jobs from one selected
+`free_bailiwicks.core_point` (freeform, inline, or nodal), stores independent ordered cycles and exact Julia
+landing ratios, and retrieves joined progressions. It uses the existing SDK
+solvers/ray calculations and data-worker pool. Apply root migrations 007–009 first;
+there is no automatic backfill. See [ORBITAL_DATA.md](ORBITAL_DATA.md) for the
+request contract, authorization, numerical limits, recovery, and the opt-in
+single-core-point MySQL verification.
+The Study UI's narrow, configured-origin-only calculation route accepts one
+selected entry ID with an empty body. Stored headers expose an indexed primary
+`free_bailiwick_id`, while reads still use the exact core parameter to retain
+every distinct orbital at that point.
+
 ### Minibrots
 
 - `GET /minibrots` filters records with optional `is_node` and `is_inline` query parameters. `limit` may request up to 20,000 records per category (the default is 5,000), which is useful for randomized detector benchmarks.

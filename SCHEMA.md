@@ -407,6 +407,153 @@ The table itself does not enforce task semantics, ordering, or execution
 constraints. Those rules belong to the server identified by
 `automation_type`.
 
+## `orbital_discovery_runs` table
+
+Data-service-owned, added by root migration `007_orbital-progressions.sql`.
+InnoDB; no existing table or source bailiwick is modified. Protocol and limits:
+[ORBITAL_DATA.md](ORBITAL_DATA.md). This is the initial `orbital-discovery-v1`
+shape; there is no prior orbital-storage format to normalize or backfill.
+
+| Field | MySQL type | Null/default | Meaning |
+| --- | --- | --- | --- |
+| `id` | ASCII binary `CHAR(36)` | required, primary key | UUID v4 job ID. |
+| `request_key` | ASCII binary `VARCHAR(128)` | nullable, unique | Optional idempotency key. |
+| `request_hash` | ASCII binary `CHAR(64)` | required | SHA-256 of calculation version, source ID, normalized core coordinates, source pattern and settings. |
+| `source_bailiwick_id` | `BIGINT UNSIGNED` | required | Source record reference; deliberately no FK so the snapshot survives source retirement. |
+| `focal_key` | ASCII binary `CHAR(64)` | required | SHA-256 of canonical `[re,im]` decimal strings. |
+| `focal_re`, `focal_im` | ASCII `VARCHAR(768)` | required | Snapshotted core parameter, magnitude at most 16. |
+| `source_pattern` | `INT UNSIGNED` | required | Positive source pattern, not orbital identity. |
+| `settings` | `JSON` | required | Validated settings object described below. |
+| `calculation_version` | `VARCHAR(64)` | required | `orbital-discovery-v2` for new calculations; historical versions retained. |
+| `status`, `stage` | `VARCHAR(32)` | required | Lifecycle and execution stage; enumerated in the protocol. |
+| `progress` | `JSON` | required | Progress object described below; initially `{}`. |
+| `error_code` | `VARCHAR(64)` | nullable | Sanitized failure code; null on ordinary bounded completion. |
+| `cancel_requested` | `TINYINT(1)` | no / `0` | Publication guard set during cancellation. |
+| `lease_expires_at` | `DATETIME(3)` | nullable | Database-clock recovery lease, initially/renewed 120 seconds ahead. |
+| `created_at` | `DATETIME(3)` | no / current timestamp | Creation time. |
+| `updated_at` | `DATETIME(3)` | no / current timestamp, auto-update | Last run change or lease renewal. |
+
+Index `(focal_key, created_at)` supports parameter/run lookup. `request_key`
+is unique when present; multiple NULL keys permit explicitly separate runs.
+Database timestamp interpretation follows the configured MySQL session timezone;
+leases compare exclusively against that same session's `NOW(3)`.
+
+`settings` has exactly the nine numeric properties `max_period`, `grid_size`,
+`half_span`, `precision_digits`, `newton_iterations`, `iteration_limit`,
+`max_angle_period`, `max_families`, and `max_orbitals`. Defaults/ranges are in
+the protocol table and validated before database access. `progress` has optional
+integer counters `attempts`, `orbital_count`, `ratios`, current `period` and
+`angle_period`; `ray_outcomes` maps SDK outcome strings to integer counts.
+Terminal progress adds Boolean `search_complete` (configured search only) and
+`all_orbitals_discovered` (always false). Initial queued progress may be `{}`.
+
+## `orbital_progressions` table
+
+Data-service-owned, InnoDB, introduced by migration 007. No uniqueness constraint
+on focal parameter or period: distinct cycles of the same period must coexist.
+
+| Field | MySQL type | Null/default | Meaning |
+| --- | --- | --- | --- |
+| `id` | `BIGINT UNSIGNED` | no / auto-increment primary key | Stable orbital identity; API serializes as a string. |
+| `free_bailiwick_id` | `BIGINT UNSIGNED` | nullable / `NULL` | Indexed primary source table entry, added by migration 008. Set on insert or the first rediscovery of an older unlinked orbital. |
+| `focal_key` | ASCII binary `CHAR(64)` | required | Exact normalized focal lookup digest. |
+| `focal_re`, `focal_im` | ASCII `VARCHAR(768)` | required | Canonical decimal focal parameter. |
+| `period` | `INT UNSIGNED` | required | Cycle length accepted by the shared Seed Surveys scan, up to 4096; no period-4 filter. |
+| `precision_digits` | `INT UNSIGNED` | required | Accepted Newton arithmetic precision, 64–256. |
+| `closure_error` | ASCII `VARCHAR(768)` | required | Maximum transition residual as a decimal string, 32 significant digits. |
+| `closure_tolerance` | ASCII `VARCHAR(768)` | required | `1e-7` for the shared survey, independently checked on all transitions; legacy strict callers use `1e-24`. |
+| `identity_tolerance` | ASCII `VARCHAR(768)` | required | `1e-7` for shared survey cycles; legacy strict callers use `1e-20`. |
+| `calculation_version` | `VARCHAR(64)` | required | `orbital-discovery-v2` for new calculations; historical versions retained. |
+| `ray_status` | `VARCHAR(32)` | no / `pending` | Separate SDK ray outcome; never inferred from an empty child table. |
+| `ray_metadata` | `JSON` | nullable | Compact ray calculation evidence described below. |
+| `discovery_metadata` | `JSON` | nullable | Latest scan confirmation and provenance; added by migration 009. |
+| `created_at` | `DATETIME(3)` | no / current timestamp | Initial acceptance. |
+| `updated_at` | `DATETIME(3)` | no / current timestamp, auto-update | Last attached ray result. |
+
+Index `(focal_key, period)` narrows full ordered-cycle comparisons. An advisory
+lock on the focal digest serializes comparison and insertion. Coordinates and
+point ordering are retained on rediscovery rather than silently replaced.
+Migration `008_orbital-bailiwick-source.sql` adds nullable `free_bailiwick_id`
+and index `idx_orbital_bailiwick` without recalculating or bulk-updating existing
+orbitals. Saves populate a missing source ID and retain an existing primary
+reference; additional source associations remain in discovery-run provenance.
+No source FK is enforced, so retiring a bailiwick does not destroy calculation
+history. Reads serialize this field as a string or null. `free_bailiwicks`
+contains the freeform, inline, and nodal entries accepted by this interface.
+
+`ray_metadata` is null before calculation. Otherwise its object contains `status`
+(SDK outcome string), `multiplier` (null or `{modulus,log_modulus,phase}`, numbers
+or null for nonfinite values), `connectedness` (null or `{status,method}`),
+`precision_digits` (integer or null), `geometry_arithmetic`
+(`native_with_sdk_terminal_precision_check`), `ray_options` (shared accuracy settings), and `search` (null or object).
+Search contains `strategy: doubling_families`, integer `evaluations`, `candidates`,
+`rejected`, `max_angle_period`, `max_families`, and Boolean `budget_reached`,
+`exhausted`, `complete` (the SDK currently reports false). Complete validated
+families are retained even if a later attempt finds no supported rays.
+
+## `orbital_progression_points` table
+
+Data-service-owned, InnoDB, introduced by migration 007.
+
+| Field | MySQL type | Null/default | Meaning |
+| --- | --- | --- | --- |
+| `orbital_id` | `BIGINT UNSIGNED` | required | FK to `orbital_progressions.id`. |
+| `point_index` | `INT UNSIGNED` | required | Zero-based forward dynamical order. |
+| `point_re`, `point_im` | ASCII `VARCHAR(768)` | required | Decimal coordinates, preserved without Number conversion. |
+
+Composite primary key `(orbital_id, point_index)`. Application validation requires
+exactly `period` contiguous indices, one traversal without a closing duplicate,
+and full closure including the last-to-first transition. No automatic cascading
+deletion is configured. Header, points, and discovery membership commit together.
+
+## `orbital_landing_ratios` table
+
+Data-service-owned, InnoDB, introduced by migration 007. Only exact rational
+angles belonging to whole validated doubling families enter this table.
+
+| Field | MySQL type | Null/default | Meaning |
+| --- | --- | --- | --- |
+| `id` | `BIGINT UNSIGNED` | no / auto-increment primary key | Ratio row identity. |
+| `orbital_id` | `BIGINT UNSIGNED` | required | Owning progression. |
+| `point_index` | `INT UNSIGNED` | required | Landing point within that stored progression. |
+| `numerator`, `denominator` | ASCII binary `VARCHAR(40)` | required | Reduced nonnegative/positive integer strings; angle normalized modulo one. |
+| `family_key` | ASCII binary `VARCHAR(96)` | required | Lexicographically smallest reduced `numerator/denominator` in the doubling cycle. |
+| `angle_period` | `INT UNSIGNED` | required | Exact angle-cycle length, separate from spatial period. |
+| `landing_error` | `DOUBLE` | required | Nonnegative SDK endpoint error, at most `1e-6`. |
+| `validation_status` | `VARCHAR(32)` | required | `validated`. |
+| `calculation_version` | `VARCHAR(64)` | required | `orbital-discovery-v2` for new calculations; historical versions retained. |
+
+Unique `(orbital_id,numerator,denominator)`; index `(orbital_id,point_index)`;
+composite FK to `orbital_progression_points`. Ratios reference the original
+stored point ordering after SDK assessment alignment. A family must have every
+doubled angle and move to the next point modulo the spatial period. Saves commit
+all returned complete families atomically and retain the smaller landing error
+on exact-ratio rediscovery. There is no renderer geometry or cascade deletion.
+
+## `orbital_discovery_results` table
+
+Data-service-owned, InnoDB, introduced by migration 007.
+
+| Field | MySQL type | Null/default | Meaning |
+| --- | --- | --- | --- |
+| `run_id` | ASCII binary `CHAR(36)` | required | FK to `orbital_discovery_runs.id`. |
+| `orbital_id` | `BIGINT UNSIGNED` | required | FK to `orbital_progressions.id`. |
+| `disposition` | `VARCHAR(16)` | required | `created` or `reused`. |
+| `discovery_method` | `VARCHAR(32)` | required | First accepted method in this run: `seed_survey_scan` for current runs; historical methods retained. |
+
+| `discovery_metadata` | `JSON` | nullable | Immutable per-run scan ranking/confirmation evidence; added by migration 009. |
+
+Metadata fields: `algorithm` (`seed-survey-scan-v1`), zero-based `rank`, finite
+`confidence`, positive `discovery_count`, `seed` (`x`,`y` numbers), `magnitude`,
+`newton_cycles`, `scan_closure_error`, `grid_size`, `half_span`, `sampling`,
+`iteration_limit`, `newton_iterations`, `precision_digits`, and `run_id`.
+Old records normalize to null. Latest-survey reads use run metadata, so a later
+rediscovery cannot change an older run's rank or confirmation evidence.
+
+Composite primary key `(run_id,orbital_id)` preserves many-to-many provenance
+across repeated discoveries. No personal/user fields are stored. Verification
+is the opt-in disposable-MySQL command documented in `ORBITAL_DATA.md`.
+
 ## Version history
 
 | Version | Document | Change | Migration notes |
