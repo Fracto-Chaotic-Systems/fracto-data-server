@@ -75,10 +75,10 @@ const get_orbital_points = (focal_point, options = {}) => {
     return {
       points: [],
       pattern: 0,
-          source: "detector_escape",
-          detector: detected,
-          detector_horizon_iterations: horizon,
-          checked_horizons,
+      source: "detector_escape",
+      detector: detected,
+      detector_horizon_iterations: horizon,
+      checked_horizons,
     };
   }
   const refined_points = detected.newton_big_complex?.point_list
@@ -91,11 +91,11 @@ const get_orbital_points = (focal_point, options = {}) => {
   ) {
     const pattern = detected.detection.candidate_cardinality;
     if (pattern === 2) {
-      const fallback = run_two_point_calc_newton_fallback(
-        focal_point,
-        options,
-      );
-      const fallback_details = { status: fallback.status, ...fallback.diagnostics };
+      const fallback = run_two_point_calc_newton_fallback(focal_point, options);
+      const fallback_details = {
+        status: fallback.status,
+        ...fallback.diagnostics,
+      };
       if (fallback.status === "newton_points_available") {
         return {
           points: fallback.points,
@@ -176,8 +176,11 @@ const summarize_detector = (detector) =>
  * @param {{re:number,im:number}} focal_point Original focal point.
  * @returns {Array<{re:number,im:number}>} Normal vectors.
  */
-const get_normals = (points, focal_point) => {
-  const cardioid_root = get_cardioid_root(focal_point);
+const get_normals = (
+  points,
+  focal_point,
+  cardioid_root = get_cardioid_root(focal_point),
+) => {
   return points.map((point, index) => {
     const previous = points[(index - 1 + points.length) % points.length];
     const next = points[(index + 1) % points.length];
@@ -285,8 +288,7 @@ export const build_circuitry_pipeline = (focal_point, options = {}) => {
         Math.floor((MAX_SAMPLE_COUNT - 1) / points.length),
       ),
     );
-    const radial_sample_count =
-      points.length * radial_samples_per_interval + 1;
+    const radial_sample_count = points.length * radial_samples_per_interval + 1;
     return {
       status: "success",
       body: {
@@ -349,8 +351,8 @@ export const build_circuitry_pipeline = (focal_point, options = {}) => {
 /**
  * Enter the curve portion of the pipeline with known orbital points and Q.
  * This direct path is useful when detection and Newton refinement have already
- * been performed elsewhere. It intentionally supports radial sweep first;
- * additional interpolators can be added without changing its caller contract.
+ * been performed elsewhere. Both radial sweep and Hermite use the supplied
+ * orbit directly, without detection or Newton refinement.
  *
  * @param {Array<{re:number,im:number}>} points Ordered orbital points.
  * @param {{re:number,im:number}} Q Radial-sweep origin.
@@ -359,7 +361,18 @@ export const build_circuitry_pipeline = (focal_point, options = {}) => {
  *   result suitable for use by a handler or another pipeline stage.
  */
 export const build_circuitry_from_points = (points, Q, options = {}) => {
-  if (!Array.isArray(points) || points.length < 2 || !Q) {
+  const interpolation = options.interpolation || INTERPOLATION_RADIAL_SWEEP;
+  if (
+    ![INTERPOLATION_RADIAL_SWEEP, INTERPOLATION_HERMITE].includes(interpolation)
+  )
+    throw Error("Unknown circuitry interpolation");
+  if (
+    !Array.isArray(points) ||
+    !points.length ||
+    !Q ||
+    ![Q.re, Q.im].every(Number.isFinite) ||
+    !points.every((point) => [point.re, point.im].every(Number.isFinite))
+  ) {
     return {
       status: "no_orbit",
       body: {
@@ -368,11 +381,26 @@ export const build_circuitry_from_points = (points, Q, options = {}) => {
         cardinality: 0,
         samples: 0,
         Q: Q || null,
-        interpolation: INTERPOLATION_RADIAL_SWEEP,
+        interpolation,
         point_source: "caller_supplied",
       },
     };
   }
+  if (points.length === 1)
+    return {
+      status: "success",
+      body: {
+        result: [{ t: 0, C: points[0] }],
+        orbital_points: points,
+        cardinality: 1,
+        samples: 1,
+        Q,
+        interpolation,
+        looped_points: false,
+        optimize_polarity: false,
+        point_source: "caller_supplied",
+      },
+    };
   const maximum_samples_per_interval = Math.max(
     1,
     Math.floor((MAX_SAMPLE_COUNT - 1) / points.length),
@@ -386,6 +414,35 @@ export const build_circuitry_from_points = (points, Q, options = {}) => {
       ),
     ),
   );
+  if (interpolation === INTERPOLATION_HERMITE) {
+    const normals = get_normals(points, null, Q);
+    const optimized = options.optimize_polarity
+      ? optimize_polarity(points, normals, false, Q)
+      : { coefficients: solve_coefficients(points, normals, false) };
+    const result = sample_curve(
+      optimized.coefficients,
+      points.length,
+      points.length * samples_per_interval + 1,
+    );
+    return {
+      status: "success",
+      body: {
+        result,
+        orbital_points: points,
+        cardinality: points.length,
+        samples: result.length,
+        Q,
+        interpolation,
+        looped_points: false,
+        optimize_polarity: Boolean(options.optimize_polarity),
+        polarity_pattern: optimized.pattern ?? null,
+        polarity_score: optimized.score ?? null,
+        polarity_metrics: optimized.metrics ?? null,
+        polarity_exhaustive: optimized.exhaustive ?? false,
+        point_source: "caller_supplied",
+      },
+    };
+  }
   const result = parameterize_radial_sweep(points, Q, {
     samples_per_interval,
   });

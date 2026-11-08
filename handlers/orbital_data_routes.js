@@ -10,6 +10,12 @@ import {
 import { OrbitalDiscoveryJobs } from "./orbital_data_jobs.js";
 import { trusted_mutation_origin } from "../../../utils/auth_request_origin.js";
 import { OrbitalRayPathStore } from "./orbital_ray_paths.js";
+import {
+  build_circuitry_from_points,
+  INTERPOLATION_HERMITE,
+  INTERPOLATION_RADIAL_SWEEP,
+} from "./orbitals/circuitry_pipeline.js";
+import { get_cardioid_root } from "./orbitals/orbitals_utils.js";
 
 const require_empty_body = (body) => {
   if (
@@ -50,6 +56,40 @@ export const create_orbital_data_router = ({
   ray_paths = new OrbitalRayPathStore(),
 } = {}) => {
   const router = express.Router();
+  router.get(
+    "/:id/circuitry",
+    safe(async (req, res) => {
+      const interpolation = req.query.interpolation || INTERPOLATION_HERMITE;
+      if (
+        ![INTERPOLATION_HERMITE, INTERPOLATION_RADIAL_SWEEP].includes(
+          interpolation,
+        )
+      )
+        throw fail("invalid_interpolation");
+      const orbital = await jobs.store.get(positive_id(req.params.id));
+      const points = orbital.points.map((entry) => ({
+        re: Number(entry.point.re),
+        im: Number(entry.point.im),
+      }));
+      const focal_point = {
+        re: Number(orbital.focal_point.re),
+        im: Number(orbital.focal_point.im),
+      };
+      const curve = build_circuitry_from_points(
+        points,
+        get_cardioid_root(focal_point),
+        {
+          interpolation,
+          optimize_polarity: req.query.optimize_polarity === "true",
+        },
+      );
+      res.status(curve.status === "success" ? 200 : 422).json({
+        ...curve.body,
+        orbital_id: orbital.orbital_id,
+        point_source: "stored_orbital",
+      });
+    }),
+  );
   router.get(
     "/:id/ray-paths",
     safe(async (req, res) => {

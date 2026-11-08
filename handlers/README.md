@@ -161,3 +161,10 @@ and rejecting stale targets with 409. Migration 012 provides the separate Julia
 cache table. The shared SDK owns identity/version/quality rules; the existing
 compressed ray codec bounds document sizes. Failed writes roll back, and missing
 schema returns the orbital router's existing 503 response.
+
+GET `/orbital-data/:id/circuitry` interpolates the requested record's stored
+points directly with the shared curve pipeline. It supports radial sweep and
+Hermite (including single-point records), computes Q from the stored focal
+point, and never runs detection/Newton or writes orbital data. The circuitry UI
+uses this route only when an orbital selection is supplied; focal-only callers
+retain the existing `/circuitry` behavior.
