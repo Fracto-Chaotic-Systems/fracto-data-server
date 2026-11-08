@@ -638,8 +638,8 @@ export class OrbitalDataStore {
       };
     });
   }
-  async get(id) {
-    return this.with_db(async (db) => {
+  async get(id, connection_db = null) {
+    const read = async (db) => {
       const [rows] = await db.execute(
         `SELECT o.id,o.free_bailiwick_id,o.focal_re,o.focal_im,o.period,o.precision_digits,o.closure_error,
         o.closure_tolerance,o.identity_tolerance,o.calculation_version,o.ray_status,o.ray_metadata,o.discovery_metadata,
@@ -687,6 +687,7 @@ export class OrbitalDataStore {
         discovery_metadata: json_value(first.discovery_metadata),
         points: [...points.values()],
       };
-    });
+    };
+    return connection_db ? read(connection_db) : this.with_db(read);
   }
 }

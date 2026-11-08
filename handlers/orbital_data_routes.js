@@ -9,6 +9,7 @@ import {
 } from "./orbital_data_contract.js";
 import { OrbitalDiscoveryJobs } from "./orbital_data_jobs.js";
 import { trusted_mutation_origin } from "../../../utils/auth_request_origin.js";
+import { OrbitalRayPathStore } from "./orbital_ray_paths.js";
 
 const require_empty_body = (body) => {
   if (
@@ -46,8 +47,24 @@ const safe = (handler) => async (req, res) => {
 export const create_orbital_data_router = ({
   jobs = new OrbitalDiscoveryJobs(),
   authorize = require_data_editor,
+  ray_paths = new OrbitalRayPathStore(),
 } = {}) => {
   const router = express.Router();
+  router.get(
+    "/:id/ray-paths",
+    safe(async (req, res) => {
+      res.json({ result: await ray_paths.get(req.params.id) });
+    }),
+  );
+  router.put(
+    "/:id/ray-paths",
+    (req, res, next) => {
+      if (trusted_mutation_origin(req, res)) next();
+    },
+    safe(async (req, res) => {
+      res.json({ result: await ray_paths.put(req.params.id, req.body) });
+    }),
+  );
   // Narrow browser action. Global enabled-user middleware precedes this router;
   // the browser supplies only an ID and cannot widen the server's compute limits.
   router.get(

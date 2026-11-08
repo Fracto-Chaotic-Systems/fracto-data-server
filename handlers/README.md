@@ -153,3 +153,11 @@ configured service authentication still applies.
 `orbital_data_jobs.js` persists its ranked candidates before scheduling
 `orbital_landing_ratios`; legacy worker tasks remain available. See
 [the persistent protocol](../ORBITAL_DATA.md) for v2 bounds and migration 009.
+
+`orbital_ray_paths.js` owns GET/PUT `/orbital-data/:id/ray-paths`. Reads return
+only caches matching the current stored orbital identity. Trusted-origin writes
+revalidate geometry and merge under an orbital row lock, preserving better paths
+and rejecting stale targets with 409. Migration 012 provides the separate Julia
+cache table. The shared SDK owns identity/version/quality rules; the existing
+compressed ray codec bounds document sizes. Failed writes roll back, and missing
+schema returns the orbital router's existing 503 response.
