@@ -1,7 +1,16 @@
 import { db_connect, db_disconnect } from "../mysql.js";
 import { OrbitalDataStore } from "./orbital_data_store.js";
 import { positive_id, fail } from "./orbital_data_contract.js";
-import { encode_ray_cache, decode_ray_cache } from "./minibrot_ray_codec.js";
+import {
+  lifecycle_for,
+  save_lifecycle,
+  path_lifecycle,
+} from "./orbital_lifecycle.js";
+import {
+  prepare_orbital_cache,
+  save_orbital_cache,
+  decode_orbital_cache,
+} from "./orbital_ray_cache_codec.js";
 import { build_orbital_trace_request } from "../../../sdk/orbitals/FractoOrbitalTraceRequest.js";
 import {
   ORBITAL_RAY_CACHE_VERSION,
@@ -36,12 +45,15 @@ export class OrbitalRayPathStore {
       connection = this.connect();
     try {
       const db = connection.promise();
-      const request = request_for(await this.store.get(id, db));
+      const orbital = await this.store.get(id, db);
+      const request = request_for(orbital);
       const [rows] = await db.execute(
         "SELECT paths FROM orbital_ray_paths WHERE orbital_id=?",
         [id],
       );
-      const cache = rows.length ? await decode_ray_cache(rows[0].paths) : null;
+      const cache = rows.length
+        ? await decode_orbital_cache(db, rows[0].paths)
+        : null;
       return orbital_ray_cache_matches(cache, request) ? cache : null;
     } finally {
       this.disconnect(connection);
@@ -71,11 +83,12 @@ export class OrbitalRayPathStore {
       await db.beginTransaction();
       transaction = true;
       const [locked] = await db.execute(
-        "SELECT id FROM orbital_progressions WHERE id=? FOR UPDATE",
+        "SELECT id,lifecycle_state FROM orbital_progressions WHERE id=? FOR UPDATE",
         [id],
       );
       if (!locked.length) throw fail("orbital_not_found", 404);
-      const request = request_for(await this.store.get(id, db));
+      const orbital = await this.store.get(id, db);
+      const request = request_for(orbital);
       if (
         JSON.stringify(orbital_ray_identity(request)) !==
         JSON.stringify(orbital_ray_identity(body.request))
@@ -86,7 +99,7 @@ export class OrbitalRayPathStore {
         [id],
       );
       const previous = rows.length
-        ? await decode_ray_cache(rows[0].paths)
+        ? await decode_orbital_cache(db, rows[0].paths)
         : null;
       const cache = merge_orbital_ray_cache(
         previous,
@@ -96,8 +109,19 @@ export class OrbitalRayPathStore {
       );
       await db.execute(
         "INSERT INTO orbital_ray_paths (orbital_id, paths) VALUES (?,?) ON DUPLICATE KEY UPDATE paths=VALUES(paths)",
-        [id, await encode_ray_cache(cache)],
+        [id, await save_orbital_cache(db, await prepare_orbital_cache(cache))],
       );
+      const paths = path_lifecycle(cache, request, body.quality);
+      const current = lifecycle_for(orbital);
+      await save_lifecycle(db, id, current, {
+        paths,
+        assignments:
+          current.assignments === "verified"
+            ? "verified"
+            : paths.status === "cached"
+              ? "verified"
+              : "partial",
+      });
       await db.commit();
       transaction = false;
       return { saved: true, updated_at: cache.updated_at };

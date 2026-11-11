@@ -18,7 +18,10 @@ const claimed = () => ({
   token: "test",
   checkpoint: initial_checkpoint(),
   source: { id: "55", pattern: 1, parameter: { x: "0", y: "0" } },
-  settings: discovery_request({ free_bailiwick_id: 55 }).settings,
+  settings: discovery_request({
+    free_bailiwick_id: 55,
+    settings: { catalog_max_denominator: 0 },
+  }).settings,
 });
 import { create_orbital_data_router } from "../handlers/orbital_data_routes.js";
 import { create_data_request_authorizer } from "../handlers/data_requests/authorization.js";

@@ -38,7 +38,9 @@ test("pattern-7 worker discovery matches the Seed Surveys full-resolution scan, 
     assert.equal(result.candidates.length, expected.length);
     assert.ok(result.candidates.length > 10 && result.candidates.length <= 100);
     assert.deepEqual(
-      result.candidates.slice(0, 10).map((o) => o.discovery_metadata.discovery_count),
+      result.candidates
+        .slice(0, 10)
+        .map((o) => o.discovery_metadata.discovery_count),
       [49, 40, 14, 6, 6, 3, 2, 2, 1, 1],
     );
     for (const [rank, actual] of result.candidates.entries()) {
@@ -76,7 +78,14 @@ test("latest survey hides historical results until recalculated and returns per-
     open: async () => ({
       execute: async () => [
         queries++ === 0
-          ? [{ id: "run" }]
+          ? [
+              {
+                id: "run",
+                progress: JSON.stringify({
+                  catalog_coverage: { max_denominator: 7 },
+                }),
+              },
+            ]
           : [
               {
                 id: 2,
@@ -93,5 +102,6 @@ test("latest survey hides historical results until recalculated and returns per-
   const result = await current.latest_survey({ x: "0", y: "0" });
   assert.equal(result.stale, false);
   assert.equal(result.run_id, "run");
+  assert.deepEqual(result.coverage, { max_denominator: 7 });
   assert.equal(result.result[0].discovery_metadata.rank, 0);
 });

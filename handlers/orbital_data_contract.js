@@ -1,6 +1,10 @@
 import { createHash } from "node:crypto";
 import { orbital_parameter } from "@fracto/sdk/orbitals/FractoOrbitalIdentity.js";
-import { SEED_SURVEY_DISCOVERY_OPTIONS, MAX_SCAN_ORBITALS } from "@fracto/sdk/orbitals/FractoSeedSurveyScan.js";
+import { ORBITAL_DISCOVERY_STRATEGIES } from "@fracto/sdk/orbitals/FractoOrbitalLifecycle.js";
+import {
+  SEED_SURVEY_DISCOVERY_OPTIONS,
+  MAX_SCAN_ORBITALS,
+} from "@fracto/sdk/orbitals/FractoSeedSurveyScan.js";
 
 export const fail = (code, status = 400) =>
   Object.assign(Error(code), { code, status });
@@ -37,6 +41,10 @@ const defaults = {
   max_angle_period: 24,
   max_families: 1024,
   max_orbitals: MAX_SCAN_ORBITALS,
+  catalog_max_denominator: 255,
+  catalog_max_families: 1024,
+  catalog_retry_unresolved: 0,
+  discovery_strategy: ORBITAL_DISCOVERY_STRATEGIES.CATALOG_ONLY,
 };
 const limits = {
   max_period: [1, 4096],
@@ -48,6 +56,9 @@ const limits = {
   max_angle_period: [1, 24],
   max_families: [1, 4096],
   max_orbitals: [1, MAX_SCAN_ORBITALS],
+  catalog_max_denominator: [0, 1000000],
+  catalog_max_families: [1, 4096],
+  catalog_retry_unresolved: [0, 1],
 };
 export const discovery_request = (body) => {
   if (
@@ -69,7 +80,21 @@ export const discovery_request = (body) => {
   )
     throw fail("invalid_settings");
   const settings = { ...defaults, ...input };
+  if (
+    input.discovery_strategy === undefined &&
+    settings.catalog_max_denominator === 0
+  )
+    settings.discovery_strategy = ORBITAL_DISCOVERY_STRATEGIES.SURVEY;
+  if (
+    !Object.values(ORBITAL_DISCOVERY_STRATEGIES).includes(
+      settings.discovery_strategy,
+    ) ||
+    (settings.discovery_strategy === ORBITAL_DISCOVERY_STRATEGIES.SURVEY) !==
+      (settings.catalog_max_denominator === 0)
+  )
+    throw fail("invalid_settings");
   for (const [key, value] of Object.entries(settings)) {
+    if (key === "discovery_strategy") continue;
     const [min, max] = limits[key];
     if (
       !Number.isFinite(value) ||

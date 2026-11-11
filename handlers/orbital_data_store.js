@@ -1,10 +1,10 @@
 import { randomUUID } from "node:crypto";
 import {
-  CHECKPOINT_VERSION,
   initial_checkpoint,
   encode_checkpoint,
   decode_checkpoint,
   checkpoint_stage,
+  bind_checkpoint_strategy,
 } from "./orbital_data_checkpoint.js";
 import {
   ORBITAL_CALCULATION_VERSION,
@@ -21,12 +21,22 @@ import {
   discovery_request,
 } from "./orbital_data_contract.js";
 import { create_orbital_database_pool } from "./orbital_data_database.js";
+import {
+  normalize_orbital_lifecycle,
+  orbital_is_selectable,
+  stored_discovery_strategy,
+} from "@fracto/sdk/orbitals/FractoOrbitalLifecycle.js";
+import { lifecycle_for, save_lifecycle } from "./orbital_lifecycle.js";
+import {
+  needs_confirmation_repair,
+  prepare_confirmation_repair,
+} from "./orbital_confirmation_repair.js";
 export { open_orbital_database } from "./orbital_data_database.js";
 const terminal = ["completed", "partial", "cancelled", "failed", "interrupted"];
 const run_fields =
   "id, source_bailiwick_id, focal_re, focal_im, source_pattern, settings, calculation_version, status, stage, progress, error_code, cancel_requested, resume_count, created_at, updated_at";
 const header_fields =
-  "id, free_bailiwick_id, focal_re, focal_im, period, precision_digits, closure_error, closure_tolerance, identity_tolerance, calculation_version, ray_status, ray_metadata, discovery_metadata";
+  "id, free_bailiwick_id, focal_re, focal_im, period, precision_digits, closure_error, closure_tolerance, identity_tolerance, calculation_version, ray_status, ray_metadata, discovery_metadata, lifecycle_state";
 const points_for = async (db, id) => {
   const [rows] = await db.execute(
     "SELECT point_re AS re, point_im AS im FROM orbital_progression_points WHERE orbital_id=? ORDER BY point_index",
@@ -110,7 +120,7 @@ export class OrbitalDataStore {
   }
   async create_run(source, request) {
     const request_hash = request_digest(source, request);
-    const initial = initial_checkpoint(request_hash),
+    const initial = initial_checkpoint(request_hash, request.settings),
       payload = await encode_checkpoint(initial);
     return this.with_db(async (db) => {
       let locked = false,
@@ -161,7 +171,7 @@ export class OrbitalDataStore {
         );
         await db.execute(
           "INSERT INTO orbital_discovery_checkpoints (run_id,format_version,phase,payload) VALUES (?,?,?,?)",
-          [id, CHECKPOINT_VERSION, initial.stage, payload],
+          [id, initial.version, initial.stage, payload],
         );
         await db.commit();
         transaction = false;
@@ -173,8 +183,12 @@ export class OrbitalDataStore {
         throw error;
       } finally {
         if (locked) {
-          try { await db.execute("SELECT RELEASE_LOCK(?)", [lock_key]); }
-          catch (error) { db.destroy(); throw error; }
+          try {
+            await db.execute("SELECT RELEASE_LOCK(?)", [lock_key]);
+          } catch (error) {
+            db.destroy();
+            throw error;
+          }
         }
       }
     });
@@ -183,9 +197,7 @@ export class OrbitalDataStore {
     return this.with_db(async (db) => {
       await assert_bailiwick_idle(db, source.id);
       if (!request.request_key) {
-        const [rows] = await db.execute(restartable_sql, [
-          source.id,
-        ]);
+        const [rows] = await db.execute(restartable_sql, [source.id]);
         return rows[0]?.id || null;
       }
       const [rows] = await db.execute(
@@ -202,20 +214,23 @@ export class OrbitalDataStore {
   }
   async latest_job(source, request) {
     const id = await this.with_db(async (db) => {
-      const [rows] = await db.execute(restartable_sql, [
-        source.id,
-      ]);
+      const [rows] = await db.execute(restartable_sql, [source.id]);
       return rows[0]?.id;
     });
     return id ? this.get_run(id) : null;
   }
   async claim_run(id) {
     return this.with_db(async (db) => {
-      const [sources] = await db.execute("SELECT source_bailiwick_id FROM orbital_discovery_runs WHERE id=?", [id]);
+      const [sources] = await db.execute(
+        "SELECT source_bailiwick_id FROM orbital_discovery_runs WHERE id=?",
+        [id],
+      );
       if (!sources.length) throw fail("discovery_job_not_found", 404);
       const source_id = String(sources[0].source_bailiwick_id);
       const lock_key = bailiwick_lock(source_id);
-      const [locks] = await db.execute("SELECT GET_LOCK(?,10) AS acquired", [lock_key]);
+      const [locks] = await db.execute("SELECT GET_LOCK(?,10) AS acquired", [
+        lock_key,
+      ]);
       if (Number(locks[0].acquired) !== 1) throw fail("bailiwick_busy", 409);
       try {
         await db.beginTransaction();
@@ -250,19 +265,45 @@ export class OrbitalDataStore {
           pattern: Number(row.source_pattern),
           ...focal_identity({ x: row.focal_re, y: row.focal_im }),
         };
+        const original_settings = json_value(row.settings);
+        bind_checkpoint_strategy(checkpoint, original_settings);
         const request = discovery_request({
           free_bailiwick_id: source.id,
-          settings: json_value(row.settings),
+          settings: original_settings,
         });
+        request.settings.discovery_strategy =
+          stored_discovery_strategy(original_settings);
+        // MySQL JSON can reorder keys. Rebuild historical defaults order
+        // without injecting newly introduced keys into the request digest.
+        const digest_settings = Object.fromEntries(
+          Object.entries(request.settings).filter(([key]) =>
+            Object.hasOwn(original_settings, key),
+          ),
+        );
         if (
           checkpoint.input_hash !== row.request_hash ||
-          request_digest(source, request) !== row.request_hash
+          request_digest(source, { settings: digest_settings }) !==
+            row.request_hash
         )
           throw fail("checkpoint_input_mismatch", 409);
+        const repairing_confirmation = prepare_confirmation_repair(
+          checkpoint,
+          original_settings,
+        );
         if (checkpoint.stage === "done" && row.status === "partial") {
           await db.commit();
           return { owned: false };
         }
+        if (repairing_confirmation)
+          await db.execute(
+            "UPDATE orbital_discovery_checkpoints SET phase=?,format_version=?,payload=? WHERE run_id=?",
+            [
+              checkpoint.stage,
+              checkpoint.version,
+              await encode_checkpoint(checkpoint),
+              id,
+            ],
+          );
         const token = randomUUID();
         const resumed = row.execution_token != null || row.status !== "queued";
         await db.execute(
@@ -274,15 +315,27 @@ export class OrbitalDataStore {
           owned: true,
           token,
           checkpoint,
-          settings: request.settings,
+          settings: {
+            ...request.settings,
+            catalog_max_denominator: Object.hasOwn(
+              original_settings,
+              "catalog_max_denominator",
+            )
+              ? request.settings.catalog_max_denominator
+              : 0,
+          },
           source,
         };
       } catch (error) {
         await db.rollback();
         throw error;
       } finally {
-        try { await db.execute("SELECT RELEASE_LOCK(?)", [lock_key]); }
-        catch (error) { db.destroy(); throw error; }
+        try {
+          await db.execute("SELECT RELEASE_LOCK(?)", [lock_key]);
+        } catch (error) {
+          db.destroy();
+          throw error;
+        }
       }
     });
   }
@@ -296,7 +349,7 @@ export class OrbitalDataStore {
           throw fail("checkpoint_input_mismatch", 409);
         await db.execute(
           "UPDATE orbital_discovery_checkpoints SET phase=?,format_version=?,payload=? WHERE run_id=?",
-          [checkpoint.stage, CHECKPOINT_VERSION, payload, id],
+          [checkpoint.stage, checkpoint.version, payload, id],
         );
         await db.execute(
           "UPDATE orbital_discovery_runs SET stage=?,progress=?,lease_expires_at=DATE_ADD(NOW(3),INTERVAL 120 SECOND) WHERE id=?",
@@ -334,19 +387,27 @@ export class OrbitalDataStore {
         "SELECT orbital_id,disposition,discovery_method,discovery_metadata FROM orbital_discovery_results WHERE run_id=? ORDER BY orbital_id",
         [id],
       );
+      const confirmation_repair_available = needs_confirmation_repair(
+        json_value(row.settings),
+        json_value(row.progress),
+      );
       return {
         ...row,
+        confirmation_repair_available,
         resume_count: Number(row.resume_count || 0),
         resumable: Boolean(
           checkpoints.length &&
           ["cancelled", "interrupted", "failed", "partial"].includes(
             row.status,
           ) &&
-          (checkpoints[0].phase !== "done" || row.status !== "partial"),
+          (checkpoints[0].phase !== "done" ||
+            row.status !== "partial" ||
+            confirmation_repair_available),
         ),
         checkpoint_phase: checkpoints[0]?.phase || null,
         source_bailiwick_id: String(row.source_bailiwick_id),
         settings: json_value(row.settings),
+        discovery_strategy: stored_discovery_strategy(json_value(row.settings)),
         progress: json_value(row.progress),
         focal_point: { re: row.focal_re, im: row.focal_im },
         results: results.map((r) => ({
@@ -446,7 +507,14 @@ export class OrbitalDataStore {
             same_orbital_cycle(
               checked.points,
               points,
-              checked.identity_tolerance,
+              [
+                "catalog_ray_endpoint_newton",
+                "catalog_representative_newton",
+              ].includes(candidate.discovery_method) &&
+                Number(header.identity_tolerance) > 0 &&
+                Number(header.identity_tolerance) <= ORBIT_CLOSURE_TOLERANCE
+                ? header.identity_tolerance
+                : checked.identity_tolerance,
             )
           ) {
             orbital = { ...header, points };
@@ -491,7 +559,31 @@ export class OrbitalDataStore {
           );
           orbital.free_bailiwick_id = source.id;
         }
-        const discovery_metadata = candidate.discovery_metadata || null;
+        const merge_metadata = (previous, incoming) => ({
+          ...incoming,
+          ...(json_value(previous) || {}),
+          run_id: run,
+          catalog: {
+            ...((json_value(previous) || {}).catalog || {}),
+            ...(incoming.catalog || {}),
+            family_keys: [
+              ...new Set([
+                ...((json_value(previous) || {}).catalog?.family_keys || []),
+                ...(incoming.catalog?.family_keys || []),
+              ]),
+            ],
+          },
+        });
+        const is_catalog = [
+          "catalog_ray_endpoint_newton",
+          "catalog_representative_newton",
+        ].includes(candidate.discovery_method);
+        const discovery_metadata = is_catalog
+          ? merge_metadata(
+              orbital.discovery_metadata,
+              candidate.discovery_metadata || {},
+            )
+          : candidate.discovery_metadata || null;
         if (discovery_metadata) {
           await db.execute(
             "UPDATE orbital_progressions SET discovery_metadata=?,calculation_version=? WHERE id=?",
@@ -504,6 +596,17 @@ export class OrbitalDataStore {
           orbital.discovery_metadata = discovery_metadata;
           orbital.calculation_version = ORBITAL_CALCULATION_VERSION;
         }
+        let run_metadata = discovery_metadata;
+        if (is_catalog) {
+          const [prior] = await db.execute(
+            "SELECT discovery_metadata FROM orbital_discovery_results WHERE run_id=? AND orbital_id=?",
+            [run, orbital.id],
+          );
+          run_metadata = merge_metadata(
+            prior[0]?.discovery_metadata,
+            candidate.discovery_metadata || {},
+          );
+        }
         await db.execute(
           `INSERT INTO orbital_discovery_results (run_id,orbital_id,disposition,discovery_method,discovery_metadata)
           VALUES (?,?,?,?,?) ON DUPLICATE KEY UPDATE discovery_metadata=VALUES(discovery_metadata)`,
@@ -512,8 +615,16 @@ export class OrbitalDataStore {
             orbital.id,
             disposition,
             candidate.discovery_method,
-            discovery_metadata ? JSON.stringify(discovery_metadata) : null,
+            run_metadata ? JSON.stringify(run_metadata) : null,
           ],
+        );
+        orbital.lifecycle_state = await save_lifecycle(
+          db,
+          orbital.id,
+          disposition === "created"
+            ? normalize_orbital_lifecycle(null)
+            : lifecycle_for(orbital),
+          { orbital: "validated" },
         );
         await db.commit();
         return { ...orbital, id: String(orbital.id), disposition };
@@ -532,14 +643,14 @@ export class OrbitalDataStore {
       }
     });
   }
-  async save_rays(run, orbital, result, token = null) {
-    validate_landing_families(result.ratios, orbital.period);
+  async save_rays(run, orbital, result, token = null, options = {}) {
+    validate_landing_families(result.ratios, orbital.period, options);
     return this.with_db(async (db) => {
       await db.beginTransaction();
       try {
         await this.assert_active(db, run, token);
         const [headers] = await db.execute(
-          "SELECT id,ray_status FROM orbital_progressions WHERE id=? FOR UPDATE",
+          "SELECT id,ray_status,lifecycle_state FROM orbital_progressions WHERE id=? FOR UPDATE",
           [orbital.id],
         );
         if (!headers.length) throw fail("orbital_not_found", 404);
@@ -568,6 +679,42 @@ export class OrbitalDataStore {
               orbital.id,
             ],
           );
+        let lifecycle = lifecycle_for(headers[0]);
+        if (["cached", "partial"].includes(lifecycle.paths.status))
+          lifecycle = (await this.get(orbital.id, db)).lifecycle_state;
+        const assignments =
+          headers[0].ray_status === "rays_found" || result.ratios.length
+            ? "verified"
+            : result.status === "attracting"
+              ? "not_applicable"
+              : "unresolved";
+        await save_lifecycle(db, orbital.id, lifecycle, { assignments });
+        await db.commit();
+      } catch (error) {
+        await db.rollback();
+        throw error;
+      }
+    });
+  }
+  async save_pending_assignments(run, orbital, token) {
+    return this.with_db(async (db) => {
+      await db.beginTransaction();
+      try {
+        await this.assert_active(db, run, token);
+        const [rows] = await db.execute(
+          "SELECT id,ray_status,lifecycle_state FROM orbital_progressions WHERE id=? FOR UPDATE",
+          [orbital.id],
+        );
+        if (!rows.length) throw fail("orbital_not_found", 404);
+        const current = lifecycle_for(rows[0]);
+        if (
+          !["verified", "partial", "not_applicable"].includes(
+            current.assignments,
+          )
+        )
+          await save_lifecycle(db, orbital.id, current, {
+            assignments: "pending",
+          });
         await db.commit();
       } catch (error) {
         await db.rollback();
@@ -589,6 +736,8 @@ export class OrbitalDataStore {
           r.free_bailiwick_id == null ? null : String(r.free_bailiwick_id),
         ray_metadata: json_value(r.ray_metadata),
         discovery_metadata: json_value(r.discovery_metadata),
+        lifecycle_state: lifecycle_for(r),
+        selectable: orbital_is_selectable(lifecycle_for(r)),
       }));
     });
   }
@@ -596,7 +745,7 @@ export class OrbitalDataStore {
     const { focal_key } = focal_identity(parameter);
     return this.with_db(async (db) => {
       const [runs] = await db.execute(
-        `SELECT id FROM orbital_discovery_runs WHERE focal_key=? AND calculation_version=?
+        `SELECT id,progress FROM orbital_discovery_runs WHERE focal_key=? AND calculation_version=?
         AND status IN ('completed','partial') ORDER BY created_at DESC,id DESC LIMIT 1`,
         [focal_key, ORBITAL_CALCULATION_VERSION],
       );
@@ -618,7 +767,7 @@ export class OrbitalDataStore {
       const [rows] = await db.execute(
         `SELECT ${columns},r.discovery_metadata AS run_metadata
         FROM orbital_discovery_results r JOIN orbital_progressions o ON o.id=r.orbital_id
-        WHERE r.run_id=? ORDER BY CAST(JSON_UNQUOTE(JSON_EXTRACT(r.discovery_metadata,'$.rank')) AS UNSIGNED),o.id`,
+        WHERE r.run_id=? ORDER BY (JSON_EXTRACT(r.discovery_metadata,'$.rank') IS NULL),CAST(JSON_UNQUOTE(JSON_EXTRACT(r.discovery_metadata,'$.rank')) AS UNSIGNED),o.id`,
         [runs[0].id],
       );
       return {
@@ -631,9 +780,12 @@ export class OrbitalDataStore {
               : String(row.free_bailiwick_id),
           ray_metadata: json_value(row.ray_metadata),
           discovery_metadata: json_value(run_metadata),
+          lifecycle_state: lifecycle_for(row),
+          selectable: orbital_is_selectable(lifecycle_for(row)),
         })),
         stale: false,
         run_id: runs[0].id,
+        coverage: json_value(runs[0].progress)?.catalog_coverage || null,
         calculation_version: ORBITAL_CALCULATION_VERSION,
       };
     });
@@ -642,7 +794,7 @@ export class OrbitalDataStore {
     const read = async (db) => {
       const [rows] = await db.execute(
         `SELECT o.id,o.free_bailiwick_id,o.focal_re,o.focal_im,o.period,o.precision_digits,o.closure_error,
-        o.closure_tolerance,o.identity_tolerance,o.calculation_version,o.ray_status,o.ray_metadata,o.discovery_metadata,
+        o.closure_tolerance,o.identity_tolerance,o.calculation_version,o.ray_status,o.ray_metadata,o.discovery_metadata,o.lifecycle_state,
         p.point_index,p.point_re,p.point_im,r.numerator,r.denominator,r.family_key,r.angle_period,r.landing_error,r.validation_status
         FROM orbital_progressions o JOIN orbital_progression_points p ON p.orbital_id=o.id
         LEFT JOIN orbital_landing_ratios r ON r.orbital_id=p.orbital_id AND r.point_index=p.point_index
@@ -669,7 +821,7 @@ export class OrbitalDataStore {
             validation_status: r.validation_status,
           });
       }
-      return {
+      const orbital = {
         orbital_id: String(first.id),
         free_bailiwick_id:
           first.free_bailiwick_id == null
@@ -687,6 +839,12 @@ export class OrbitalDataStore {
         discovery_metadata: json_value(first.discovery_metadata),
         points: [...points.values()],
       };
+      orbital.lifecycle_state = lifecycle_for({
+        ...orbital,
+        lifecycle_state: first.lifecycle_state,
+      });
+      orbital.selectable = orbital_is_selectable(orbital.lifecycle_state);
+      return orbital;
     };
     return connection_db ? read(connection_db) : this.with_db(read);
   }

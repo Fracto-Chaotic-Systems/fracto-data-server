@@ -1,6 +1,12 @@
 import { fail, discovery_request } from "./orbital_data_contract.js";
+import { bind_checkpoint_strategy } from "./orbital_data_checkpoint.js";
 import { data_compute_worker_pool } from "./worker_task_pool.js";
 import { OrbitalDataStore } from "./orbital_data_store.js";
+import { OrbitalFamilyInvestigationStore } from "./orbital_family_investigations.js";
+import {
+  advance_catalog_job,
+  load_job_catalog,
+} from "./orbital_catalog_jobs.js";
 
 /** Work advances only after its durable checkpoint commits. Tokens fence old owners. */
 export class OrbitalDiscoveryJobs {
@@ -10,6 +16,8 @@ export class OrbitalDiscoveryJobs {
     max_jobs = 4,
     run_timeout_ms = 7200000,
     task_timeout_ms = 3600000,
+    family_store = new OrbitalFamilyInvestigationStore({ database: store }),
+    catalog_provider = load_job_catalog,
   } = {}) {
     Object.assign(this, {
       store,
@@ -17,6 +25,8 @@ export class OrbitalDiscoveryJobs {
       max_jobs,
       run_timeout_ms,
       task_timeout_ms,
+      family_store,
+      catalog_provider,
     });
     this.active = new Map();
     this.pending_starts = 0;
@@ -29,6 +39,8 @@ export class OrbitalDiscoveryJobs {
     );
   }
   async start(request) {
+    if (request.settings.catalog_max_denominator > 0)
+      await this.catalog_provider(request.settings.catalog_max_denominator);
     const source = await this.store.source(request.source_id);
     const existing = await this.store.lookup_run(source, request);
     if (existing) {
@@ -49,7 +61,8 @@ export class OrbitalDiscoveryJobs {
     const previous = this.active.get(id);
     if (previous) {
       const run = await this.store.get_run(id);
-      if (["queued", "running"].includes(run.status)) throw fail("bailiwick_busy", 409);
+      if (["queued", "running"].includes(run.status))
+        throw fail("bailiwick_busy", 409);
       this.pool.cancel(previous.task_id);
       await previous.completion;
     }
@@ -87,9 +100,36 @@ export class OrbitalDiscoveryJobs {
     }, this.run_timeout_ms);
     state.deadline_timer.unref?.();
     state.timer = setInterval(() => {
-      this.store.heartbeat(id, state.token).catch((error) => {
-        if (error.code === "job_not_active") this.pool.cancel(state.task_id);
-      });
+      this.store
+        .heartbeat(id, state.token)
+        .then(async () => {
+          const claim = state.family_claim;
+          if (!claim) return;
+          try {
+            await this.family_store.heartbeat(
+              claim.context,
+              claim.token,
+              claim.owner,
+            );
+          } catch (error) {
+            // Completing a family can race an already-started heartbeat.
+            if (state.family_claim !== claim && error.code !== "job_not_active")
+              return;
+            throw error;
+          }
+        })
+        .catch((error) => {
+          if (
+            [
+              "job_not_active",
+              "investigation_lease_lost",
+              "investigation_job_owner_mismatch",
+            ].includes(error.code)
+          ) {
+            state.ownership_error = error;
+            this.pool.cancel(state.task_id);
+          }
+        });
     }, 20000);
     state.timer.unref?.();
     state.completion = this.execute(
@@ -179,9 +219,15 @@ export class OrbitalDiscoveryJobs {
     const cp = checkpoint;
     const commit = () => this.store.save_checkpoint(id, cp, state.token);
     try {
+      bind_checkpoint_strategy(cp, settings);
       while (cp.stage !== "done") {
         if (Date.now() >= state.deadline)
           throw fail("discovery_time_limit", 409);
+        if (["catalog", "catalog_finalize"].includes(cp.stage)) {
+          await advance_catalog_job(this, id, source, settings, state, cp);
+          await commit();
+          continue;
+        }
         if (cp.stage === "survey") {
           const batch = await this.task(
             id,
@@ -266,9 +312,10 @@ export class OrbitalDiscoveryJobs {
             cp.persist_index++;
             state.progress.orbital_count = cp.orbitals.length;
           } else {
-            cp.stage = "rays";
+            cp.stage =
+              settings.catalog_max_denominator > 0 ? "catalog" : "rays";
             Object.assign(state.progress, {
-              phase: "rays",
+              phase: cp.stage === "catalog" ? "catalog" : "rays",
               ray_orbitals_total: cp.orbitals.length,
               ray_orbitals_processed: cp.ray_index,
               ray_families_processed: 0,
@@ -364,7 +411,18 @@ export class OrbitalDiscoveryJobs {
         state.token,
       );
     } catch (error) {
+      error = state.ownership_error || error;
       if (error.code === "job_not_active") return;
+      console.error(
+        JSON.stringify({
+          event: "orbital_discovery_failure",
+          run_id: id,
+          phase: cp.stage,
+          family_key: state.catalog_family_key || null,
+          error_code: error.code || "discovery_stage_failed",
+          message: error.message?.slice(0, 300),
+        }),
+      );
       const code = state.time_limited
         ? "discovery_time_limit"
         : error.code === "WORKER_POOL_OVERLOADED"
@@ -377,6 +435,9 @@ export class OrbitalDiscoveryJobs {
                     "discovery_time_limit",
                     "checkpoint_size_limit",
                     "checkpoint_version_mismatch",
+                    "investigation_busy",
+                    "investigation_lease_lost",
+                    "investigation_job_owner_mismatch",
                   ].includes(error.code)
                 ? error.code
                 : "discovery_stage_failed";

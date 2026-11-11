@@ -29,19 +29,19 @@ that have authenticated through an external OpenID Connect provider and have
 been enabled by an administrator. A successful provider login does not enable
 the record automatically.
 
-| Field | MySQL type | Null | Default | Description |
-| --- | --- | --- | --- | --- |
-| `id` | `BIGINT UNSIGNED` | no | auto-increment | Stable local user identifier. |
-| `provider` | `VARCHAR(64)` | no | none | Identity-provider name. |
-| `provider_subject` | `VARCHAR(255)` | no | none | Provider's stable subject identifier. |
-| `email` | `VARCHAR(320)` | yes | `null` | Profile email; not an identity key. |
-| `display_name` | `VARCHAR(255)` | yes | `null` | Display name supplied by the provider. |
-| `enabled` | `TINYINT(1)` | no | `0` | Allowlist switch. Only enabled users may enter the app. |
-| `role` | `VARCHAR(64)` | yes | `null` | Reserved for a future authorization model. |
-| `created_at` | `TIMESTAMP` | no | current timestamp | Local record creation time. |
-| `updated_at` | `TIMESTAMP` | no | current timestamp/on update | Last local record update. |
-| `last_login_at` | `DATETIME` | yes | `null` | Last successful authenticated login. |
-| `last_seen_at` | `DATETIME` | yes | `null` | Last validated session activity. |
+| Field              | MySQL type        | Null | Default                     | Description                                             |
+| ------------------ | ----------------- | ---- | --------------------------- | ------------------------------------------------------- |
+| `id`               | `BIGINT UNSIGNED` | no   | auto-increment              | Stable local user identifier.                           |
+| `provider`         | `VARCHAR(64)`     | no   | none                        | Identity-provider name.                                 |
+| `provider_subject` | `VARCHAR(255)`    | no   | none                        | Provider's stable subject identifier.                   |
+| `email`            | `VARCHAR(320)`    | yes  | `null`                      | Profile email; not an identity key.                     |
+| `display_name`     | `VARCHAR(255)`    | yes  | `null`                      | Display name supplied by the provider.                  |
+| `enabled`          | `TINYINT(1)`      | no   | `0`                         | Allowlist switch. Only enabled users may enter the app. |
+| `role`             | `VARCHAR(64)`     | yes  | `null`                      | Reserved for a future authorization model.              |
+| `created_at`       | `TIMESTAMP`       | no   | current timestamp           | Local record creation time.                             |
+| `updated_at`       | `TIMESTAMP`       | no   | current timestamp/on update | Last local record update.                               |
+| `last_login_at`    | `DATETIME`        | yes  | `null`                      | Last successful authenticated login.                    |
+| `last_seen_at`     | `DATETIME`        | yes  | `null`                      | Last validated session activity.                        |
 
 The pair `(provider, provider_subject)` is unique. Email and display name may
 change and therefore must not be used as the primary identity key.
@@ -56,11 +56,11 @@ second copy of account identity data. The singleton `id` is reserved as `1`;
 bootstrap logic must only read or write that value. The state is written only
 after the initial administrator has been provisioned successfully.
 
-| Field | MySQL type | Null | Default | Description |
-| --- | --- | --- | --- | --- |
-| `id` | `TINYINT UNSIGNED` | no | none | Singleton marker key; bootstrap uses `1`. |
-| `user_id` | `BIGINT UNSIGNED` | no | none | Local `users.id` of the initial administrator. |
-| `completed_at` | `TIMESTAMP` | no | current timestamp | Time initial administrator provisioning completed. |
+| Field          | MySQL type         | Null | Default           | Description                                        |
+| -------------- | ------------------ | ---- | ----------------- | -------------------------------------------------- |
+| `id`           | `TINYINT UNSIGNED` | no   | none              | Singleton marker key; bootstrap uses `1`.          |
+| `user_id`      | `BIGINT UNSIGNED`  | no   | none              | Local `users.id` of the initial administrator.     |
+| `completed_at` | `TIMESTAMP`        | no   | current timestamp | Time initial administrator provisioning completed. |
 
 The marker has a primary key on `id`; bootstrap logic must reserve and use only
 `id=1` so there is one deployment marker. A row is not inserted by schema
@@ -73,18 +73,18 @@ deleting an account cannot silently reopen first-run bootstrap.
 The main server writes authentication audit events through the data server.
 Events are append-only records and are separate from the current user state.
 
-| Field | MySQL type | Null | Default | Description |
-| --- | --- | --- | --- | --- |
-| `id` | `BIGINT UNSIGNED` | no | auto-increment | Event identifier. |
-| `user_id` | `BIGINT UNSIGNED` | yes | `null` | Local user id when one is known. |
-| `provider` | `VARCHAR(64)` | no | none | Provider involved in the attempt. |
-| `provider_subject` | `VARCHAR(255)` | no | none | Provider subject, when supplied. |
-| `event_type` | `VARCHAR(32)` | no | none | `authenticated`, `rejected`, `disabled`, `logout`, or `error`. |
-| `success` | `TINYINT(1)` | no | `0` | Whether the event completed successfully. |
-| `event_at` | `TIMESTAMP` | no | current timestamp | Event time recorded by the server. |
-| `ip_address` | `VARCHAR(45)` | yes | `null` | Optional IPv4 or IPv6 source address. |
-| `user_agent` | `VARCHAR(512)` | yes | `null` | Optional browser user-agent summary. |
-| `details` | `JSON` | yes | `null` | Non-secret diagnostic context. Tokens and secrets are prohibited. |
+| Field              | MySQL type        | Null | Default           | Description                                                       |
+| ------------------ | ----------------- | ---- | ----------------- | ----------------------------------------------------------------- |
+| `id`               | `BIGINT UNSIGNED` | no   | auto-increment    | Event identifier.                                                 |
+| `user_id`          | `BIGINT UNSIGNED` | yes  | `null`            | Local user id when one is known.                                  |
+| `provider`         | `VARCHAR(64)`     | no   | none              | Provider involved in the attempt.                                 |
+| `provider_subject` | `VARCHAR(255)`    | no   | none              | Provider subject, when supplied.                                  |
+| `event_type`       | `VARCHAR(32)`     | no   | none              | `authenticated`, `rejected`, `disabled`, `logout`, or `error`.    |
+| `success`          | `TINYINT(1)`      | no   | `0`               | Whether the event completed successfully.                         |
+| `event_at`         | `TIMESTAMP`       | no   | current timestamp | Event time recorded by the server.                                |
+| `ip_address`       | `VARCHAR(45)`     | yes  | `null`            | Optional IPv4 or IPv6 source address.                             |
+| `user_agent`       | `VARCHAR(512)`    | yes  | `null`            | Optional browser user-agent summary.                              |
+| `details`          | `JSON`            | yes  | `null`            | Non-secret diagnostic context. Tokens and secrets are prohibited. |
 
 The data server creates an index on `(provider, provider_subject, event_at)`
 for identity history and audit queries.
@@ -103,18 +103,18 @@ connection and query execution. Asset records used by the welcome page are
 ordinary image assets whose `asset_type` is `image`, `width` is `4800`, and
 `height` is `4800`.
 
-| Field | MySQL type | Null | Default | Description |
-| --- | --- | --- | --- | --- |
-| `id` | `INT` | no | auto-increment | Stable database identifier. |
-| `asset_id` | `VARCHAR(45)` | no | none | Unique public asset identifier. |
-| `width` | `INT` | no | none | Source image width in pixels. |
-| `height` | `INT` | no | none | Source image height in pixels. |
-| `focal_point_x` | `DOUBLE` | no | none | Complex-plane real coordinate associated with the image. |
-| `focal_point_y` | `DOUBLE` | no | none | Complex-plane imaginary coordinate associated with the image. |
-| `scope` | `DOUBLE` | no | none | Complex-plane scope used to generate the image. |
-| `filename` | `VARCHAR(45)` | no | none | Source or generated filename. |
-| `public_url` | `VARCHAR(255)` | no | none | Fetchable public image URL. |
-| `asset_type` | `VARCHAR(45)` | no | none | Asset classification, such as `image`. |
+| Field           | MySQL type     | Null | Default        | Description                                                   |
+| --------------- | -------------- | ---- | -------------- | ------------------------------------------------------------- |
+| `id`            | `INT`          | no   | auto-increment | Stable database identifier.                                   |
+| `asset_id`      | `VARCHAR(45)`  | no   | none           | Unique public asset identifier.                               |
+| `width`         | `INT`          | no   | none           | Source image width in pixels.                                 |
+| `height`        | `INT`          | no   | none           | Source image height in pixels.                                |
+| `focal_point_x` | `DOUBLE`       | no   | none           | Complex-plane real coordinate associated with the image.      |
+| `focal_point_y` | `DOUBLE`       | no   | none           | Complex-plane imaginary coordinate associated with the image. |
+| `scope`         | `DOUBLE`       | no   | none           | Complex-plane scope used to generate the image.               |
+| `filename`      | `VARCHAR(45)`  | no   | none           | Source or generated filename.                                 |
+| `public_url`    | `VARCHAR(255)` | no   | none           | Fetchable public image URL.                                   |
+| `asset_type`    | `VARCHAR(45)`  | no   | none           | Asset classification, such as `image`.                        |
 
 `asset_id` is unique and `id` is the primary key. The welcome-image query
 must apply the allowlisted predicates `asset_type = 'image'`, `width = 4800`,
@@ -132,24 +132,24 @@ backward-compatible until the filtered endpoint is introduced.
 
 ## `videos` table
 
-| Field | Type | Description |
-| --- | --- | --- |
-| `id` | integer | Stable video-project identifier. |
-| `title` | string | User-visible project title. |
-| `created_at` | timestamp | Record creation time. |
-| `updated_at` | timestamp | Most recent persisted update. |
-| `archived` | boolean | Soft-delete marker; `false` by default. |
-| `meta` | JSON object | Technical rendering and output configuration. |
-| `script` | JSON object | Ordered motion and frame instructions. |
-| `meta_version` | integer | Version of the `meta` document, when independently versioned. |
-| `script_version` | integer | Version of the `script` document, when independently versioned. |
-| `render_state` | `VARCHAR(16)` | `idle`, `queued`, `running`, `frames_ready`, `encoding`, `completed`, `failed`, or `cancelled`; defaults to `idle`. |
-| `render_progress` | `INT UNSIGNED` | Integer percentage from 0 to 100; defaults to `0`. |
-| `render_error` | `VARCHAR(4096)` nullable | Most recent render failure message, or `null`. |
-| `render_started_at` | `DATETIME` nullable | Time frame production began, or `null` before execution. |
-| `render_completed_at` | `DATETIME` nullable | Time rendering stopped, completed, or was cancelled, or `null`. |
-| `render_output_uri` | `VARCHAR(1024)` nullable | Frame workspace while `frames_ready`, final server-side output location after successful assembly, or `null`. |
-| `render_frame_count` | `INT UNSIGNED` nullable | Number of frames requested/generated for the render, or `null` before planning. |
+| Field                 | Type                     | Description                                                                                                         |
+| --------------------- | ------------------------ | ------------------------------------------------------------------------------------------------------------------- |
+| `id`                  | integer                  | Stable video-project identifier.                                                                                    |
+| `title`               | string                   | User-visible project title.                                                                                         |
+| `created_at`          | timestamp                | Record creation time.                                                                                               |
+| `updated_at`          | timestamp                | Most recent persisted update.                                                                                       |
+| `archived`            | boolean                  | Soft-delete marker; `false` by default.                                                                             |
+| `meta`                | JSON object              | Technical rendering and output configuration.                                                                       |
+| `script`              | JSON object              | Ordered motion and frame instructions.                                                                              |
+| `meta_version`        | integer                  | Version of the `meta` document, when independently versioned.                                                       |
+| `script_version`      | integer                  | Version of the `script` document, when independently versioned.                                                     |
+| `render_state`        | `VARCHAR(16)`            | `idle`, `queued`, `running`, `frames_ready`, `encoding`, `completed`, `failed`, or `cancelled`; defaults to `idle`. |
+| `render_progress`     | `INT UNSIGNED`           | Integer percentage from 0 to 100; defaults to `0`.                                                                  |
+| `render_error`        | `VARCHAR(4096)` nullable | Most recent render failure message, or `null`.                                                                      |
+| `render_started_at`   | `DATETIME` nullable      | Time frame production began, or `null` before execution.                                                            |
+| `render_completed_at` | `DATETIME` nullable      | Time rendering stopped, completed, or was cancelled, or `null`.                                                     |
+| `render_output_uri`   | `VARCHAR(1024)` nullable | Frame workspace while `frames_ready`, final server-side output location after successful assembly, or `null`.       |
+| `render_frame_count`  | `INT UNSIGNED` nullable  | Number of frames requested/generated for the render, or `null` before planning.                                     |
 
 The render lifecycle is owned by the asset server and persisted on the video
 record. A render request moves a video from
@@ -196,28 +196,28 @@ The initial `meta` object contains the project description and basic output
 dimensions and timing. These are JSON properties, not additional columns in
 the `videos` table.
 
-| Property | Type | Description |
-| --- | --- | --- |
-| `description` | string | User-authored description of the video project. |
-| `frame_size` | integer | Width and height of the square output frame, in pixels. |
-| `frame_rate` | number | Output frame rate, in frames per second. |
-| `format` | enum string | Container format: `mp4`, `webm`, `mov`, or `mkv`. |
-| `codec` | enum string | Video codec: `h264`, `hevc`, `vp9`, or `av1`. |
-| `pixel_format` | enum string | Pixel encoding, such as `yuv420p`, `yuv444p`, or `rgba`. |
-| `bitrate` | integer or null | Target video bitrate in bits per second. |
-| `quality` | number or null | Codec-specific quality value, such as CRF. |
-| `aspect_ratio` | number | Display width-to-height ratio. |
-| `duration` | number or null | Expected runtime in seconds; null when derived from the script. |
-| `audio` | object | Audio output configuration; see the nested shape below. |
-| `color_space` | object | Color interpretation metadata; see the nested shape below. |
-| `keyframe_interval` | integer or null | Maximum number of frames between keyframes. |
-| `output_extension` | enum string or null | Preferred output suffix: `mp4`, `webm`, `mov`, or `mkv`. |
-| `output_uri` | string or null | Destination URI or path for generated output. |
-| `thumbnail` | object | Poster-frame or preview configuration. |
-| `render_engine` | string or null | Renderer identifier, such as `fracto-raster`. |
-| `capability_version` | string or null | Version of the renderer capability set used. |
-| `created_by` | string or null | User or process that created the project. |
-| `updated_by` | string or null | User or process that most recently changed the project. |
+| Property             | Type                | Description                                                     |
+| -------------------- | ------------------- | --------------------------------------------------------------- |
+| `description`        | string              | User-authored description of the video project.                 |
+| `frame_size`         | integer             | Width and height of the square output frame, in pixels.         |
+| `frame_rate`         | number              | Output frame rate, in frames per second.                        |
+| `format`             | enum string         | Container format: `mp4`, `webm`, `mov`, or `mkv`.               |
+| `codec`              | enum string         | Video codec: `h264`, `hevc`, `vp9`, or `av1`.                   |
+| `pixel_format`       | enum string         | Pixel encoding, such as `yuv420p`, `yuv444p`, or `rgba`.        |
+| `bitrate`            | integer or null     | Target video bitrate in bits per second.                        |
+| `quality`            | number or null      | Codec-specific quality value, such as CRF.                      |
+| `aspect_ratio`       | number              | Display width-to-height ratio.                                  |
+| `duration`           | number or null      | Expected runtime in seconds; null when derived from the script. |
+| `audio`              | object              | Audio output configuration; see the nested shape below.         |
+| `color_space`        | object              | Color interpretation metadata; see the nested shape below.      |
+| `keyframe_interval`  | integer or null     | Maximum number of frames between keyframes.                     |
+| `output_extension`   | enum string or null | Preferred output suffix: `mp4`, `webm`, `mov`, or `mkv`.        |
+| `output_uri`         | string or null      | Destination URI or path for generated output.                   |
+| `thumbnail`          | object              | Poster-frame or preview configuration.                          |
+| `render_engine`      | string or null      | Renderer identifier, such as `fracto-raster`.                   |
+| `capability_version` | string or null      | Version of the renderer capability set used.                    |
+| `created_by`         | string or null      | User or process that created the project.                       |
+| `updated_by`         | string or null      | User or process that most recently changed the project.         |
 
 The initial shape is:
 
@@ -281,11 +281,11 @@ The `script` object contains an ordered `steps` array. At the current minimal
 schema, each step identifies a focal point and scope for that portion of the
 video path:
 
-| Property | Type | Description |
-| --- | --- | --- |
-| `steps` | array | Ordered video path steps; defaults to an empty array. |
+| Property              | Type   | Description                                                  |
+| --------------------- | ------ | ------------------------------------------------------------ |
+| `steps`               | array  | Ordered video path steps; defaults to an empty array.        |
 | `steps[].focal_point` | object | Complex-plane location with numeric `x` and `y` coordinates. |
-| `steps[].scope` | number | Width of the rendered complex-plane region for the step. |
+| `steps[].scope`       | number | Width of the rendered complex-plane region for the step.     |
 
 ```json
 {
@@ -318,31 +318,31 @@ The data server maintains the composite index
 queries without sorting the potentially large `tasks` JSON document, while the
 `id` suffix makes ordering deterministic when timestamps tie.
 
-| Field | MySQL type | Null | Default | Description |
-| --- | --- | --- | --- | --- |
-| `id` | `BIGINT UNSIGNED` | no | auto-increment | Stable automation-job identifier and primary key. |
-| `title` | `VARCHAR(255)` | no | none | User-visible name of the job definition. |
-| `automation_type` | `VARCHAR(100)` | no | none | Server/job namespace, such as `tiles` or `assets`. Records must be queried with this discriminator. |
-| `state` | `VARCHAR(16)` | no | `ready` | Lifecycle state of the job; see the state table below. |
-| `created_at` | `TIMESTAMP` | no | current timestamp | Time the record was created. |
-| `updated_at` | `TIMESTAMP` | no | current timestamp | Time the record was last modified; updated automatically by MySQL. |
-| `run_start` | `DATETIME` | yes | `NULL` | Time execution began; remains null for jobs that have not run. |
-| `run_stop` | `DATETIME` | yes | `NULL` | Time execution stopped; used when a run is paused or complete, and may also be set for a failed run. |
-| `tasks` | `JSON` | no | none | Server-owned ordered task definition. Its shape is determined by `automation_type`; for Tiles it is an array of task objects. |
-| `checkpoint` | `JSON` | yes | `NULL` | Latest versioned engine checkpoint, written at successful operation boundaries so a paused or interrupted job can resume safely. |
+| Field             | MySQL type        | Null | Default           | Description                                                                                                                      |
+| ----------------- | ----------------- | ---- | ----------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `id`              | `BIGINT UNSIGNED` | no   | auto-increment    | Stable automation-job identifier and primary key.                                                                                |
+| `title`           | `VARCHAR(255)`    | no   | none              | User-visible name of the job definition.                                                                                         |
+| `automation_type` | `VARCHAR(100)`    | no   | none              | Server/job namespace, such as `tiles` or `assets`. Records must be queried with this discriminator.                              |
+| `state`           | `VARCHAR(16)`     | no   | `ready`           | Lifecycle state of the job; see the state table below.                                                                           |
+| `created_at`      | `TIMESTAMP`       | no   | current timestamp | Time the record was created.                                                                                                     |
+| `updated_at`      | `TIMESTAMP`       | no   | current timestamp | Time the record was last modified; updated automatically by MySQL.                                                               |
+| `run_start`       | `DATETIME`        | yes  | `NULL`            | Time execution began; remains null for jobs that have not run.                                                                   |
+| `run_stop`        | `DATETIME`        | yes  | `NULL`            | Time execution stopped; used when a run is paused or complete, and may also be set for a failed run.                             |
+| `tasks`           | `JSON`            | no   | none              | Server-owned ordered task definition. Its shape is determined by `automation_type`; for Tiles it is an array of task objects.    |
+| `checkpoint`      | `JSON`            | yes  | `NULL`            | Latest versioned engine checkpoint, written at successful operation boundaries so a paused or interrupted job can resume safely. |
 
 ### Automation states
 
 The current state vocabulary is deliberately small and shared across servers:
 
-| State | Meaning | Timestamp expectations |
-| --- | --- | --- |
-| `draft` | A job is being defined or edited and is not eligible to run. | `run_start` and `run_stop` are normally `NULL`. |
-| `ready` | A validated job is available for execution. | `run_start` and `run_stop` are normally `NULL` until execution begins. |
-| `running` | The job is actively executing. | `run_start` is set; `run_stop` is `NULL`. |
-| `paused` | Execution has been intentionally suspended and may resume. | `run_start` remains set; `run_stop` records the pause time. |
-| `failed` | Execution stopped because of an error. | `run_start` is set; `run_stop` should record the failure time when known. |
-| `complete` | All tasks finished successfully. | `run_start` and `run_stop` are set. |
+| State      | Meaning                                                      | Timestamp expectations                                                    |
+| ---------- | ------------------------------------------------------------ | ------------------------------------------------------------------------- |
+| `draft`    | A job is being defined or edited and is not eligible to run. | `run_start` and `run_stop` are normally `NULL`.                           |
+| `ready`    | A validated job is available for execution.                  | `run_start` and `run_stop` are normally `NULL` until execution begins.    |
+| `running`  | The job is actively executing.                               | `run_start` is set; `run_stop` is `NULL`.                                 |
+| `paused`   | Execution has been intentionally suspended and may resume.   | `run_start` remains set; `run_stop` records the pause time.               |
+| `failed`   | Execution stopped because of an error.                       | `run_start` is set; `run_stop` should record the failure time when known. |
+| `complete` | All tasks finished successfully.                             | `run_start` and `run_stop` are set.                                       |
 
 State transitions must be performed by the server that owns the matching
 `automation_type`. A consumer should treat unknown future states as
@@ -376,13 +376,13 @@ properties to documented defaults.
 For `automation_type = "tiles"`, `tasks` is an ordered array. Tasks are added
 in manager mode and saved together as one `ready` job:
 
-| Property | Type | Description |
-| --- | --- | --- |
-| `generate_code` | string | Coverage operation: `redo`, `can_do`, `blank`, or `interior`. `redo` corresponds to the coverage table's `tile count` operation. |
-| `level` | integer | Tile level targeted by the operation. |
-| `short_codes` | string[] | Ordered tile shortcodes included in the operation. |
-| `focal_point` | object | Current frame focal point captured at save time, with numeric `x` and `y` properties. |
-| `scope` | number | Current frame scope captured at save time. |
+| Property        | Type     | Description                                                                                                                      |
+| --------------- | -------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `generate_code` | string   | Coverage operation: `redo`, `can_do`, `blank`, or `interior`. `redo` corresponds to the coverage table's `tile count` operation. |
+| `level`         | integer  | Tile level targeted by the operation.                                                                                            |
+| `short_codes`   | string[] | Ordered tile shortcodes included in the operation.                                                                               |
+| `focal_point`   | object   | Current frame focal point captured at save time, with numeric `x` and `y` properties.                                            |
+| `scope`         | number   | Current frame scope captured at save time.                                                                                       |
 
 Task order is preserved. No application-level shortcode count limit is
 imposed; the UI emits an informational warning at each additional
@@ -414,26 +414,26 @@ InnoDB; no existing table or source bailiwick is modified. Protocol and limits:
 [ORBITAL_DATA.md](ORBITAL_DATA.md). This is the initial `orbital-discovery-v1`
 shape; there is no prior orbital-storage format to normalize or backfill.
 
-| Field | MySQL type | Null/default | Meaning |
-| --- | --- | --- | --- |
-| `id` | ASCII binary `CHAR(36)` | required, primary key | UUID v4 job ID. |
-| `request_key` | ASCII binary `VARCHAR(128)` | nullable, unique | Optional idempotency key. |
-| `request_hash` | ASCII binary `CHAR(64)` | required | SHA-256 of calculation version, source ID, normalized core coordinates, source pattern and settings. |
-| `source_bailiwick_id` | `BIGINT UNSIGNED` | required | Source record reference; deliberately no FK so the snapshot survives source retirement. |
-| `focal_key` | ASCII binary `CHAR(64)` | required | SHA-256 of canonical `[re,im]` decimal strings. |
-| `focal_re`, `focal_im` | ASCII `VARCHAR(768)` | required | Snapshotted core parameter, magnitude at most 16. |
-| `source_pattern` | `INT UNSIGNED` | required | Positive source pattern, not orbital identity. |
-| `settings` | `JSON` | required | Validated settings object described below. |
-| `calculation_version` | `VARCHAR(64)` | required | `orbital-discovery-v2` for new calculations; historical versions retained. |
-| `status`, `stage` | `VARCHAR(32)` | required | Lifecycle and execution stage; enumerated in the protocol. |
-| `progress` | `JSON` | required | Progress object described below; initially `{}`. |
-| `error_code` | `VARCHAR(64)` | nullable | Sanitized failure code; null on ordinary bounded completion. |
-| `execution_token` | ASCII binary `CHAR(36)` | nullable | Private owner generation; migration 010. Every worker publication and heartbeat is fenced by this value and the lease. |
-| `resume_count` | `INT UNSIGNED` | no / `0` | Number of actual ownership resumptions; simultaneous attachments do not increment it. |
-| `cancel_requested` | `TINYINT(1)` | no / `0` | Publication guard set during cancellation. |
-| `lease_expires_at` | `DATETIME(3)` | nullable | Database-clock recovery lease, initially/renewed 120 seconds ahead. |
-| `created_at` | `DATETIME(3)` | no / current timestamp | Creation time. |
-| `updated_at` | `DATETIME(3)` | no / current timestamp, auto-update | Last run change or lease renewal. |
+| Field                  | MySQL type                  | Null/default                        | Meaning                                                                                                                |
+| ---------------------- | --------------------------- | ----------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `id`                   | ASCII binary `CHAR(36)`     | required, primary key               | UUID v4 job ID.                                                                                                        |
+| `request_key`          | ASCII binary `VARCHAR(128)` | nullable, unique                    | Optional idempotency key.                                                                                              |
+| `request_hash`         | ASCII binary `CHAR(64)`     | required                            | SHA-256 of calculation version, source ID, normalized core coordinates, source pattern and settings.                   |
+| `source_bailiwick_id`  | `BIGINT UNSIGNED`           | required                            | Source record reference; deliberately no FK so the snapshot survives source retirement.                                |
+| `focal_key`            | ASCII binary `CHAR(64)`     | required                            | SHA-256 of canonical `[re,im]` decimal strings.                                                                        |
+| `focal_re`, `focal_im` | ASCII `VARCHAR(768)`        | required                            | Snapshotted core parameter, magnitude at most 16.                                                                      |
+| `source_pattern`       | `INT UNSIGNED`              | required                            | Positive source pattern, not orbital identity.                                                                         |
+| `settings`             | `JSON`                      | required                            | Validated settings object described below.                                                                             |
+| `calculation_version`  | `VARCHAR(64)`               | required                            | `orbital-discovery-v2` for new calculations; historical versions retained.                                             |
+| `status`, `stage`      | `VARCHAR(32)`               | required                            | Lifecycle and execution stage; enumerated in the protocol.                                                             |
+| `progress`             | `JSON`                      | required                            | Progress object described below; initially `{}`.                                                                       |
+| `error_code`           | `VARCHAR(64)`               | nullable                            | Sanitized failure code; null on ordinary bounded completion.                                                           |
+| `execution_token`      | ASCII binary `CHAR(36)`     | nullable                            | Private owner generation; migration 010. Every worker publication and heartbeat is fenced by this value and the lease. |
+| `resume_count`         | `INT UNSIGNED`              | no / `0`                            | Number of actual ownership resumptions; simultaneous attachments do not increment it.                                  |
+| `cancel_requested`     | `TINYINT(1)`                | no / `0`                            | Publication guard set during cancellation.                                                                             |
+| `lease_expires_at`     | `DATETIME(3)`               | nullable                            | Database-clock recovery lease, initially/renewed 120 seconds ahead.                                                    |
+| `created_at`           | `DATETIME(3)`               | no / current timestamp              | Creation time.                                                                                                         |
+| `updated_at`           | `DATETIME(3)`               | no / current timestamp, auto-update | Last run change or lease renewal.                                                                                      |
 
 Index `(focal_key, created_at)` supports parameter/run lookup. `request_key`
 is unique when present; multiple NULL keys permit explicitly separate runs.
@@ -454,23 +454,23 @@ Terminal progress adds Boolean `search_complete` (configured search only) and
 Data-service-owned, InnoDB, introduced by migration 007. No uniqueness constraint
 on focal parameter or period: distinct cycles of the same period must coexist.
 
-| Field | MySQL type | Null/default | Meaning |
-| --- | --- | --- | --- |
-| `id` | `BIGINT UNSIGNED` | no / auto-increment primary key | Stable orbital identity; API serializes as a string. |
-| `free_bailiwick_id` | `BIGINT UNSIGNED` | nullable / `NULL` | Indexed primary source table entry, added by migration 008. Set on insert or the first rediscovery of an older unlinked orbital. |
-| `focal_key` | ASCII binary `CHAR(64)` | required | Exact normalized focal lookup digest. |
-| `focal_re`, `focal_im` | ASCII `VARCHAR(768)` | required | Canonical decimal focal parameter. |
-| `period` | `INT UNSIGNED` | required | Cycle length accepted by the shared Seed Surveys scan, up to 4096; no period-4 filter. |
-| `precision_digits` | `INT UNSIGNED` | required | Accepted Newton arithmetic precision, 64–256. |
-| `closure_error` | ASCII `VARCHAR(768)` | required | Maximum transition residual as a decimal string, 32 significant digits. |
-| `closure_tolerance` | ASCII `VARCHAR(768)` | required | `1e-7` for the shared survey, independently checked on all transitions; legacy strict callers use `1e-24`. |
-| `identity_tolerance` | ASCII `VARCHAR(768)` | required | `1e-7` for shared survey cycles; legacy strict callers use `1e-20`. |
-| `calculation_version` | `VARCHAR(64)` | required | `orbital-discovery-v2` for new calculations; historical versions retained. |
-| `ray_status` | `VARCHAR(32)` | no / `pending` | Separate SDK ray outcome; never inferred from an empty child table. |
-| `ray_metadata` | `JSON` | nullable | Compact ray calculation evidence described below. |
-| `discovery_metadata` | `JSON` | nullable | Latest scan confirmation and provenance; added by migration 009. |
-| `created_at` | `DATETIME(3)` | no / current timestamp | Initial acceptance. |
-| `updated_at` | `DATETIME(3)` | no / current timestamp, auto-update | Last attached ray result. |
+| Field                  | MySQL type              | Null/default                        | Meaning                                                                                                                          |
+| ---------------------- | ----------------------- | ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `id`                   | `BIGINT UNSIGNED`       | no / auto-increment primary key     | Stable orbital identity; API serializes as a string.                                                                             |
+| `free_bailiwick_id`    | `BIGINT UNSIGNED`       | nullable / `NULL`                   | Indexed primary source table entry, added by migration 008. Set on insert or the first rediscovery of an older unlinked orbital. |
+| `focal_key`            | ASCII binary `CHAR(64)` | required                            | Exact normalized focal lookup digest.                                                                                            |
+| `focal_re`, `focal_im` | ASCII `VARCHAR(768)`    | required                            | Canonical decimal focal parameter.                                                                                               |
+| `period`               | `INT UNSIGNED`          | required                            | Cycle length accepted by the shared Seed Surveys scan, up to 4096; no period-4 filter.                                           |
+| `precision_digits`     | `INT UNSIGNED`          | required                            | Accepted Newton arithmetic precision, 64–256.                                                                                    |
+| `closure_error`        | ASCII `VARCHAR(768)`    | required                            | Maximum transition residual as a decimal string, 32 significant digits.                                                          |
+| `closure_tolerance`    | ASCII `VARCHAR(768)`    | required                            | `1e-7` for the shared survey, independently checked on all transitions; legacy strict callers use `1e-24`.                       |
+| `identity_tolerance`   | ASCII `VARCHAR(768)`    | required                            | `1e-7` for shared survey cycles; legacy strict callers use `1e-20`.                                                              |
+| `calculation_version`  | `VARCHAR(64)`           | required                            | `orbital-discovery-v2` for new calculations; historical versions retained.                                                       |
+| `ray_status`           | `VARCHAR(32)`           | no / `pending`                      | Separate SDK ray outcome; never inferred from an empty child table.                                                              |
+| `ray_metadata`         | `JSON`                  | nullable                            | Compact ray calculation evidence described below.                                                                                |
+| `discovery_metadata`   | `JSON`                  | nullable                            | Latest scan confirmation and provenance; added by migration 009.                                                                 |
+| `created_at`           | `DATETIME(3)`           | no / current timestamp              | Initial acceptance.                                                                                                              |
+| `updated_at`           | `DATETIME(3)`           | no / current timestamp, auto-update | Last attached ray result.                                                                                                        |
 
 Index `(focal_key, period)` narrows full ordered-cycle comparisons. An advisory
 lock on the focal digest serializes comparison and insertion. Coordinates and
@@ -497,11 +497,11 @@ families are retained even if a later attempt finds no supported rays.
 
 Data-service-owned, InnoDB, introduced by migration 007.
 
-| Field | MySQL type | Null/default | Meaning |
-| --- | --- | --- | --- |
-| `orbital_id` | `BIGINT UNSIGNED` | required | FK to `orbital_progressions.id`. |
-| `point_index` | `INT UNSIGNED` | required | Zero-based forward dynamical order. |
-| `point_re`, `point_im` | ASCII `VARCHAR(768)` | required | Decimal coordinates, preserved without Number conversion. |
+| Field                  | MySQL type           | Null/default | Meaning                                                   |
+| ---------------------- | -------------------- | ------------ | --------------------------------------------------------- |
+| `orbital_id`           | `BIGINT UNSIGNED`    | required     | FK to `orbital_progressions.id`.                          |
+| `point_index`          | `INT UNSIGNED`       | required     | Zero-based forward dynamical order.                       |
+| `point_re`, `point_im` | ASCII `VARCHAR(768)` | required     | Decimal coordinates, preserved without Number conversion. |
 
 Composite primary key `(orbital_id, point_index)`. Application validation requires
 exactly `period` contiguous indices, one traversal without a closing duplicate,
@@ -513,17 +513,17 @@ deletion is configured. Header, points, and discovery membership commit together
 Data-service-owned, InnoDB, introduced by migration 007. Only exact rational
 angles belonging to whole validated doubling families enter this table.
 
-| Field | MySQL type | Null/default | Meaning |
-| --- | --- | --- | --- |
-| `id` | `BIGINT UNSIGNED` | no / auto-increment primary key | Ratio row identity. |
-| `orbital_id` | `BIGINT UNSIGNED` | required | Owning progression. |
-| `point_index` | `INT UNSIGNED` | required | Landing point within that stored progression. |
-| `numerator`, `denominator` | ASCII binary `VARCHAR(40)` | required | Reduced nonnegative/positive integer strings; angle normalized modulo one. |
-| `family_key` | ASCII binary `VARCHAR(96)` | required | Lexicographically smallest reduced `numerator/denominator` in the doubling cycle. |
-| `angle_period` | `INT UNSIGNED` | required | Exact angle-cycle length, separate from spatial period. |
-| `landing_error` | `DOUBLE` | required | Nonnegative SDK endpoint error, at most `1e-6`. |
-| `validation_status` | `VARCHAR(32)` | required | `validated`. |
-| `calculation_version` | `VARCHAR(64)` | required | `orbital-discovery-v2` for new calculations; historical versions retained. |
+| Field                      | MySQL type                 | Null/default                    | Meaning                                                                           |
+| -------------------------- | -------------------------- | ------------------------------- | --------------------------------------------------------------------------------- |
+| `id`                       | `BIGINT UNSIGNED`          | no / auto-increment primary key | Ratio row identity.                                                               |
+| `orbital_id`               | `BIGINT UNSIGNED`          | required                        | Owning progression.                                                               |
+| `point_index`              | `INT UNSIGNED`             | required                        | Landing point within that stored progression.                                     |
+| `numerator`, `denominator` | ASCII binary `VARCHAR(40)` | required                        | Reduced nonnegative/positive integer strings; angle normalized modulo one.        |
+| `family_key`               | ASCII binary `VARCHAR(96)` | required                        | Lexicographically smallest reduced `numerator/denominator` in the doubling cycle. |
+| `angle_period`             | `INT UNSIGNED`             | required                        | Exact angle-cycle length, separate from spatial period.                           |
+| `landing_error`            | `DOUBLE`                   | required                        | Nonnegative SDK endpoint error, at most `1e-6`.                                   |
+| `validation_status`        | `VARCHAR(32)`              | required                        | `validated`.                                                                      |
+| `calculation_version`      | `VARCHAR(64)`              | required                        | `orbital-discovery-v2` for new calculations; historical versions retained.        |
 
 Unique `(orbital_id,numerator,denominator)`; index `(orbital_id,point_index)`;
 composite FK to `orbital_progression_points`. Ratios reference the original
@@ -536,12 +536,12 @@ on exact-ratio rediscovery. There is no renderer geometry or cascade deletion.
 
 Data-service-owned, InnoDB, introduced by migration 007.
 
-| Field | MySQL type | Null/default | Meaning |
-| --- | --- | --- | --- |
-| `run_id` | ASCII binary `CHAR(36)` | required | FK to `orbital_discovery_runs.id`. |
-| `orbital_id` | `BIGINT UNSIGNED` | required | FK to `orbital_progressions.id`. |
-| `disposition` | `VARCHAR(16)` | required | `created` or `reused`. |
-| `discovery_method` | `VARCHAR(32)` | required | First accepted method in this run: `seed_survey_scan` for current runs; historical methods retained. |
+| Field              | MySQL type              | Null/default | Meaning                                                                                              |
+| ------------------ | ----------------------- | ------------ | ---------------------------------------------------------------------------------------------------- |
+| `run_id`           | ASCII binary `CHAR(36)` | required     | FK to `orbital_discovery_runs.id`.                                                                   |
+| `orbital_id`       | `BIGINT UNSIGNED`       | required     | FK to `orbital_progressions.id`.                                                                     |
+| `disposition`      | `VARCHAR(16)`           | required     | `created` or `reused`.                                                                               |
+| `discovery_method` | `VARCHAR(32)`           | required     | First accepted method in this run: `seed_survey_scan` for current runs; historical methods retained. |
 
 | `discovery_metadata` | `JSON` | nullable | Immutable per-run scan ranking/confirmation evidence; added by migration 009. |
 
@@ -560,13 +560,13 @@ is the opt-in disposable-MySQL command documented in `ORBITAL_DATA.md`.
 
 Introduced by migration 010, InnoDB. No historical checkpoint rows are created.
 
-| Field | Type | Null/default | Meaning |
-| --- | --- | --- | --- |
-| run_id | ASCII binary CHAR(36) | required, primary key/FK | Owning orbital_discovery_runs row. |
-| format_version | INT UNSIGNED | required | Checkpoint format, currently 1. |
-| phase | VARCHAR(32) | required | survey, scan, persisting, rays, or done. |
-| payload | MEDIUMBLOB | required | Bounded gzip JSON, below 16 MiB compressed and 64 MiB inflated. |
-| updated_at | DATETIME(3) | current timestamp, auto-update | Last committed durable unit. |
+| Field          | Type                  | Null/default                   | Meaning                                                               |
+| -------------- | --------------------- | ------------------------------ | --------------------------------------------------------------------- |
+| run_id         | ASCII binary CHAR(36) | required, primary key/FK       | Owning orbital_discovery_runs row.                                    |
+| format_version | INT UNSIGNED          | required                       | Checkpoint format, currently 2; compatible format 1 upgrades on load. |
+| phase          | VARCHAR(32)           | required                       | survey, scan, persisting, rays, catalog, catalog_finalize, or done.   |
+| payload        | MEDIUMBLOB            | required                       | Bounded gzip JSON, below 16 MiB compressed and 64 MiB inflated.       |
+| updated_at     | DATETIME(3)           | current timestamp, auto-update | Last committed durable unit.                                          |
 
 The payload stores version, profile signature, input_hash (run request_hash),
 phase, logical progress, survey rows, complete scan groups and tested pixels,
@@ -583,11 +583,80 @@ A new generation resets cancel_requested and error_code while restoring durable
 progress, preserving the same UUID and immutable parameter/settings snapshots.
 No new source/focal point is created by resumption.
 
+## Catalog investigation tables
+
+Migration 013 introduces two InnoDB tables. No investigations are backfilled.
+Migration 014 adds nullable job owners; unowned rows retain their standalone behavior.
+
+`orbital_family_investigations`:
+
+| Field                               | Type                     | Null/default          | Meaning                                                                                   |
+| ----------------------------------- | ------------------------ | --------------------- | ----------------------------------------------------------------------------------------- |
+| identity_key                        | ASCII binary CHAR(64)    | required, primary key | SHA-256 of exact focal point, family, versions, numerical profile.                        |
+| focal_key                           | ASCII binary CHAR(64)    | required              | Shared focal identity, indexed with family_key.                                           |
+| focal_re, focal_im                  | ASCII VARCHAR(768)       | required              | Normalized exact decimal coordinates.                                                     |
+| family_key                          | ASCII binary VARCHAR(96) | required              | Canonical numeric-minimum catalog family.                                                 |
+| denominator                         | ASCII binary VARCHAR(40) | required              | Positive reduced odd denominator as a decimal integer.                                    |
+| angle_period                        | INT UNSIGNED             | required              | Positive doubling period.                                                                 |
+| catalog_version, solver_version     | ASCII VARCHAR(64)        | required              | Algorithms defining the investigation.                                                    |
+| profile                             | JSON                     | required              | Validated bounded numerical settings.                                                     |
+| status                              | ASCII VARCHAR(24)        | pending               | pending, investigating, validated, unresolved.                                            |
+| reason                              | ASCII VARCHAR(96)        | nullable              | Numerical or interruption outcome.                                                        |
+| outcome                             | JSON                     | nullable              | Validated result, optionally wrapped by the bounded gzip codec; includes geometry.        |
+| orbital_id                          | BIGINT UNSIGNED          | nullable              | Published orbital FK, ON DELETE SET NULL.                                                 |
+| attempt_count                       | INT UNSIGNED             | 0                     | Number of claimed attempts.                                                               |
+| lease_token                         | ASCII binary CHAR(36)    | nullable              | UUID fencing the current family attempt.                                                  |
+| lease_expires_at                    | DATETIME(3)              | nullable              | Expiry, default lease duration 300 seconds.                                               |
+| owner_run_id, owner_execution_token | ASCII binary CHAR(36)    | nullable              | Migration 014: owning job UUID and execution UUID; verified against active job ownership. |
+| created_at, updated_at              | DATETIME(3)              | current timestamp     | Creation and last update; updated_at auto-updates.                                        |
+
+Status and lease expiry are indexed. Numerical identity excludes denominator
+coverage and job budgets, so expanded searches reuse compatible outcomes.
+
+`orbital_family_investigation_attempts`:
+
+| Field             | Type                  | Null/default          | Meaning                                                                |
+| ----------------- | --------------------- | --------------------- | ---------------------------------------------------------------------- |
+| id                | ASCII binary CHAR(36) | required, primary key | Attempt/lease UUID.                                                    |
+| investigation_key | ASCII binary CHAR(64) | required              | FK to investigation identity; indexed with started_at.                 |
+| status            | ASCII VARCHAR(24)     | required              | investigating, validated, or unresolved; reason records interruptions. |
+| reason            | ASCII VARCHAR(96)     | nullable              | Completion, cancellation, lease expiry, or owner replacement.          |
+| outcome_hash      | ASCII binary CHAR(64) | nullable              | SHA-256 of completed result for idempotent acknowledgement.            |
+| evidence          | JSON                  | nullable              | Compact numerical evidence without full geometry.                      |
+| started_at        | DATETIME(3)           | current timestamp     | Attempt start.                                                         |
+| finished_at       | DATETIME(3)           | nullable              | Attempt termination.                                                   |
+
+Catalog publications add `catalog` provenance to discovery_metadata and use
+`catalog_ray_endpoint_newton` as their discovery method. Matching survey metadata
+retains its rank and confidence; catalog-only run membership has no survey rank.
+
 ## Version history
 
-| Version | Document | Change | Migration notes |
-| --- | --- | --- | --- |
-| 010 | Orbital checkpoint format 1 | Durable resumable discovery and fenced execution. | Additive columns/table; no backfill. |
+Migration 016 adds nullable JSON `orbital_progressions.lifecycle_state`, without
+a backfill. Its versioned document contains `version` (`orbital-lifecycle-v1`),
+`orbital` and `assignments` enums, and `paths` with `status`, nonnegative integer
+`cached_rays`/`required_rays`, nullable SHA-256 `identity_key`, and nullable
+`profile` (`tolerance`, `precision_digits`, `minimum_depth`). Allowed states and
+cross-field constraints are enforced by the SDK lifecycle contract and documented
+in `ORBITAL_DATA.md`. Header/detail reads normalize old null records conservatively
+and derive `selectable` from validated orbital evidence independently of paths.
+Checkpoint format 2 gains an optional versioned `discovery_strategy` field;
+missing tags bind to the original settings without changing the input hash.
+
+Migration 015 adds `orbital_ray_cache_chunks` (InnoDB): `content_hash` is the
+required ASCII binary CHAR(64) primary key (SHA-256 of compressed bytes), `payload`
+is a required MEDIUMBLOB limited by the codec to 8 MiB, and `created_at` is a
+required DATETIME(3) defaulting to CURRENT_TIMESTAMP(3). Content is immutable and
+shared across manifests; chunks are retained without automatic garbage collection.
+Existing `orbital_family_investigations.outcome` and `orbital_ray_paths.paths`
+JSON columns may now hold `orbital-gzip-chunks-v1` manifests with ordered hashes,
+raw/compressed sizes and a raw SHA-256 digest. Raw caches remain bounded at 96 MiB.
+No existing row shape is backfilled; legacy JSON/gzip values still decode.
+
+| Version | Document                               | Change                                                | Migration notes                                                                |
+| ------- | -------------------------------------- | ----------------------------------------------------- | ------------------------------------------------------------------------------ |
+| 010     | Orbital checkpoint format 1            | Durable resumable discovery and fenced execution.     | Additive columns/table; no backfill.                                           |
+| 013–014 | Catalog ledger and checkpoint format 2 | Persistent family results and resumable catalog jobs. | Additive tables/owner columns; format-1 and old settings compatibility tested. |
 
 ## Schema maintenance
 

@@ -119,6 +119,12 @@ app.use((req, res, next) => {
 // Automation jobs may contain thousands of shortcodes. Keep this configurable
 // for installations with larger or stricter request-size requirements.
 const json_body_limit = process.env.FRACTO_JSON_BODY_LIMIT || "25mb";
+// Selection-time geometry for a large catalog family uses the chunk-backed cache.
+// An explicit installation-wide limit still takes precedence.
+app.use(
+  "/orbital-data/:id/ray-paths",
+  express.json({ limit: process.env.FRACTO_JSON_BODY_LIMIT || "96mb" }),
+);
 app.use(express.json({ limit: json_body_limit })); // For application/json
 app.use(express.urlencoded({ extended: true })); // For application/x-www-form-urlencoded
 

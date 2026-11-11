@@ -21,41 +21,72 @@ const roundtrip = async (cp) => decode_checkpoint(await encode_checkpoint(cp));
 
 test("job lookup matches the bailiwick ID regardless of new coordinates or settings", async () => {
   const queries = [];
-  const store = new OrbitalDataStore({ open: async () => ({
-    execute: async (sql, values) => {
-      queries.push({ sql, values });
-      if (sql.includes("id<>?")) return [[]];
-      assert.ok(sql.includes("r.source_bailiwick_id=?"));
-      assert.deepEqual(values, ["65"]);
-      return [[{ id: "original-checkpoint" }]];
-    },
-    end: async () => {},
-  }) });
-  const request = discovery_request({ free_bailiwick_id: "65", settings: { max_families: 19 } });
-  assert.equal(await store.lookup_run({ id: "65", parameter: { x: "0", y: "0" }, pattern: 1 }, request), "original-checkpoint");
+  const store = new OrbitalDataStore({
+    open: async () => ({
+      execute: async (sql, values) => {
+        queries.push({ sql, values });
+        if (sql.includes("id<>?")) return [[]];
+        assert.ok(sql.includes("r.source_bailiwick_id=?"));
+        assert.deepEqual(values, ["65"]);
+        return [[{ id: "original-checkpoint" }]];
+      },
+      end: async () => {},
+    }),
+  });
+  const request = discovery_request({
+    free_bailiwick_id: "65",
+    settings: { max_families: 19 },
+  });
+  assert.equal(
+    await store.lookup_run(
+      { id: "65", parameter: { x: "0", y: "0" }, pattern: 1 },
+      request,
+    ),
+    "original-checkpoint",
+  );
   assert.equal(queries.length, 2);
 });
 
 test("a separate job manager cannot claim a live owner or create another run for the same bailiwick", async () => {
   const locks = [];
-  const store = new OrbitalDataStore({ open: async () => ({
-    execute: async (sql, values) => {
-      if (sql.includes("GET_LOCK")) { locks.push(values[0]); return [[{ acquired: 1 }]]; }
-      if (sql.includes("RELEASE_LOCK")) return [[{ released: 1 }]];
-      if (sql.startsWith("SELECT source_bailiwick_id")) return [[{ source_bailiwick_id: "65" }]];
-      if (sql.includes("id<>?")) return [[{ id: "other-active-run" }]];
-      assert.fail(sql);
-    },
-    beginTransaction: async () => {},
-    rollback: async () => {},
-    end: async () => {},
-  }) });
+  const store = new OrbitalDataStore({
+    open: async () => ({
+      execute: async (sql, values) => {
+        if (sql.includes("GET_LOCK")) {
+          locks.push(values[0]);
+          return [[{ acquired: 1 }]];
+        }
+        if (sql.includes("RELEASE_LOCK")) return [[{ released: 1 }]];
+        if (sql.startsWith("SELECT source_bailiwick_id"))
+          return [[{ source_bailiwick_id: "65" }]];
+        if (sql.includes("id<>?")) return [[{ id: "other-active-run" }]];
+        assert.fail(sql);
+      },
+      beginTransaction: async () => {},
+      rollback: async () => {},
+      end: async () => {},
+    }),
+  });
   const source = { id: "65", parameter: { x: "0", y: "0" }, pattern: 1 };
-  const request = discovery_request({ free_bailiwick_id: "65", request_key: "another", settings: { max_families: 19 } });
-  await assert.rejects(store.claim_run("old-checkpoint"), { code: "bailiwick_busy", status: 409 });
-  await assert.rejects(store.create_run(source, request), { code: "bailiwick_busy", status: 409 });
+  const request = discovery_request({
+    free_bailiwick_id: "65",
+    request_key: "another",
+    settings: { max_families: 19 },
+  });
+  await assert.rejects(store.claim_run("old-checkpoint"), {
+    code: "bailiwick_busy",
+    status: 409,
+  });
+  await assert.rejects(store.create_run(source, request), {
+    code: "bailiwick_busy",
+    status: 409,
+  });
   assert.equal(locks.length, 2);
-  assert.equal(locks[0], locks[1], "creation and claiming share the same database mutex");
+  assert.equal(
+    locks[0],
+    locks[1],
+    "creation and claiming share the same database mutex",
+  );
 });
 
 test("legacy stopped jobs retain results but never claim resumability without a checkpoint", async () => {
@@ -109,7 +140,10 @@ test("a finished ray calculation survives failed SQL publication without being c
   durable.orbitals = [{ id: "1", period: 1, points: [] }];
   const row = { id: "run", status: "cancelled" };
   const source = { id: "55", parameter: { x: "0", y: "0" }, pattern: 1 };
-  const settings = discovery_request({ free_bailiwick_id: 55 }).settings;
+  const settings = discovery_request({
+    free_bailiwick_id: 55,
+    settings: { catalog_max_denominator: 0 },
+  }).settings;
   const store = {
     get_run: async () => ({ ...row }),
     claim_run: async () => ({

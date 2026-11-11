@@ -13,10 +13,23 @@ import {
   discover_orbital_ray_batch,
   calculate_orbital_landing_ratios,
 } from "@fracto/sdk/orbitals/FractoOrbitalDiscovery.js";
+import { discover_catalog_orbital_family } from "@fracto/sdk/orbitals/FractoCatalogOrbitalDiscovery.js";
+import { discover_validated_representative_orbital } from "@fracto/sdk/orbitals/FractoLandingAssignments.js";
 
 // Keep task names allowlisted. Worker messages contain only cloneable payloads;
 // HTTP request/response objects and database connections stay on the main thread.
 const task_handlers = {
+  orbital_catalog_representative: ({ parameter, family, profile }, id) =>
+    discover_validated_representative_orbital(parameter, family, {
+      discovery: profile.discovery,
+      validation: profile.validation,
+      on_progress: (progress) => parentPort.postMessage({ id, progress }),
+    }),
+  orbital_catalog_family: ({ parameter, family, profile }) =>
+    discover_catalog_orbital_family(parameter, family, {
+      ...profile,
+      retain_geometry: true,
+    }),
   orbital_survey_rows: (payload, id) =>
     calculate_orbital_survey_rows(payload, (progress) =>
       parentPort.postMessage({ id, progress }),
