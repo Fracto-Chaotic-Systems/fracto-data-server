@@ -1,4 +1,5 @@
 import express from "express";
+import { randomUUID } from "node:crypto";
 import { require_data_editor } from "./data_requests/authorization.js";
 import {
   discovery_request,
@@ -149,6 +150,24 @@ export const create_orbital_data_router = ({
       res
         .status(202)
         .json({ result: await jobs.resume(run_id(req.params.id)) });
+    }),
+  );
+  router.post(
+    "/bailiwicks/:id/discovery-jobs/rediscover",
+    (req, res, next) => {
+      if (trusted_mutation_origin(req, res)) next();
+    },
+    safe(async (req, res) => {
+      require_empty_body(req.body);
+      const request = {
+        ...discovery_request({
+          free_bailiwick_id: positive_id(req.params.id),
+          request_key: randomUUID(),
+          settings: { catalog_retry_unresolved: 1 },
+        }),
+        rediscover: true,
+      };
+      res.status(202).json({ result: await jobs.start(request) });
     }),
   );
   router.post(

@@ -255,6 +255,61 @@ test("browser discovery accepts only a selected bailiwick and configured UI orig
   }
 });
 
+test("browser rediscovery creates fresh bounded catalog requests and retries unresolved families", async () => {
+  const started = [],
+    app = express();
+  app.use(express.json());
+  app.use(
+    "/orbital-data",
+    create_orbital_data_router({
+      jobs: {
+        start: async (request) => {
+          started.push(request);
+          return { id: "fresh-" + started.length };
+        },
+      },
+    }),
+  );
+  const server = await new Promise((resolve) => {
+    const s = app.listen(0, "127.0.0.1", () => resolve(s));
+  });
+  const base = `http://127.0.0.1:${server.address().port}/orbital-data/bailiwicks/55/discovery-jobs/rediscover`;
+  const origin =
+    process.env.FRACTO_UI_ORIGIN ||
+    `http://localhost:${process.env.FRACTO_UI_PORT || 3006}`;
+  const send = (body = {}, request_origin = origin) =>
+    fetch(base, {
+      method: "POST",
+      headers: { origin: request_origin, "content-type": "application/json" },
+      body: JSON.stringify(body),
+    });
+  try {
+    assert.equal((await send({}, "https://untrusted.example")).status, 403);
+    assert.equal(
+      (await send({ settings: { catalog_max_denominator: 100000 } })).status,
+      400,
+    );
+    assert.equal((await send({ request_key: "old-job" })).status, 400);
+    assert.equal(started.length, 0);
+    assert.equal((await send()).status, 202);
+    assert.equal((await send()).status, 202);
+    assert.equal(started.length, 2);
+    assert.notEqual(started[0].request_key, started[1].request_key);
+    for (const request of started) {
+      assert.equal(request.source_id, "55");
+      assert.match(request.request_key, /^[a-f0-9-]{36}$/);
+      assert.equal(
+        request.settings.discovery_strategy,
+        "catalog-representative-rays-v1",
+      );
+      assert.equal(request.settings.catalog_max_denominator, 255);
+      assert.equal(request.settings.catalog_retry_unresolved, 1);
+    }
+  } finally {
+    await new Promise((resolve) => server.close(resolve));
+  }
+});
+
 test("source lookup accepts free, inline, and nodal table entries without changing core coordinates", async () => {
   for (const flags of [
     { is_inline: 0, is_node: 0 },

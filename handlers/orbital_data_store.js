@@ -54,7 +54,7 @@ const request_digest = (source, request) =>
     request.settings,
   ]);
 const restartable_sql =
-  "SELECT r.id FROM orbital_discovery_runs r LEFT JOIN orbital_discovery_checkpoints c ON c.run_id=r.id WHERE r.source_bailiwick_id=? AND (c.run_id IS NOT NULL OR r.status IN ('queued','running')) AND (c.phase<>'done' OR r.status IN ('queued','running','cancelled','interrupted','failed')) AND r.status IN ('queued','running','interrupted','cancelled','failed','partial') ORDER BY (r.status IN ('queued','running') AND r.lease_expires_at>NOW(3)) DESC,r.created_at DESC,r.id DESC LIMIT 1";
+  "SELECT r.id FROM orbital_discovery_runs r LEFT JOIN orbital_discovery_checkpoints c ON c.run_id=r.id WHERE r.source_bailiwick_id=? AND JSON_EXTRACT(r.progress,'$.superseded_by') IS NULL AND (c.run_id IS NOT NULL OR r.status IN ('queued','running')) AND (c.phase<>'done' OR r.status IN ('queued','running','cancelled','interrupted','failed')) AND r.status IN ('queued','running','interrupted','cancelled','failed','partial') ORDER BY (r.status IN ('queued','running') AND r.lease_expires_at>NOW(3)) DESC,r.created_at DESC,r.id DESC LIMIT 1";
 
 const bailiwick_lock = (id) => hash(["orbital_bailiwick", String(id)]);
 
@@ -173,6 +173,13 @@ export class OrbitalDataStore {
           "INSERT INTO orbital_discovery_checkpoints (run_id,format_version,phase,payload) VALUES (?,?,?,?)",
           [id, initial.version, initial.stage, payload],
         );
+        if (request.rediscover)
+          await db.execute(
+            `UPDATE orbital_discovery_runs SET progress=JSON_SET(COALESCE(progress,JSON_OBJECT()),'$.superseded_by',?)
+          WHERE source_bailiwick_id=? AND id<>? AND (status IN ('cancelled','interrupted','failed','partial')
+          OR (status IN ('queued','running') AND (lease_expires_at IS NULL OR lease_expires_at<=NOW(3))))`,
+            [id, source.id, id],
+          );
         await db.commit();
         transaction = false;
         return { id, reused: false };

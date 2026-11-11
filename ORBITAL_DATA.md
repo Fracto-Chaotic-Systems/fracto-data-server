@@ -175,6 +175,11 @@ the configured UI Origin guard and never exposes a service credential.
 - POST `/orbital-data/bailiwicks/:id/discovery-jobs` with `{}`: start the
   standard shared workflow for one selected source, returning 202 `{result:run}`.
   Arbitrary settings, coordinates and additional body fields are rejected.
+- POST `/orbital-data/bailiwicks/:id/discovery-jobs/rediscover` with `{}`:
+  start a fresh catalog-only run using current defaults. Verified family evidence
+  is reused; unresolved families are retried. Older stopped jobs are marked as
+  superseded for automatic selection, retaining their checkpoints and results.
+  Active work blocks a second run. The same UI Origin guard applies.
 - POST `/orbital-data/discovery-jobs` (private): accepts
   `{free_bailiwick_id,request_key?,settings?}`. A request key reuses a run
   with identical version/source snapshot/settings and conflicts on changed inputs.
