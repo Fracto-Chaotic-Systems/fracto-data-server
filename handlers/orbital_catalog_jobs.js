@@ -3,6 +3,8 @@ import BigComplex from "@fracto/sdk/math/BigComplex.js";
 import {
   validate_denominator_catalog,
   catalog_doubling_families,
+  expand_catalog_family,
+  DENOMINATOR_CATALOG_VERSION,
 } from "@fracto/sdk/orbitals/FractoDenominatorCatalog.js";
 import {
   CATALOG_ORBITAL_DISCOVERY_VERSION,
@@ -19,25 +21,40 @@ import {
 } from "./orbital_compact_contract.js";
 import { LANDING_ASSIGNMENT_VERSION } from "@fracto/sdk/orbitals/FractoLandingAssignments.js";
 import {
+  pattern_orbital_periods,
+  orbital_period_allowed,
+  pattern_angle_period_allowed,
+} from "@fracto/sdk/orbitals/FractoOrbitalPeriodScope.js";
+import {
   ORBITAL_DISCOVERY_STRATEGIES,
   stored_discovery_strategy,
 } from "@fracto/sdk/orbitals/FractoOrbitalLifecycle.js";
 
-let bundled;
-export const load_job_catalog = async (maximum) => {
-  bundled ||= readFile(
-    new URL(
-      "../../../sdk/orbitals/data/denominator-catalog.json",
-      import.meta.url,
-    ),
-    "utf8",
-  )
-    .then((text) => validate_denominator_catalog(JSON.parse(text)))
-    .catch((error) => {
-      bundled = null;
-      throw error;
-    });
-  const catalog = await bundled;
+const bundled = new Map();
+export const load_job_catalog = async (maximum, { version } = {}) => {
+  const legacy = version === DENOMINATOR_CATALOG_VERSION;
+  const source = legacy
+    ? new URL(
+        "../../../sdk/orbitals/data/denominator-catalog.json",
+        import.meta.url,
+      )
+    : process.env.FRACTO_ORBITAL_CATALOG_FILE ||
+      new URL(
+        "../../../sdk/orbitals/data/denominator-catalog-small-numerators.json",
+        import.meta.url,
+      );
+  const key = String(source);
+  if (!bundled.has(key))
+    bundled.set(
+      key,
+      readFile(source, "utf8")
+        .then((text) => validate_denominator_catalog(JSON.parse(text)))
+        .catch((error) => {
+          bundled.delete(key);
+          throw error;
+        }),
+    );
+  const catalog = await bundled.get(key);
   if (
     !Number.isSafeInteger(maximum) ||
     maximum < 1 ||
@@ -61,18 +78,51 @@ export const load_job_catalog = async (maximum) => {
     ),
   };
 };
-export const job_catalog_profile = (settings) =>
+const period_scope = (settings, pattern) =>
+  settings.catalog_pattern_periods && pattern !== undefined
+    ? { allowed_orbital_periods: pattern_orbital_periods(pattern) }
+    : {};
+
+/** A runtime search view; the SDK file and database retain the complete catalog. */
+export const select_pattern_catalog = (catalog, pattern, mode = 0) => {
+  if (mode === 0) return catalog;
+  if (![1, 2].includes(mode)) throw fail("invalid_pattern_angle_scope");
+  pattern_orbital_periods(pattern);
+  const denominators = catalog.denominators.filter((entry) =>
+    pattern_angle_period_allowed(pattern, entry.angle_period, mode === 2),
+  );
+  return {
+    ...catalog,
+    denominators,
+    family_count: denominators.reduce(
+      (sum, entry) => sum + entry.families.length, 0,
+    ),
+    angle_count: denominators.reduce(
+      (sum, entry) => sum + entry.families.length * entry.angle_period, 0,
+    ),
+    unfiltered_family_count: catalog.family_count,
+    source_pattern: pattern,
+    angle_period_scope:
+      mode === 2 ? "pattern_divisors_and_multiples" : "pattern_divisors",
+    allowed_angle_periods: [
+      ...new Set(denominators.map((entry) => entry.angle_period)),
+    ].sort((a, b) => a - b),
+  };
+};
+export const job_catalog_profile = (settings, pattern) =>
   catalog_discovery_profile({
     precision_digits: Math.max(128, settings.precision_digits || 128),
     newton_iterations: settings.newton_iterations || 80,
-    max_families: settings.catalog_max_families || 1024,
+    max_families: settings.catalog_max_families || 65536,
     retain_geometry: true,
+    ...period_scope(settings, pattern),
   });
-export const job_compact_profile = (settings) => ({
+export const job_compact_profile = (settings, pattern) => ({
   ...compact_investigation_profile({
     discovery: {
       precision_digits: Math.max(128, settings.precision_digits || 128),
       newton_iterations: settings.newton_iterations || 80,
+      ...period_scope(settings, pattern),
     },
     validation: {
       precision_digits: Math.max(128, settings.precision_digits || 128),
@@ -80,7 +130,7 @@ export const job_compact_profile = (settings) => ({
     },
     assignment_version: LANDING_ASSIGNMENT_VERSION,
   }),
-  max_families: settings.catalog_max_families || 1024,
+  max_families: settings.catalog_max_families || 65536,
 });
 
 /** Map complete ratios to the actual stored forward-cycle order without changing points. */
@@ -134,23 +184,43 @@ export const advance_catalog_job = async (
   const solver_version = compact
     ? COMPACT_SOLVER_VERSION
     : CATALOG_ORBITAL_DISCOVERY_VERSION;
+  if (settings.catalog_pattern_periods) pattern_orbital_periods(source.pattern);
   state.catalog_inputs ||= {
-    catalog: await jobs.catalog_provider(settings.catalog_max_denominator),
+    catalog: select_pattern_catalog(
+      await jobs.catalog_provider(settings.catalog_max_denominator, {
+        version:
+          cp.catalog?.catalog_version ||
+          cp.progress?.catalog_coverage?.catalog_version,
+      }),
+      source.pattern,
+      settings.catalog_pattern_periods ? settings.catalog_pattern_angles || 0 : 0,
+    ),
     profile: compact
-      ? job_compact_profile(settings)
-      : job_catalog_profile(settings),
+      ? job_compact_profile(settings, source.pattern)
+      : job_catalog_profile(settings, source.pattern),
   };
   const { catalog, profile } = state.catalog_inputs;
-  state.catalog_inputs.families ||= [...catalog_doubling_families(catalog)];
+  const solver_profile = compact ? profile.discovery : profile;
+  state.catalog_inputs.families ||= [
+    ...catalog_doubling_families(catalog, { expand_angles: false }),
+  ];
   const signature = hash([
     catalog.version,
     catalog.max_denominator,
     catalog.family_count,
     solver_version,
     profile,
+    ...(catalog.angle_period_scope
+      ? [catalog.angle_period_scope, source.pattern, catalog.allowed_angle_periods]
+      : []),
   ]);
   cp.catalog ||= {
     signature,
+    catalog_version: catalog.version,
+    ...(solver_profile.allowed_orbital_periods ? {
+      source_pattern: source.pattern,
+      allowed_orbital_periods: solver_profile.allowed_orbital_periods,
+    } : {}),
     family_index: 0,
     finalize_index: 0,
     matched_ids: [],
@@ -172,7 +242,16 @@ export const advance_catalog_job = async (
     catalog_processed: progress.family_index,
     catalog_total: total,
     catalog_families: catalog.family_count,
+    ...(catalog.angle_period_scope ? {
+      catalog_unfiltered_families: catalog.unfiltered_family_count,
+      catalog_angle_period_scope: catalog.angle_period_scope,
+      allowed_angle_periods: catalog.allowed_angle_periods,
+    } : {}),
     catalog_max_denominator: catalog.max_denominator,
+    ...(solver_profile.allowed_orbital_periods ? {
+      source_pattern: source.pattern,
+      allowed_orbital_periods: solver_profile.allowed_orbital_periods,
+    } : {}),
     catalog_accepted: progress.accepted,
     catalog_unresolved: progress.unresolved,
     catalog_cache_hits: progress.cache_hits,
@@ -237,10 +316,11 @@ export const advance_catalog_job = async (
       retry_index >= total)
   )
     throw fail("invalid_confirmation_retry", 409);
-  const family =
+  const family = expand_catalog_family(
     state.catalog_inputs.families[
       retry_key ? retry_index : progress.family_index
-    ];
+    ],
+  );
   state.catalog_family_key = family.key;
   const context = {
     parameter: source.parameter,
@@ -311,6 +391,8 @@ export const advance_catalog_job = async (
     }
   } else throw Error("invalid_investigation_claim");
   if (outcome.status === "orbital_found" || (compact && outcome.candidate)) {
+    if (!orbital_period_allowed(solver_profile, outcome.candidate.period))
+      throw fail("orbital_period_outside_pattern", 409);
     const candidate = {
       ...outcome.candidate,
       discovery_method: compact
@@ -334,6 +416,10 @@ export const advance_catalog_job = async (
             : {}),
           max_denominator: catalog.max_denominator,
           family_keys: [family.key],
+          ...(solver_profile.allowed_orbital_periods ? {
+            source_pattern: source.pattern,
+            allowed_orbital_periods: solver_profile.allowed_orbital_periods,
+          } : {}),
         },
       },
     };

@@ -41,9 +41,11 @@ const defaults = {
   max_angle_period: 24,
   max_families: 1024,
   max_orbitals: MAX_SCAN_ORBITALS,
-  catalog_max_denominator: 255,
-  catalog_max_families: 1024,
+  catalog_max_denominator: 524287,
+  catalog_max_families: 65536,
   catalog_retry_unresolved: 0,
+  catalog_pattern_periods: 1,
+  catalog_pattern_angles: 2, // 0: all, 1: divisors, 2: divisors and multiples.
   discovery_strategy: ORBITAL_DISCOVERY_STRATEGIES.CATALOG_ONLY,
 };
 const limits = {
@@ -57,8 +59,10 @@ const limits = {
   max_families: [1, 4096],
   max_orbitals: [1, MAX_SCAN_ORBITALS],
   catalog_max_denominator: [0, 1000000],
-  catalog_max_families: [1, 4096],
+  catalog_max_families: [1, 1000000],
   catalog_retry_unresolved: [0, 1],
+  catalog_pattern_periods: [0, 1],
+  catalog_pattern_angles: [0, 2],
 };
 export const discovery_request = (body) => {
   if (

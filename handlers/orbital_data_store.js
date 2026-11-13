@@ -324,6 +324,10 @@ export class OrbitalDataStore {
           checkpoint,
           settings: {
             ...request.settings,
+            // Existing checkpoints keep their original unscoped solver profile.
+            catalog_pattern_periods:
+              original_settings.catalog_pattern_periods ?? 0,
+            catalog_pattern_angles: original_settings.catalog_pattern_angles ?? 0,
             catalog_max_denominator: Object.hasOwn(
               original_settings,
               "catalog_max_denominator",

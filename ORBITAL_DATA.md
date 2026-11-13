@@ -319,12 +319,49 @@ New compact jobs use format-3 checkpoints with a separate strategy signature;
 historical format-1/2 checkpoints remain readable. Switching a checkpoint's
 strategy is rejected rather than discarding its cursor or reinterpreting its data.
 
-Defaults are `catalog_max_denominator: 255`, `catalog_max_families: 1024`, and
+Defaults are `catalog_max_denominator: 524287`, `catalog_max_families: 65536`, and
 `catalog_retry_unresolved: 0`. A private request can choose an inclusive bound
 within the bundled catalog, reduce the work budget, request unresolved retries,
 or set the denominator bound to zero for the legacy route. Larger bounds require
 preprocessing and installing an expanded catalog first. Old jobs whose stored
 settings lack these fields retain the legacy route and input fingerprint.
+
+New requests also default to `catalog_pattern_periods: 1`. The source's saved
+`pattern` supplies the core-point period; positive divisors, including 1 and the
+pattern itself, restrict Newton solve periods and published primitive orbital
+periods. Pattern 13 allows [1,13]; pattern 12 allows [1,2,3,4,6,12]. Both compact
+and full-family solvers enforce the scope, and persistence independently rejects
+out-of-scope candidates. Seed-survey publication uses the same period filter.
+Scope is included in numerical profiles and checkpoint/cache identity; progress
+and coverage retain `source_pattern` and `allowed_orbital_periods`.
+
+New requests default to `catalog_pattern_angles: 2`: before tracing, restrict the
+catalog search to angle periods that divide the pattern or are multiples of the
+pattern itself, within the SDK's period-32 ceiling. Multiples are not taken of
+every divisor, since multiples of 1 would select the entire catalog again.
+The published orbital periods still must divide the pattern, so angle-period-8
+families may supply a period-4 orbital without admitting period-8 orbitals.
+
+Private requests can use `catalog_pattern_angles: 1` for divisors only, or 0 to
+retain all angle families. Pattern 4 searches 5 families in divisors-only mode,
+or 8498 including multiples; patterns 12 and 13 search 3595 and 381 respectively
+including multiples. Progress and coverage report selected family counts,
+`allowed_angle_periods`, `angle_period_scope`, and the unfiltered catalog total.
+The SDK JSON and full database remain unchanged. Numerical evidence is reusable
+between search modes; checkpoints bind the exact selected scope and cursor.
+
+Historical jobs missing `catalog_pattern_periods` resume unscoped; those missing
+`catalog_pattern_angles` retain their previous all-angle search. Setting
+`catalog_pattern_periods` to 0 disables both source-pattern restrictions for
+diagnostics. Select Rediscover for the new default scope.
+
+New jobs load `denominator-catalog-small-numerators.json` by default: 16,308
+families with angle period at most 32 and canonical numerator below 256.
+After updating a running service, restart it and select Rediscover to create a
+new run. Resume retains the original catalog version and budgets; historical
+v1 checkpoints still load `denominator-catalog.json`. Compact v2 catalog encoding
+uses the same exact family identities as v1, allowing verified ledger evidence
+to be reused across the format change.
 
 Catalog checkpoints retain a configuration signature, family cursor, counts,
 matched orbital IDs, and finalization cursor. Workers calculate representative

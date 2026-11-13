@@ -18,6 +18,21 @@ export const catalog_coverage = (catalog, progress, family_budget) => {
   });
   return {
     max_denominator: catalog.max_denominator,
+    ...(catalog.angle_period_scope ? {
+      angle_period_scope: catalog.angle_period_scope,
+      allowed_angle_periods: catalog.allowed_angle_periods,
+      unfiltered_families: catalog.unfiltered_family_count,
+    } : {}),
+    ...(progress.allowed_orbital_periods ? {
+      source_pattern: progress.source_pattern,
+      allowed_orbital_periods: progress.allowed_orbital_periods,
+    } : {}),
+    ...(catalog.max_angle_period === undefined
+      ? {}
+      : { max_angle_period: catalog.max_angle_period }),
+    ...(catalog.numerator_limit === undefined
+      ? {}
+      : { numerator_limit: catalog.numerator_limit }),
     catalog_version: catalog.version,
     family_budget,
     total_families: catalog.family_count,

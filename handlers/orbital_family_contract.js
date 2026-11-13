@@ -4,7 +4,10 @@ import {
   compact_investigation_profile,
   validate_compact_family_outcome,
 } from "./orbital_compact_contract.js";
-import { DENOMINATOR_CATALOG_VERSION } from "@fracto/sdk/orbitals/FractoDenominatorCatalog.js";
+import {
+  DENOMINATOR_CATALOG_VERSION,
+  COMPACT_CATALOG_VERSION,
+} from "@fracto/sdk/orbitals/FractoDenominatorCatalog.js";
 import {
   CATALOG_ORBITAL_DISCOVERY_VERSION,
   catalog_discovery_profile,
@@ -17,6 +20,7 @@ import {
 import { validate_landing_families } from "@fracto/sdk/orbitals/FractoOrbitalDiscovery.js";
 import { merge_orbital_ray_cache } from "@fracto/sdk/orbitals/FractoOrbitalRayCache.js";
 import { rational_angle } from "@fracto/sdk/orbitals/FractoRayGeometry.js";
+import { orbital_period_allowed } from "@fracto/sdk/orbitals/FractoOrbitalPeriodScope.js";
 
 const ordered = (value) =>
   Array.isArray(value)
@@ -35,7 +39,9 @@ export const family_hash = (value) =>
 /** Bound-independent identity: extending a catalog must reuse earlier families. */
 export const family_investigation_identity = (context) => {
   if (
-    context?.catalog_version !== DENOMINATOR_CATALOG_VERSION ||
+    ![DENOMINATOR_CATALOG_VERSION, COMPACT_CATALOG_VERSION].includes(
+      context?.catalog_version,
+    ) ||
     ![CATALOG_ORBITAL_DISCOVERY_VERSION, COMPACT_SOLVER_VERSION].includes(
       context.solver_version,
     )
@@ -60,7 +66,9 @@ export const family_investigation_identity = (context) => {
     family_key: family.key,
     denominator: family.denominator,
     angle_period: family.angle_period,
-    catalog_version: context.catalog_version,
+    // v2 changes catalog encoding/filtering, not the meaning of an exact family.
+    // Reuse existing v1 investigation evidence for unchanged families.
+    catalog_version: DENOMINATOR_CATALOG_VERSION,
     solver_version: context.solver_version,
     profile,
   };
@@ -125,6 +133,7 @@ export const validate_family_outcome = (context, result) => {
   if (
     !candidate ||
     candidate.period !== result.candidate.period ||
+    !orbital_period_allowed(identity.profile, candidate.period) ||
     !Number.isInteger(candidate.precision_digits) ||
     candidate.precision_digits < 64 ||
     candidate.precision_digits > 512 ||

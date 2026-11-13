@@ -3,6 +3,7 @@ import {
   REPRESENTATIVE_RAY_SOLVER_VERSION,
   REPRESENTATIVE_CONFIRMATION_REVISION,
 } from "@fracto/sdk/orbitals/FractoRepresentativeRaySolver.js";
+import { orbital_period_allowed } from "@fracto/sdk/orbitals/FractoOrbitalPeriodScope.js";
 import {
   landing_assignment_profile,
   LANDING_ASSIGNMENT_VERSION,
@@ -82,6 +83,7 @@ export const validate_compact_family_outcome = (context, result) => {
   if (
     !candidate ||
     candidate.period !== result.candidate.period ||
+    !orbital_period_allowed(profile.discovery, candidate.period) ||
     context.family.angle_period % candidate.period ||
     candidate.points.some(
       (point, index) =>

@@ -3,6 +3,7 @@ import { bind_checkpoint_strategy } from "./orbital_data_checkpoint.js";
 import { data_compute_worker_pool } from "./worker_task_pool.js";
 import { OrbitalDataStore } from "./orbital_data_store.js";
 import { OrbitalFamilyInvestigationStore } from "./orbital_family_investigations.js";
+import { pattern_orbital_periods } from "@fracto/sdk/orbitals/FractoOrbitalPeriodScope.js";
 import {
   advance_catalog_job,
   load_job_catalog,
@@ -271,7 +272,14 @@ export class OrbitalDiscoveryJobs {
             attempts: batch.progress.processed,
           });
           if (batch.done) {
-            cp.candidates = batch.candidates;
+            const allowed = settings.catalog_pattern_periods
+              ? pattern_orbital_periods(source.pattern)
+              : null;
+            cp.candidates = allowed
+              ? batch.candidates.filter((candidate) =>
+                  allowed.includes(candidate.points.length),
+                )
+              : batch.candidates;
             cp.stage = "persisting";
             Object.assign(state.progress, {
               expected_orbitals: cp.candidates.length,
