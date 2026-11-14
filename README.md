@@ -157,7 +157,7 @@ limits, versioning, cache eligibility, rollout and the published ray-theory basi
 
 - `GET /tiles` returns tile records, optionally filtered by `folder`.
 - `GET /tile` reads one tile using `short_code`.
-- `PUT /tile` inserts or updates tile metadata from a JSON body.
+- `PUT /tile` inserts tile metadata from a JSON body; it does not update existing rows.
 - `GET /tile_coverage` returns stored coverage for a requested `level`.
 
 These database records are separate from the tile server's compiled in-memory index.
