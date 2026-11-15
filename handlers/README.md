@@ -65,7 +65,11 @@ This directory contains the HTTP handlers and calculation helpers used by the Fr
 - `handle_orbital_spectrum.js` generates orbital spectrum and pyramid results.
 - `data_compute_worker.js` runs allowlisted CPU-bound task payloads away from the data-server event loop; HTTP and database objects remain on the main thread.
 - `worker_task_pool.js` provides a bounded worker-thread pool with Promise and callback completion, queue backpressure, timeouts, cancellation of queued or active work, and aggregate metrics. Cancelling active work terminates and replaces its worker slot so a stale CPU-bound task cannot hold capacity.
-- `handle_query.js` executes the data server's constrained query endpoint.
+- `handle_query.js` executes the data server's constrained query endpoint. Tile
+  previews and `handle_tiles.js` use `short_code DESC`; tiles have no `id` column.
+  The query endpoint reads the live `tiles` table, not the `tiles_seed` staging
+  table. A completed seed requires a separate validation and cutover before it
+  supplies live queries.
 - `handle_tile.js` reads and writes individual tile records.
 - `handle_tiles.js` handles tile-list requests.
 - `handle_users.js` provisions OIDC users, enforces bootstrap and access policy, and records authentication events. Its Express route factories adapt handlers that accept an injectable connection factory; register those factories rather than passing the three-argument handler directly, because Express uses the third argument for `next`.

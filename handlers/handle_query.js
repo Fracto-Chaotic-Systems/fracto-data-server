@@ -26,7 +26,7 @@ export const handle_query = (req, res) => {
       columns: table === "free_bailiwicks" ? MINIBROT_LIST_COLUMNS : undefined,
       limit: 1000,
       offset: 0,
-      order: "id DESC",
+      order: table === "tiles" ? "short_code DESC" : "id DESC",
     },
     (result) => {
       db_disconnect(connection);

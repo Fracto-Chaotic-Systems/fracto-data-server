@@ -5,7 +5,7 @@ export const handle_tiles = (req, res) => {
     table: "tiles",
     limit: 1000,
     offset: 0,
-    order: "id desc",
+    order: "short_code DESC",
   };
   const folder = req.query.folder || null;
   if (folder) {
