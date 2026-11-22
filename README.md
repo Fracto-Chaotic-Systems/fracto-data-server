@@ -25,6 +25,15 @@ Configuration files may contain credentials and are intentionally excluded from 
 
 ## Installation
 
+Provision `config/mysql.json` inside this service checkout before starting it.
+The root's `config/mysql.json` does not satisfy this requirement. Run
+`npm run start:check` to check readable, valid JSON without connecting to MySQL
+or printing credentials. `npm start` and the root startup preflight invoke this
+check; the root launches the service's declared `startup_check` executable.
+`npm run test:startup` reproduces a missing service config with a valid root
+config, plus malformed and provisioned configuration cases. The production
+image build runs these isolated regression tests without private configuration.
+
 Controlled corrections for explicitly registered local environment/asset snapshots
 are documented in [corrections/README.md](corrections/README.md). The data service
 independently validates AI proposals and owns explicit approvals, transactional

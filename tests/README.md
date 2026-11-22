@@ -1,5 +1,11 @@
 # Data service tests
 
+`startup_configuration.test.js` runs the declared service configuration check
+in disposable checkouts with no SDK or database. It reproduces the lab failure
+where the root MySQL config exists but the service-owned file is missing, checks
+invalid JSON/object handling and verifies provisioned configuration passes without
+printing credentials. Run `npm run test:startup`; Docker production builds also run it.
+
 `npm run test:environment` covers the asset registry's explicit database fields,
 parameter binding and private API boundary. Set
 `FRACTO_TEST_ENVIRONMENT_ASSET_DATABASE=1` to include actual MySQL upserts using a

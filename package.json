@@ -5,8 +5,11 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
+    "prestart": "npm run start:check",
     "start": "nodemon --exec \"node --max-old-space-size=16384 index.js\"",
     "test": "node --test",
+    "start:check": "node scripts/check_startup_configuration.js",
+    "test:startup": "node --test tests/startup_configuration.test.js",
     "test:environment": "node --test tests/environment_asset_database.test.js tests/environment_registry.test.js"
   },
   "repository": {
@@ -33,6 +36,7 @@
   },
   "fracto": {
     "commands": {
+      "startup_check": "scripts/check_startup_configuration.js",
       "benchmark_catalog_only_jobs": "scripts/benchmark_catalog_only_jobs.js",
       "benchmark_orbital_catalog": "scripts/benchmark_orbital_catalog.js",
       "benchmark_orbital_newton": "scripts/benchmark_orbital_newton.js",
