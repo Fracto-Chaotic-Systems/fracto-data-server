@@ -17,7 +17,7 @@ helper intentionally remains data-service-owned rather than importing AI code.
 ## Local workflow
 
 The only writable operation is deduplication of a set-valued environment dependency
-list, preserving first-occurrence order. It cannot delete assets/environments,
+list, preserving first-occurrence order. It cannot delete assets or environment records,
 replace missing references or merge content. Snapshot fields match the AI
 `data_quality/README.md` contract and must contain approved non-personal game data.
 
