@@ -6,7 +6,7 @@ import {
   merge_ray_cache,
   MAX_RAY_GROUP_BYTES,
   RAY_CACHE_VERSION,
-} from "../../../sdk/orbitals/FractoMinibrotRayCache.js";
+} from "@fracto/sdk/orbitals/FractoMinibrotRayCache.js";
 
 const parse = (value) =>
   typeof value === "string" ? JSON.parse(value) : value;

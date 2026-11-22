@@ -1,6 +1,6 @@
 import { createHash, timingSafeEqual } from "node:crypto";
 import { db_connect, db_disconnect, select, update } from "../mysql.js";
-import { record_runtime_metric } from "../../../utils/windowed_metrics.js";
+import { record_runtime_metric } from "@fracto/sdk/utils/WindowedMetrics.js";
 
 const USER_COLUMNS =
   "id, provider, provider_subject, email, display_name, enabled, role, created_at, updated_at, last_login_at, last_seen_at";

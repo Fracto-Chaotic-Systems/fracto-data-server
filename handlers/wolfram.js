@@ -1,5 +1,5 @@
 import WolframAlphaAPI from "@wolfram-alpha/wolfram-alpha-api";
-import wolfram_config from "../../../config/wolfram.json" with { type: "json" };
+import wolfram_config from "../config/wolfram.json" with { type: "json" };
 
 const waApi = WolframAlphaAPI(wolfram_config.AppID);
 

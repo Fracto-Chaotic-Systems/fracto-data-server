@@ -140,6 +140,7 @@ vite.config.ts.timestamp-*
 
 #App-specific
 config/*
+!config/README.md
 benchmarks/
 php/request
 php/response

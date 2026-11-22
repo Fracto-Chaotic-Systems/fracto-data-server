@@ -138,7 +138,7 @@ formatting and per-pixel view allocations without changing seed coordinates or
 detector settings. The dominant cost remains per-seed orbit sampling and return
 analysis: the in-cardioid detector processes up to 4,097 orbit samples for
 each of the 1,048,576 render pixels, while outside-cardioid seeded calculator
-calls use their configured 10,000-iteration horizon.
+calls use the caller’s explicit `seed_iteration_limit` (100,000 by default).
 
 Status 1 is assigned only if the detector reports an integer period greater
 than one and at least that many orbit samples are available to take the final

@@ -28,12 +28,17 @@ test("cardinality detection is independently callable", () => {
   assert.equal(result.status, "cardinality_detected");
 });
 
-test("Newton refinement accepts a supplied cardinality", () => {
+test("Newton refinement retains the supplied candidate but rejects an unclosed one-step result", () => {
   const result = refine_orbital_points(seven_point, 7, {
     newton_mode: "native",
     newton_limit: 1,
   });
-  assert.equal(result.cardinality, 7);
+  assert.equal(result.cardinality, 0);
+  assert.equal(result.candidate_cardinality, 7);
+  assert.equal(result.status, "closure_not_reached");
+  assert.equal(result.closure_reached, false);
+  assert.deepEqual(result.newton.point_list, []);
+  assert.ok(result.newton.closure_error > result.newton.closure_tolerance);
   assert.equal(result.newton.cardinality_supplied, true);
   assert.equal(result.newton.diagnostics.supplied_cardinality, 7);
 });
@@ -45,9 +50,13 @@ test("radial circuitry can begin from caller-supplied points and Q", () => {
     { re: -1, im: 0 },
     { re: 0, im: -1 },
   ];
-  const result = build_circuitry_from_points(points, { re: 0, im: 0 }, {
-    samples_per_interval: 4,
-  });
+  const result = build_circuitry_from_points(
+    points,
+    { re: 0, im: 0 },
+    {
+      samples_per_interval: 4,
+    },
+  );
   assert.equal(result.status, "success");
   assert.equal(result.body.point_source, "caller_supplied");
   assert.equal(result.body.cardinality, points.length);
@@ -66,11 +75,17 @@ test("experimental Newton exits on stagnation without changing the established s
   assert.equal(experimental.diagnostics.early_exit, true);
   assert.equal(experimental.diagnostics.exit_reason, "no_step_improvement");
   assert.equal(established.cycles, 25);
-  assert.equal("status" in established, false);
+  assert.equal(established.status, "closure_not_reached");
+  assert.equal(established.closure_reached, false);
+  assert.deepEqual(established.point_list, []);
+  assert.equal(established.candidate_cardinality, 10);
 });
 
 test("two-point investigation preserves the established ordered points", () => {
-  const points = [{ re: -1, im: 0 }, { re: 0, im: 0 }];
+  const points = [
+    { re: -1, im: 0 },
+    { re: 0, im: 0 },
+  ];
   const result = investigate_two_point_orbit({ re: -1, im: 0 }, points);
   assert.strictEqual(result.points, points);
   assert.deepEqual(result.parameterization, {
@@ -85,10 +100,11 @@ test("two-point investigation preserves the established ordered points", () => {
     RangeError,
   );
   assert.throws(
-    () => investigate_two_point_orbit(
-      { re: -1, im: 0 },
-      [...points, { re: 1, im: 0 }],
-    ),
+    () =>
+      investigate_two_point_orbit({ re: -1, im: 0 }, [
+        ...points,
+        { re: 1, im: 0 },
+      ]),
     RangeError,
   );
 });
@@ -122,7 +138,10 @@ test("theta approximation returns nearest reduced integer fractions below the ca
 
 test("two-point investigation exposes r, theta, and reduced rational theta in cardioid", () => {
   const focal_point = FractoUtil.r_theta_to_P(0.8, 0.3);
-  const points = [{ re: 2, im: 3 }, { re: 4, im: 5 }];
+  const points = [
+    { re: 2, im: 3 },
+    { re: 4, im: 5 },
+  ];
   const result = investigate_two_point_orbit(
     { re: focal_point.x, im: focal_point.y },
     points,
@@ -164,16 +183,24 @@ test("coarse Newton sweep refines only a small ranked candidate set", () => {
   assert.equal(result.coarse_candidates.length, 2);
   assert.ok(result.refined_candidates.length >= 2);
   assert.ok(result.refined_candidates.length <= 3);
-  assert.ok(result.refined_candidates.some(({ cardinality }) => cardinality === 10));
-  assert.ok(result.refined_candidates.every(({ result: candidate }) =>
-    candidate.diagnostics.mode === "experimental_big_complex",
-  ));
+  assert.ok(
+    result.refined_candidates.some(({ cardinality }) => cardinality === 10),
+  );
+  assert.ok(
+    result.refined_candidates.every(
+      ({ result: candidate }) =>
+        candidate.diagnostics.mode === "experimental_big_complex",
+    ),
+  );
   assert.ok(result.timings.total_ms >= result.timings.coarse_ms);
 });
 
 test("two-point coarse sweep is opt-in and leaves established points unchanged", () => {
   const focal_point = FractoUtil.r_theta_to_P(0.8, 0.3);
-  const points = [{ re: 2, im: 3 }, { re: 4, im: 5 }];
+  const points = [
+    { re: 2, im: 3 },
+    { re: 4, im: 5 },
+  ];
   const default_result = investigate_two_point_orbit(
     { re: focal_point.x, im: focal_point.y },
     points,
@@ -204,10 +231,13 @@ test("two-point coarse sweep is opt-in and leaves established points unchanged",
 });
 
 test("circuitry returns apparent two-point results without the experiment hook", () => {
-  const result = build_circuitry_pipeline({ re: -1, im: 0 }, {
-    interpolation: "radial_sweep",
-    detector_iterations: 2048,
-  });
+  const result = build_circuitry_pipeline(
+    { re: -1, im: 0 },
+    {
+      interpolation: "radial_sweep",
+      detector_iterations: 2048,
+    },
+  );
   assert.equal(result.status, "success");
   assert.equal(result.body.detector, undefined);
   assert.equal(result.body.cardinality, 2);
@@ -215,15 +245,21 @@ test("circuitry returns apparent two-point results without the experiment hook",
     { re: -1, im: 0 },
     { re: 0, im: 0 },
   ]);
-  assert.equal(result.body.point_source, "fracto_fast_calc_outside_main_cardioid");
+  assert.equal(
+    result.body.point_source,
+    "fracto_fast_calc_outside_main_cardioid",
+  );
   assert.equal(result.body.two_point_investigation, undefined);
   assert.equal(result.body.two_point_newton_experiment, undefined);
 });
 
 test("a one-point orbit remains a renderable circuitry result", () => {
-  const result = build_circuitry_pipeline({ re: 0, im: 0 }, {
-    interpolation: "radial_sweep",
-  });
+  const result = build_circuitry_pipeline(
+    { re: 0, im: 0 },
+    {
+      interpolation: "radial_sweep",
+    },
+  );
   assert.equal(result.status, "success");
   assert.equal(result.body.cardinality, 1);
   assert.equal(result.body.samples, 1);
@@ -231,7 +267,6 @@ test("a one-point orbit remains a renderable circuitry result", () => {
   assert.equal(result.body.result.length, 1);
   assert.deepEqual(result.body.result[0].C, result.body.orbital_points[0]);
 });
-
 
 test("Q calculation remains independently available", () => {
   const Q = get_cardioid_root({ re: 0, im: 0 });

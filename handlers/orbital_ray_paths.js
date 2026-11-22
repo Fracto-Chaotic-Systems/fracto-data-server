@@ -11,14 +11,14 @@ import {
   save_orbital_cache,
   decode_orbital_cache,
 } from "./orbital_ray_cache_codec.js";
-import { build_orbital_trace_request } from "../../../sdk/orbitals/FractoOrbitalTraceRequest.js";
+import { build_orbital_trace_request } from "@fracto/sdk/orbitals/FractoOrbitalTraceRequest.js";
 import {
   ORBITAL_RAY_CACHE_VERSION,
   MAX_ORBITAL_RAY_WRITE_BYTES,
   orbital_ray_identity,
   orbital_ray_cache_matches,
   merge_orbital_ray_cache,
-} from "../../../sdk/orbitals/FractoOrbitalRayCache.js";
+} from "@fracto/sdk/orbitals/FractoOrbitalRayCache.js";
 
 const request_for = (orbital) =>
   build_orbital_trace_request(

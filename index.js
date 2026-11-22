@@ -3,16 +3,18 @@ import {
   require_world_notes_origin,
 } from "./handlers/world_notes.js";
 import { handle_data_request } from "./handlers/data_requests/handler.js";
-import { require_data_editor } from "./handlers/data_requests/authorization.js";
+import { require_data_editor } from "@fracto/sdk/utils/PrivateEditorAuthorization.js";
 import { handle_wordnet_mappings } from "./handlers/wordnet_mappings.js";
 import express from "express";
+import { create_database_sync_router, create_sync_peer_router } from "./handlers/database_sync.js";
+import { create_environment_registry_router } from "./environment/routes.js";
 import chalk from "chalk";
 import path from "path";
-import { require_administrator } from "../../utils/admin_authorization.js";
+import { require_administrator } from "@fracto/sdk/utils/AdminAuthorization.js";
 import {
   require_enabled_user_if_configured,
   require_internal_service,
-} from "../../utils/service_authorization.js";
+} from "@fracto/sdk/utils/ServiceAuthorization.js";
 
 const FRACTO_DATA_PORT = Number(process.env.FRACTO_DATA_PORT || 3002);
 
@@ -119,6 +121,10 @@ app.use((req, res, next) => {
 // Automation jobs may contain thousands of shortcodes. Keep this configurable
 // for installations with larger or stricter request-size requirements.
 const json_body_limit = process.env.FRACTO_JSON_BODY_LIMIT || "25mb";
+// Internal registration authenticates before parsing; never expose it via generic query routes.
+app.use("/internal/environment-assets", create_environment_registry_router());
+app.use("/internal/database-sync-peer", require_internal_service, create_sync_peer_router());
+app.use("/internal/database-sync", require_internal_service, express.json({ limit: "16kb" }), create_database_sync_router());
 // Selection-time geometry for a large catalog family uses the chunk-backed cache.
 // An explicit installation-wide limit still takes precedence.
 app.use(

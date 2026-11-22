@@ -1,6 +1,6 @@
 import { gzip, gunzip } from "node:zlib";
 import { promisify } from "node:util";
-import { MAX_RAY_CACHE_BYTES } from "../../../sdk/orbitals/FractoMinibrotRayCache.js";
+import { MAX_RAY_CACHE_BYTES } from "@fracto/sdk/orbitals/FractoMinibrotRayCache.js";
 const compress = promisify(gzip),
   decompress = promisify(gunzip);
 /** Large geometry is compressed transparently inside the JSON column. */

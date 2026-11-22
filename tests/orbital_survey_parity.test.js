@@ -3,7 +3,7 @@ import test from "node:test";
 import { WorkerTaskPool } from "../handlers/worker_task_pool.js";
 import { discovery_request } from "../handlers/orbital_data_contract.js";
 import { calculate_seed_survey } from "../handlers/handle_orbital.js";
-import { scan_orbitals as ui_scan } from "../../fracto-ui/src/pages/assets/surveys/SeedSurveyScan.js";
+import { scan_orbitals as ui_scan } from "@fracto/sdk/orbitals/FractoSeedSurveyScan.js";
 import {
   scan_orbitals,
   SEED_SURVEY_DISCOVERY_OPTIONS,

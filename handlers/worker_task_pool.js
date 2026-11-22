@@ -2,7 +2,7 @@ import { Worker } from "node:worker_threads";
 import { availableParallelism } from "node:os";
 import { performance } from "node:perf_hooks";
 
-import { record_runtime_metric } from "../../../utils/windowed_metrics.js";
+import { record_runtime_metric } from "@fracto/sdk/utils/WindowedMetrics.js";
 
 const bounded_integer = (value, fallback, min, max) => {
   const parsed = Number(value);

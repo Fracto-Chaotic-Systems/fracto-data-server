@@ -1,6 +1,6 @@
 import express from "express";
 import { randomUUID } from "node:crypto";
-import { require_data_editor } from "./data_requests/authorization.js";
+import { require_data_editor } from "@fracto/sdk/utils/PrivateEditorAuthorization.js";
 import {
   discovery_request,
   positive_id,
@@ -9,7 +9,7 @@ import {
   fail,
 } from "./orbital_data_contract.js";
 import { OrbitalDiscoveryJobs } from "./orbital_data_jobs.js";
-import { trusted_mutation_origin } from "../../../utils/auth_request_origin.js";
+import { trusted_mutation_origin } from "@fracto/sdk/utils/AuthRequestOrigin.js";
 import { OrbitalRayPathStore } from "./orbital_ray_paths.js";
 import {
   build_circuitry_from_points,

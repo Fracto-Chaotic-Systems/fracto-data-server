@@ -1,6 +1,6 @@
 import mysql from "mysql2/promise";
 
-import config from "../../../config/mysql.json" with { type: "json" };
+import config from "../config/mysql.json" with { type: "json" };
 
 const CHECK_TIMEOUT_MS = 2000;
 

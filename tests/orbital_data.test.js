@@ -24,7 +24,7 @@ const claimed = () => ({
   }).settings,
 });
 import { create_orbital_data_router } from "../handlers/orbital_data_routes.js";
-import { create_data_request_authorizer } from "../handlers/data_requests/authorization.js";
+import { create_data_request_authorizer } from "@fracto/sdk/utils/PrivateEditorAuthorization.js";
 import { OrbitalDiscoveryJobs } from "../handlers/orbital_data_jobs.js";
 import { OrbitalDataStore } from "../handlers/orbital_data_store.js";
 
@@ -302,7 +302,7 @@ test("browser rediscovery creates fresh bounded catalog requests and retries unr
         request.settings.discovery_strategy,
         "catalog-representative-rays-v1",
       );
-      assert.equal(request.settings.catalog_max_denominator, 255);
+      assert.equal(request.settings.catalog_max_denominator, 524287);
       assert.equal(request.settings.catalog_retry_unresolved, 1);
     }
   } finally {

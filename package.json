@@ -6,7 +6,8 @@
   "type": "module",
   "scripts": {
     "start": "nodemon --exec \"node --max-old-space-size=16384 index.js\"",
-    "test": "node --test"
+    "test": "node --test",
+    "test:environment": "node --test tests/environment_asset_database.test.js tests/environment_registry.test.js"
   },
   "repository": {
     "type": "git",
@@ -27,6 +28,25 @@
     "nerdamer": "^1.1.13",
     "nodemon": "^3.1.11",
     "poly-roots": "^1.0.8",
-    "polynomial": "^1.6.1"
+    "polynomial": "^1.6.1",
+    "mysql2": "^3.16.0"
+  },
+  "fracto": {
+    "commands": {
+      "benchmark_catalog_only_jobs": "scripts/benchmark_catalog_only_jobs.js",
+      "benchmark_orbital_catalog": "scripts/benchmark_orbital_catalog.js",
+      "benchmark_orbital_newton": "scripts/benchmark_orbital_newton.js",
+      "benchmark_orbital_ray_paths": "scripts/benchmark_orbital_ray_paths.js",
+      "benchmark_spectral_analysis": "scripts/benchmark_spectral_analysis.js",
+      "build_database_orbital_catalog": "scripts/build_database_orbital_catalog.js",
+      "verify_application_orbitals": "scripts/verify_application_orbitals.js",
+      "verify_orbital_catalog_recovery": "scripts/verify_orbital_catalog_recovery.js",
+      "verify_orbital_discovery": "scripts/verify_orbital_discovery.js",
+      "verify_orbital_resume": "scripts/verify_orbital_resume.js",
+      "benchmark_orbital_survey": "scripts/benchmark_orbital_survey.js",
+      "recalculate_stored_orbitals": "scripts/recalculate_stored_orbitals.js",
+      "verify_seed_survey_orbitals": "scripts/verify_seed_survey_orbitals.js",
+      "load_tile_database": "scripts/manifest_to_db.js"
+    }
   }
 }

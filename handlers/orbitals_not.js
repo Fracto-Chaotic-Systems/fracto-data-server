@@ -1,6 +1,6 @@
 import Complex from "@fracto/sdk/math/Complex.js";
 import FractoFastCalc from "@fracto/sdk/FractoFastCalc.js";
-import { copy_json } from "../../../utils.js";
+import { copy_json } from "@fracto/sdk/utils/Process.js";
 
 const orbital_recurse = (
   negative_P,

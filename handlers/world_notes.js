@@ -1,4 +1,4 @@
-import { trusted_mutation_origin } from "../../../utils/auth_request_origin.js";
+import { trusted_mutation_origin } from "@fracto/sdk/utils/AuthRequestOrigin.js";
 import { handle_data_request } from "./data_requests/handler.js";
 
 export const require_world_notes_origin = (req, res, next) => {

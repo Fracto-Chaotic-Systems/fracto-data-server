@@ -3,7 +3,7 @@ import { readFile } from "node:fs/promises";
 const connection_options = async (database) => {
   const config = JSON.parse(
     await readFile(
-      new URL("../../../config/mysql.json", import.meta.url),
+      new URL("../config/mysql.json", import.meta.url),
       "utf8",
     ),
   );

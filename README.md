@@ -1,17 +1,24 @@
 # fracto-data-server
 
+The environment asset database registry, SQL and migration 019 are owned here;
+see [environment/README.md](environment/README.md). The asset service registers
+allowlisted provenance through `PUT /internal/environment-assets/:id`; this
+service never opens model files. Application schema migrations belong under
+`database/migrations/`, discovered by the root infrastructure runner. Run
+`npm run test:environment` for validation and registry persistence tests.
+
 Express and MySQL service for Fracto's persistent data and computational endpoints. It listens on port 3002 and handles tile metadata, assets, lore, minibrots, orbitals, radial-point data, backups, and several fractal calculation utilities.
 
 ## Repository layout
 
-This is an independent Git repository expected at `fracto/servers/fracto-data-server/`. It imports root-owned files such as `../../constants.js`, `../../config/mysql.json`, and modules under `../../sdk/`. Keep this directory directly beneath the root `servers/` directory. Commit service files here and shared SDK/configuration changes in the root repository.
+This independent service imports shared functionality only through `@fracto/sdk`. It owns application persistence, SQL maintenance scripts and private configuration under `config/`. Cross-service calls use documented HTTP endpoints.
 
 ## Requirements
 
 - Node 22, the validated runtime.
-- MySQL reachable using the root `config/mysql.json` settings.
+- MySQL reachable using this service's `config/mysql.json` settings.
 - The required Fracto database schema and tables.
-- Root configuration files for MySQL and optional Wolfram operations.
+- Service-owned configuration files for MySQL and optional Wolfram operations.
 - `mysqldump` on `PATH` for the backup endpoint.
 
 Configuration files may contain credentials and are intentionally excluded from version control. Do not put secrets in this repository.
@@ -172,16 +179,17 @@ These database records are separate from the tile server's compiled in-memory in
   option and a fixed 4,096-iteration horizon per sample (adaptive expansion is
   disabled so the full plane scan remains bounded). For parameters outside
   the main cardioid, the SDK uses its seeded fast-calculator fallback at
-  `seed_level: 0.00625`. Detected non-singleton
-  candidates are plotted in pattern colors; inconclusive samples are grey,
-  while escapes and singleton results are omitted. Candidates are
+  `seed_level: 0.00625` and an explicit `seed_iteration_limit` (100,000 by
+  default). All parameter domains stream a shared pattern/iteration canvas
+  buffer, including escape iteration counts. Candidate point lists retain
+  their detector/calculator provenance. Candidates are
   observational, not mathematical proof.
   The survey runs in the bounded compute-worker pool so this expensive scan
   does not delay the legacy chart or block other data-server requests. The
   initial response includes a survey job ID and progress; poll
   `GET /orbitals/seed-survey/:job_id` for progress and completion. Progress
-  advances every eight seeds, streaming point deltas that are accumulated for
-  polling clients. A newer focal-point request cancels the older
+  advances once per completed image row, streaming candidate deltas and row
+  buffers that are accumulated for polling clients. A newer focal-point request cancels the older
   queued or running survey so obsolete scans cannot occupy the bounded pool;
   repeated requests for the same active focal point reuse its job. Jobs are
   process-local and expire after 15 minutes. The survey does not alter

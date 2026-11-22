@@ -1,0 +1,3 @@
+
+# Historical SQL proofs retain their upstream license whitespace.
+database/schema/history/*.sql text eol=lf -whitespace

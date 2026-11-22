@@ -1,8 +1,8 @@
-import { spawn_sync } from "../../../utils.js";
+import { spawn_sync } from "@fracto/sdk/utils/Process.js";
 import { fileURLToPath } from "url";
 import path from "path";
 import fs from "fs";
-import config from "../../../config/mysql.json" with { type: "json" };
+import config from "../config/mysql.json" with { type: "json" };
 
 export const SEPARATOR = path.sep;
 

@@ -1,6 +1,6 @@
 import mysql from "mysql2";
 import chalk from "chalk";
-import config from "../../config/mysql.json" with { type: "json" };
+import config from "./config/mysql.json" with { type: "json" };
 
 const STRUCTURED_LOG_PREFIX = "@@FRACTO_LOG@@";
 const SQL_KEYWORDS = [

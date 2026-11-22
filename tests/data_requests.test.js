@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { parse_data_request } from "../handlers/data_requests/contract.js";
 import { create_data_request_handler } from "../handlers/data_requests/handler.js";
-import { create_data_request_authorizer } from "../handlers/data_requests/authorization.js";
+import { create_data_request_authorizer } from "@fracto/sdk/utils/PrivateEditorAuthorization.js";
 
 const request = (values = { world_name: "Aimward" }) => ({
   table: "wordnet_mappings",

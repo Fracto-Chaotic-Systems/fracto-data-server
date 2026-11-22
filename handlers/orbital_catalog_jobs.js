@@ -34,15 +34,9 @@ const bundled = new Map();
 export const load_job_catalog = async (maximum, { version } = {}) => {
   const legacy = version === DENOMINATOR_CATALOG_VERSION;
   const source = legacy
-    ? new URL(
-        "../../../sdk/orbitals/data/denominator-catalog.json",
-        import.meta.url,
-      )
+    ? new URL(import.meta.resolve("@fracto/sdk/orbitals/data/denominator-catalog.json"))
     : process.env.FRACTO_ORBITAL_CATALOG_FILE ||
-      new URL(
-        "../../../sdk/orbitals/data/denominator-catalog-small-numerators.json",
-        import.meta.url,
-      );
+      new URL(import.meta.resolve("@fracto/sdk/orbitals/data/denominator-catalog-small-numerators.json"));
   const key = String(source);
   if (!bundled.has(key))
     bundled.set(
