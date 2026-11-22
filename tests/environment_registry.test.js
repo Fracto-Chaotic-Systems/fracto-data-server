@@ -74,3 +74,63 @@ test("private registry validates requests and returns no provenance or database 
   assert.equal(failure.status, 503);
   assert.deepEqual(await failure.json(), { error: "catalog_unavailable" });
 });
+
+test("category listing is private, bounded and uses only the database result", async (t) => {
+  let query,
+    calls = 0;
+  const app = express();
+  app.use(
+    "/registry",
+    create_environment_registry_router({
+      authorize(req, res, next) {
+        if (req.get("X-Test-Token") !== "private") return res.sendStatus(403);
+        next();
+      },
+      database: {
+        async list(value) {
+          calls++;
+          query = value;
+          return {
+            assets: [
+              {
+                id: "scene",
+                name: "Scene",
+                category: value.category,
+                model: null,
+                format: null,
+              },
+            ],
+            next_cursor: null,
+          };
+        },
+      },
+    }),
+  );
+  const server = app.listen(0, "127.0.0.1");
+  await new Promise((resolve) => server.once("listening", resolve));
+  t.after(
+    () =>
+      new Promise((resolve) => {
+        server.closeAllConnections();
+        server.close(resolve);
+      }),
+  );
+  const base = "http://127.0.0.1:" + server.address().port + "/registry";
+  assert.equal((await fetch(base + "?category=area")).status, 403);
+  const headers = { "X-Test-Token": "private" };
+  for (const suffix of [
+    "category=wrong",
+    "category[]=area",
+    "limit=201",
+    "after=../x",
+    "extra=private",
+  ])
+    assert.equal((await fetch(base + "?" + suffix, { headers })).status, 400);
+  assert.equal(calls, 0);
+  const response = await fetch(base + "?category=area&limit=10&after=grass", {
+    headers,
+  });
+  assert.equal(response.status, 200);
+  assert.deepEqual(query, { category: "area", after: "grass", limit: 10 });
+  assert.equal((await response.json()).assets[0].id, "scene");
+});

@@ -27,3 +27,23 @@ from its API before a new file is published. The registry is a projection of the
 current catalog, not an independent metadata editor. If synchronization fails
 after file publication, the next metadata read/list retries registration. There
 is no distributed transaction or automatic deletion of database rows.
+
+## Category listing (additive version 1)
+
+GET /internal/environment-assets uses the same internal authorization and no-store
+policy as PUT. Optional query fields are category (material, component or area),
+after (exclusive lowercase slug cursor, at most 64 characters), and limit (1–200,
+default 200). Omitted category queries all model categories in the same table.
+Unknown, repeated/structured or invalid parameters return 400 {error:"invalid_query"}.
+Success is 200 {assets:[{id,name,category,model,format}],next_cursor:null|id}.
+Rows are ordered by asset ID; next_cursor is the last returned ID when more exist.
+Summaries include only bounded public model fields (SDK validator), with nullable
+model/format. No attribution, checksums, SQL or private configuration are returned.
+Database/invalid-result failures return 503 {error:"catalog_unavailable"}. GET is
+read-only and retryable; keyset pages are not a transaction-wide snapshot.
+
+PUT adds optional record.model_category, validated against the same three values;
+legacy requests default to material. Descriptive record.category remains intact.
+Migration 020 must be applied before category-aware service deployment. The asset
+client follows pages with a 15-second timeout each, validates categories and cursor
+progress, and fails the whole list on an invalid/unavailable page.

@@ -1,6 +1,10 @@
 import express from "express";
 import { create_environment_asset_database } from "./database.js";
-import { validate_environment_registration } from "@fracto/sdk/FractoEnvironmentCatalog.js";
+import {
+  validate_environment_registration,
+  validate_model_category,
+  validate_model_asset_page,
+} from "@fracto/sdk/FractoEnvironmentCatalog.js";
 import { require_internal_service } from "@fracto/sdk/utils/ServiceAuthorization.js";
 
 export function authorize_environment_registry(req, res, next) {
@@ -28,6 +32,38 @@ export function create_environment_registry_router({
     authorize(req, res, next);
   });
   router.use(express.json({ limit: "8mb", strict: true }));
+  router.get("/", async (req, res) => {
+    let query;
+    try {
+      if (
+        Object.keys(req.query).some(
+          (key) => !["category", "after", "limit"].includes(key),
+        )
+      )
+        throw new Error();
+      const { category, after = "", limit = "200" } = req.query;
+      if (category !== undefined) validate_model_category(category);
+      if (
+        typeof after !== "string" ||
+        (after && !/^[a-z][a-z0-9-]{0,63}$/.test(after)) ||
+        typeof limit !== "string" ||
+        !/^\d{1,3}$/.test(limit) ||
+        Number(limit) < 1 ||
+        Number(limit) > 200
+      )
+        throw new Error();
+      query = { category, after, limit: Number(limit) };
+    } catch {
+      return res.status(400).json({ error: "invalid_query" });
+    }
+    try {
+      res.json(
+        validate_model_asset_page(await database.list(query), query.category),
+      );
+    } catch {
+      res.status(503).json({ error: "catalog_unavailable" });
+    }
+  });
   router.put("/:id", async (req, res) => {
     try {
       const { record, revision } = validate_environment_registration(req.body);

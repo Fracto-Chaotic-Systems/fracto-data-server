@@ -21,3 +21,8 @@ Migration 019 lives in `../database/migrations/`, preserving its original bytes,
 filename and checksum. The root generic migration runner discovers service-owned
 migrations; applied history is verified rather than replayed. Run `npm run
 db:migrate` from the root, then the asset service's `npm run environment:register`.
+
+All three model lists query this same table. Migration 020 adds indexed
+`model_category` values material/component/area, independent of descriptive
+`category` values such as vegetation/grass. Existing rows default to material.
+The private GET endpoint uses bound category/cursor filters and bounded pages.

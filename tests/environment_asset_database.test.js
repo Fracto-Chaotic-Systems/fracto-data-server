@@ -66,9 +66,9 @@ test(
         open: async () => ({
           execute: (sql, values) =>
             connection.execute(
-              sql.replace(
-                "INSERT INTO environment_assets",
-                "INSERT INTO environment_asset_registry_test",
+              sql.replaceAll(
+                "environment_assets",
+                "environment_asset_registry_test",
               ),
               values,
             ),
@@ -106,6 +106,16 @@ test(
           : saved[0].modification_history;
       assert.equal(history.at(-1).description, "Modified structure.");
       assert.equal(+saved[0].created_at, +initial[0].created_at);
+      for (const category of ["component", "area"])
+        await registry.sync(
+          { ...record, id: "test-" + category, model_category: category },
+          "c".repeat(64),
+        );
+      for (const category of ["material", "component", "area"]) {
+        const page = await registry.list({ category });
+        assert.equal(page.assets.length, 1);
+        assert.equal(page.assets[0].category, category);
+      }
     } finally {
       await connection.query(
         "DROP TEMPORARY TABLE IF EXISTS environment_asset_registry_test",
@@ -141,4 +151,50 @@ test("registry binds values, reuses connections and retries pool creation failur
   assert.ok(queries[0][1].includes("Creator"));
   await registry.close();
   assert.equal(closed, true);
+});
+
+test("all model categories query one table using bound filters and stable pagination", async () => {
+  const calls = [];
+  const registry = create_environment_asset_database({
+    open: async () => ({
+      execute: async (sql, params) => {
+        calls.push({ sql, params });
+        return [
+          [
+            {
+              asset_id: "a",
+              name: "A",
+              model_category: params[1] || "material",
+              model_path: null,
+              model_format: null,
+            },
+            {
+              asset_id: "b",
+              name: "B",
+              model_category: params[1] || "material",
+              model_path: null,
+              model_format: null,
+            },
+          ],
+        ];
+      },
+    }),
+  });
+  for (const category of ["material", "component", "area"]) {
+    const page = await registry.list({ category, limit: 1 });
+    assert.equal(page.assets[0].category, category);
+    assert.equal(page.next_cursor, "a");
+    assert.deepEqual(calls.at(-1).params, ["", category]);
+    assert.match(
+      calls.at(-1).sql,
+      /FROM environment_assets WHERE asset_id > \? AND model_category = \?/,
+    );
+  }
+  await assert.rejects(
+    registry.list({ category: "invalid" }),
+    /invalid_record/,
+  );
+  await assert.rejects(registry.list({ limit: 201 }), /invalid_query/);
+  await assert.rejects(registry.list({ after: "' OR 1=1" }), /invalid_query/);
+  assert.equal(calls.length, 3);
 });
