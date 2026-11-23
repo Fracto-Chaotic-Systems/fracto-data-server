@@ -32,6 +32,48 @@ export function create_environment_registry_router({
     authorize(req, res, next);
   });
   router.use(express.json({ limit: "8mb", strict: true }));
+  router
+    .route("/folders")
+    .get(async (req, res) => {
+      try {
+        if (Object.keys(req.query).some((key) => key !== "category"))
+          throw new Error("invalid_record");
+        if (typeof req.query.category !== "string")
+          throw new Error("invalid_record");
+        validate_model_category(req.query.category);
+      } catch {
+        return res.status(400).json({ error: "invalid_record" });
+      }
+      try {
+        res.json(await database.folders(req.query.category));
+      } catch {
+        res.status(503).json({ error: "catalog_unavailable" });
+      }
+    })
+    .post(async (req, res) => {
+      try {
+        if (
+          !req.body ||
+          Object.keys(req.body).some(
+            (key) => !["category", "folder_path"].includes(key),
+          )
+        )
+          throw new Error("invalid_record");
+        if (typeof req.body.category !== "string")
+          throw new Error("invalid_record");
+        validate_model_category(req.body.category);
+        res.json(
+          await database.add_folder(req.body.category, req.body.folder_path),
+        );
+      } catch (error) {
+        const invalid = ["invalid_record", "invalid_folder"].includes(
+          error.message,
+        );
+        res
+          .status(invalid ? 400 : 503)
+          .json({ error: invalid ? error.message : "catalog_unavailable" });
+      }
+    });
   router.get("/", async (req, res) => {
     let query;
     try {
@@ -72,7 +114,11 @@ export function create_environment_registry_router({
       await database.sync(record, revision);
       res.json({ id: record.id, revision });
     } catch (error) {
-      const invalid = ["invalid_record", "invalid_url"].includes(error.message);
+      const invalid = [
+        "invalid_record",
+        "invalid_url",
+        "invalid_folder",
+      ].includes(error.message);
       res
         .status(invalid ? 400 : 503)
         .json({ error: invalid ? "invalid_record" : "catalog_unavailable" });

@@ -47,3 +47,38 @@ legacy requests default to material. Descriptive record.category remains intact.
 Migration 020 must be applied before category-aware service deployment. The asset
 client follows pages with a 15-second timeout each, validates categories and cursor
 progress, and fails the whole list on an invalid/unavailable page.
+
+
+## Logical folders (additive version 1)
+
+Migration 021 adds folder_path VARCHAR(512), default empty/category root. GET
+summary rows include folder_path. PUT records and public catalog PATCH edits may
+include it. The shared SDK normalizes whitespace around slash-separated names
+and rejects empty internal segments, dot/dot-dot names, colons, backslashes,
+controls and bounds above eight levels / 64 characters per name / 512 total.
+The path is logical metadata only and must never be used to open/move files.
+
+Omitted PUT folder_path defaults to root on insert and preserves existing folder
+values on upsert; explicit empty clears it. Omitted PATCH folder_path preserves
+the catalog value. PATCH retains expected-revision conflict behavior (409),
+atomic file publication and retryable database reconciliation; folder moves add
+history. Invalid public PATCH paths return 400 invalid_folder; invalid internal
+registrations return 400 invalid_record. Folder definitions are standalone rows in model_folders (migration 022), preserving
+empty groups independently of asset assignments.
+
+## Folder definitions (additive version 1)
+
+GET /internal/environment-assets/folders requires a category query value and
+returns 200 {folders:[path,...]} (maximum 1,000), including paths currently
+referenced by assets. POST to the same route accepts only {category,folder_path}
+and returns 200 {folder_path}. Categories are material/component/area; a path
+uses the SDK bounds above and must be nonempty. Definitions use case-sensitive
+category/path keys. POST is idempotent and safe to retry. SQL never uses a path
+as an identifier or filesystem location. Invalid requests return 400
+invalid_record or invalid_folder, auth failures 403, oversized bodies 413, and
+persistence failures 503 catalog_unavailable. Existing internal authentication,
+no-store headers and 15-second client timeout apply. Folder creation does not
+modify an asset. Public asset-service /environment-catalog/folders GET/POST
+forwards this contract under the existing user/trusted-origin policy. Folder
+movement continues through revision-checked asset PATCH, with history and
+portable catalog persistence; it does not move resource files.

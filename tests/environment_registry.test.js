@@ -134,3 +134,22 @@ test("category listing is private, bounded and uses only the database result", a
   assert.deepEqual(query, { category: "area", after: "grass", limit: 10 });
   assert.equal((await response.json()).assets[0].id, "scene");
 });
+
+test("folder endpoints enforce service auth, category and bounded path validation", async t=>{
+ const app=express();let calls=0;
+ app.use("/registry",create_environment_registry_router({authorize:(req,res,next)=>req.get("X-Test-Token")==="allowed"?next():res.sendStatus(403),database:{
+   async folders(category){calls++;return {folders:[category+"/Empty"]};},
+   async add_folder(category,path){calls++; if(path==="../escape")throw Error("invalid_folder");return {folder_path:path};}
+ }}));
+ const server=app.listen(0,"127.0.0.1");await new Promise(resolve=>server.once("listening",resolve));
+ t.after(()=>new Promise(resolve=>{server.closeAllConnections();server.close(resolve);}));
+ const url=`http://127.0.0.1:${server.address().port}/registry/folders`;
+ assert.equal((await fetch(url+"?category=material")).status,403);assert.equal(calls,0);
+ const headers={"X-Test-Token":"allowed","Content-Type":"application/json"};
+ assert.deepEqual(await (await fetch(url+"?category=area",{headers})).json(),{folders:["area/Empty"]});
+ const post=body=>fetch(url,{method:"POST",headers,body:JSON.stringify(body)});
+ assert.equal((await post({category:"bad",folder_path:"Test"})).status,400);
+ assert.equal((await post({category:"material",folder_path:"Test",extra:true})).status,400);
+ assert.equal((await post({category:"material",folder_path:"../escape"})).status,400);
+ assert.deepEqual(await (await post({category:"component",folder_path:"Empty"})).json(),{folder_path:"Empty"});
+});

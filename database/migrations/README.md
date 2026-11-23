@@ -10,3 +10,11 @@ needed for the ownership change. New application migrations belong here.
 category/asset-ID index. Existing rows default to material. It preserves the
 subject category, attribution, identities and histories. Apply with `db:migrate`
 before deploying category-aware services.
+
+
+021_model-folder-paths.sql adds logical folder_path (default empty/category root)
+and a category/path index. Existing identities, attribution and file paths are
+unchanged. Apply this additive migration before deploying folder-aware services.
+
+022_model-folders.sql stores category-scoped logical folder definitions independently
+of assets, preserving empty folders. Apply before deploying folder creation.

@@ -65,3 +65,6 @@ but returns no accepted points. Experimental stagnation remains separate from
 the established solver’s closure status. `worker_task_pool.test.js` checks
 adaptive horizon expansion and exact short horizons when adaptation is disabled,
 while preserving asynchronous execution, cancellation and backpressure checks.
+
+Folder registry tests cover authenticated folder endpoints and category isolation.
+The opt-in MySQL test creates only connection-local temporary folder/asset tables.

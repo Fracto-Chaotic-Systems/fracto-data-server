@@ -87,6 +87,7 @@ test(
       assert.equal(+initial[0].updated_at, +repeated[0].updated_at);
       const changed = structuredClone(record);
       changed.attribution.creator_name = "Updated creator";
+      changed.folder_path = "Vegetation/Grasses";
       changed.history.push({
         date: "2026-11-22",
         action: "catalog-note",
@@ -99,6 +100,15 @@ test(
       );
       assert.equal(saved.length, 1);
       assert.equal(saved[0].creator_name, "Updated creator");
+      assert.equal(saved[0].folder_path, "Vegetation/Grasses");
+      const legacy = { ...changed };
+      delete legacy.folder_path;
+      await registry.sync(legacy, "b".repeat(64));
+      const [legacyRows] = await connection.query(
+        "SELECT folder_path FROM environment_asset_registry_test WHERE asset_id=?",
+        [record.id],
+      );
+      assert.equal(legacyRows[0].folder_path, "Vegetation/Grasses");
       assert.equal(saved[0].revision, "b".repeat(64));
       const history =
         typeof saved[0].modification_history === "string"
@@ -115,6 +125,10 @@ test(
         const page = await registry.list({ category });
         assert.equal(page.assets.length, 1);
         assert.equal(page.assets[0].category, category);
+        assert.equal(
+          page.assets[0].folder_path,
+          category === "material" ? "Vegetation/Grasses" : "",
+        );
       }
     } finally {
       await connection.query(
@@ -197,4 +211,26 @@ test("all model categories query one table using bound filters and stable pagina
   await assert.rejects(registry.list({ limit: 201 }), /invalid_query/);
   await assert.rejects(registry.list({ after: "' OR 1=1" }), /invalid_query/);
   assert.equal(calls.length, 3);
+});
+
+test("MySQL folders persist independently of assets and are category scoped", {skip:process.env.FRACTO_TEST_ENVIRONMENT_ASSET_DATABASE !== "1"}, async()=>{
+ const pool=await open_environment_asset_pool();const connection=await pool.getConnection();
+ try {
+  await connection.query("CREATE TEMPORARY TABLE model_folder_test LIKE model_folders");
+  await connection.query("CREATE TEMPORARY TABLE model_folder_asset_test LIKE environment_assets");
+  const registry=create_environment_asset_database({open:async()=>({execute:(sql,values)=>connection.execute(sql.replaceAll("model_folders","model_folder_test").replaceAll("environment_assets","model_folder_asset_test"),values)})});
+  assert.deepEqual(await registry.folders("material"),{folders:[]});
+  await registry.add_folder("material","Vegetation/Grasses");
+  await registry.add_folder("material","Vegetation/Grasses");
+  await registry.add_folder("area","Buildings");
+  assert.deepEqual(await registry.folders("material"),{folders:["Vegetation/Grasses"]});
+  assert.deepEqual(await registry.folders("component"),{folders:[]});
+  assert.deepEqual(await registry.folders("area"),{folders:["Buildings"]});
+  await assert.rejects(registry.add_folder("material","../escape"), /invalid_folder/);
+  await assert.rejects(registry.add_folder("material",""), /invalid_folder/);
+  await assert.rejects(registry.add_folder("bad","Valid"), /invalid_record/);
+ } finally {
+  await connection.query("DROP TEMPORARY TABLE IF EXISTS model_folder_test, model_folder_asset_test");
+  connection.release();await pool.end();
+ }
 });
