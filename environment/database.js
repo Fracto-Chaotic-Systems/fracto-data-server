@@ -11,6 +11,7 @@ export function environment_asset_row(record, revision) {
   const view = catalog_view(record);
   return {
     asset_id: record.id,
+    archived: record.archived === true ? 1 : 0,
     name: record.name,
     version: record.version,
     category: record.category || "environment",
@@ -76,7 +77,7 @@ export function create_environment_asset_database({
       validate_model_category(category);
       const db = await database();
       const [rows] = await db.execute(
-        "SELECT folder_path FROM model_folders WHERE model_category = ? UNION SELECT folder_path FROM environment_assets WHERE model_category = ? AND folder_path <> '' ORDER BY folder_path LIMIT 1001",
+        "SELECT folder_path FROM model_folders WHERE model_category = ? UNION SELECT folder_path FROM environment_assets WHERE archived = 0 AND model_category = ? AND folder_path <> '' ORDER BY folder_path LIMIT 1001",
         [category, category],
       );
       if (rows.length > 1000) throw new Error("catalog_unavailable");
@@ -109,7 +110,7 @@ export function create_environment_asset_database({
       const db = await database();
       const parameters = category === undefined ? [after] : [after, category];
       const [rows] = await db.execute(
-        `SELECT asset_id, name, model_category, folder_path, model_path, model_format FROM environment_assets WHERE asset_id > ?${category === undefined ? "" : " AND model_category = ?"} ORDER BY asset_id LIMIT ${limit + 1}`,
+        `SELECT asset_id, name, model_category, folder_path, model_path, model_format FROM environment_assets WHERE archived = 0 AND asset_id > ?${category === undefined ? "" : " AND model_category = ?"} ORDER BY asset_id LIMIT ${limit + 1}`,
         parameters,
       );
       const more = rows.length > limit;
@@ -129,7 +130,8 @@ export function create_environment_asset_database({
       const updates = columns.filter(
         (key) =>
           key !== "asset_id" &&
-          (key !== "folder_path" || Object.hasOwn(record, "folder_path")),
+          (key !== "folder_path" || Object.hasOwn(record, "folder_path")) &&
+          (key !== "archived" || Object.hasOwn(record, "archived")),
       );
       const db = await database();
       // Repeated reads/backfills are idempotent, including updated_at.
@@ -137,6 +139,11 @@ export function create_environment_asset_database({
         `INSERT INTO environment_assets (${columns.map((key) => `\`${key}\``).join(",")}) VALUES (${columns.map(() => "?").join(",")}) ON DUPLICATE KEY UPDATE ${updates.map((key) => `\`${key}\`=VALUES(\`${key}\`)`).join(",")}`,
         Object.values(row),
       );
+    },
+    async manage_folder(body) {
+      const db = await database();
+      const { manage_model_folder } = await import("./folders.js");
+      return manage_model_folder(db, body);
     },
     async close() {
       if (pool) await (await pool).end();

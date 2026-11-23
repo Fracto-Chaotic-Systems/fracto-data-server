@@ -18,3 +18,7 @@ unchanged. Apply this additive migration before deploying folder-aware services.
 
 022_model-folders.sql stores category-scoped logical folder definitions independently
 of assets, preserving empty folders. Apply before deploying folder creation.
+
+023_archived-models.sql adds an archived flag and active-category index. Deleted
+models retain their identity, provenance and history but leave active listings.
+Apply before deploying model tree deletion; cold boot now applies pending files.

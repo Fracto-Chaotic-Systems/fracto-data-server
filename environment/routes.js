@@ -1,3 +1,4 @@
+import { validate_model_management } from "@fracto/sdk/FractoModelManagement.js";
 import express from "express";
 import { create_environment_asset_database } from "./database.js";
 import {
@@ -74,6 +75,25 @@ export function create_environment_registry_router({
           .json({ error: invalid ? error.message : "catalog_unavailable" });
       }
     });
+  router.post("/folders/manage", async (req, res) => {
+    try {
+      const body = validate_model_management(req.body);
+      if (!body.action.endsWith("-folder")) throw new Error("invalid_record");
+      res.json(await database.manage_folder(req.body));
+    } catch (error) {
+      const conflict = [
+        "folder_not_empty",
+        "folder_conflict",
+        "folder_not_found",
+      ].includes(error.message);
+      const invalid = ["invalid_record", "invalid_folder"].includes(
+        error.message,
+      );
+      res.status(conflict ? 409 : invalid ? 400 : 503).json({
+        error: conflict || invalid ? error.message : "catalog_unavailable",
+      });
+    }
+  });
   router.get("/", async (req, res) => {
     let query;
     try {

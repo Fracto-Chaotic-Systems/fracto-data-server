@@ -201,7 +201,7 @@ test("all model categories query one table using bound filters and stable pagina
     assert.deepEqual(calls.at(-1).params, ["", category]);
     assert.match(
       calls.at(-1).sql,
-      /FROM environment_assets WHERE asset_id > \? AND model_category = \?/,
+      /FROM environment_assets WHERE archived = 0 AND asset_id > \? AND model_category = \?/,
     );
   }
   await assert.rejects(
@@ -213,24 +213,178 @@ test("all model categories query one table using bound filters and stable pagina
   assert.equal(calls.length, 3);
 });
 
-test("MySQL folders persist independently of assets and are category scoped", {skip:process.env.FRACTO_TEST_ENVIRONMENT_ASSET_DATABASE !== "1"}, async()=>{
- const pool=await open_environment_asset_pool();const connection=await pool.getConnection();
- try {
-  await connection.query("CREATE TEMPORARY TABLE model_folder_test LIKE model_folders");
-  await connection.query("CREATE TEMPORARY TABLE model_folder_asset_test LIKE environment_assets");
-  const registry=create_environment_asset_database({open:async()=>({execute:(sql,values)=>connection.execute(sql.replaceAll("model_folders","model_folder_test").replaceAll("environment_assets","model_folder_asset_test"),values)})});
-  assert.deepEqual(await registry.folders("material"),{folders:[]});
-  await registry.add_folder("material","Vegetation/Grasses");
-  await registry.add_folder("material","Vegetation/Grasses");
-  await registry.add_folder("area","Buildings");
-  assert.deepEqual(await registry.folders("material"),{folders:["Vegetation/Grasses"]});
-  assert.deepEqual(await registry.folders("component"),{folders:[]});
-  assert.deepEqual(await registry.folders("area"),{folders:["Buildings"]});
-  await assert.rejects(registry.add_folder("material","../escape"), /invalid_folder/);
-  await assert.rejects(registry.add_folder("material",""), /invalid_folder/);
-  await assert.rejects(registry.add_folder("bad","Valid"), /invalid_record/);
- } finally {
-  await connection.query("DROP TEMPORARY TABLE IF EXISTS model_folder_test, model_folder_asset_test");
-  connection.release();await pool.end();
- }
-});
+test(
+  "MySQL folders persist independently of assets and are category scoped",
+  { skip: process.env.FRACTO_TEST_ENVIRONMENT_ASSET_DATABASE !== "1" },
+  async () => {
+    const pool = await open_environment_asset_pool();
+    const connection = await pool.getConnection();
+    try {
+      await connection.query(
+        "CREATE TEMPORARY TABLE model_folder_test LIKE model_folders",
+      );
+      await connection.query(
+        "CREATE TEMPORARY TABLE model_folder_asset_test LIKE environment_assets",
+      );
+      const registry = create_environment_asset_database({
+        open: async () => ({
+          execute: (sql, values) =>
+            connection.execute(
+              sql
+                .replaceAll("model_folders", "model_folder_test")
+                .replaceAll("environment_assets", "model_folder_asset_test"),
+              values,
+            ),
+        }),
+      });
+      assert.deepEqual(await registry.folders("material"), { folders: [] });
+      await registry.add_folder("material", "Vegetation/Grasses");
+      await registry.add_folder("material", "Vegetation/Grasses");
+      await registry.add_folder("area", "Buildings");
+      assert.deepEqual(await registry.folders("material"), {
+        folders: ["Vegetation/Grasses"],
+      });
+      assert.deepEqual(await registry.folders("component"), { folders: [] });
+      assert.deepEqual(await registry.folders("area"), {
+        folders: ["Buildings"],
+      });
+      await assert.rejects(
+        registry.add_folder("material", "../escape"),
+        /invalid_folder/,
+      );
+      await assert.rejects(
+        registry.add_folder("material", ""),
+        /invalid_folder/,
+      );
+      await assert.rejects(
+        registry.add_folder("bad", "Valid"),
+        /invalid_record/,
+      );
+    } finally {
+      await connection.query(
+        "DROP TEMPORARY TABLE IF EXISTS model_folder_test, model_folder_asset_test",
+      );
+      connection.release();
+      await pool.end();
+    }
+  },
+);
+
+test(
+  "MySQL archives hide models without dropping provenance and folder definitions change transactionally",
+  { skip: process.env.FRACTO_TEST_ENVIRONMENT_ASSET_DATABASE !== "1" },
+  async () => {
+    const pool = await open_environment_asset_pool();
+    const connection = await pool.getConnection();
+    const execute = (sql, values) =>
+      connection.execute(
+        sql
+          .replaceAll("model_folders", "management_folder_test")
+          .replaceAll("environment_assets", "management_asset_test"),
+        values,
+      );
+    const facade = {
+      execute,
+      beginTransaction: () => connection.beginTransaction(),
+      commit: () => connection.commit(),
+      rollback: () => connection.rollback(),
+      release() {},
+    };
+    const registry = create_environment_asset_database({
+      open: async () => ({ execute, getConnection: async () => facade }),
+    });
+    try {
+      await connection.query(
+        "CREATE TEMPORARY TABLE management_folder_test LIKE model_folders",
+      );
+      await connection.query(
+        "CREATE TEMPORARY TABLE management_asset_test LIKE environment_assets",
+      );
+      await registry.add_folder("material", "plants");
+      await registry.add_folder("material", "plants/herbs");
+      await registry.add_folder("area", "plants");
+      await registry.sync(
+        { ...record, folder_path: "greenery/herbs" },
+        "a".repeat(64),
+      );
+      await registry.manage_folder({
+        action: "rename-folder",
+        category: "material",
+        folder_path: "plants",
+        name: "greenery",
+      });
+      assert.deepEqual((await registry.folders("material")).folders, [
+        "greenery",
+        "greenery/herbs",
+      ]);
+      assert.deepEqual((await registry.folders("area")).folders, ["plants"]);
+      await assert.rejects(
+        registry.manage_folder({
+          action: "delete-folder",
+          category: "material",
+          folder_path: "greenery",
+        }),
+        /folder_not_empty/,
+      );
+      await assert.rejects(
+        registry.manage_folder({
+          action: "delete-folder",
+          category: "material",
+          folder_path: "greenery/herbs",
+        }),
+        /folder_not_empty/,
+      );
+      await registry.sync(
+        { ...record, archived: true, folder_path: "greenery/herbs" },
+        "b".repeat(64),
+      );
+      assert.deepEqual(
+        (await registry.list({ category: "material" })).assets,
+        [],
+      );
+      // Old clients cannot resurrect archived records by omitting the new field.
+      await registry.sync(record, "b".repeat(64));
+      assert.deepEqual(
+        (await registry.list({ category: "material" })).assets,
+        [],
+      );
+      const [saved] = await connection.query(
+        "SELECT creator_name, archived FROM management_asset_test",
+      );
+      assert.equal(saved[0].creator_name, record.attribution.creator_name);
+      assert.equal(saved[0].archived, 1);
+      await registry.manage_folder({
+        action: "delete-folder",
+        category: "material",
+        folder_path: "greenery/herbs",
+      });
+      await registry.manage_folder({
+        action: "delete-folder",
+        category: "material",
+        folder_path: "greenery",
+      });
+      assert.deepEqual((await registry.folders("material")).folders, []);
+      await registry.add_folder("material", "plants");
+      await registry.add_folder("material", "flowers");
+      await assert.rejects(
+        registry.manage_folder({
+          action: "rename-folder",
+          category: "material",
+          folder_path: "plants",
+          name: "flowers",
+        }),
+        /folder_conflict/,
+      );
+      assert.deepEqual((await registry.folders("material")).folders, [
+        "flowers",
+        "plants",
+      ]);
+    } finally {
+      await connection.query(
+        "DROP TEMPORARY TABLE IF EXISTS management_folder_test, management_asset_test",
+      );
+      connection.release();
+      await pool.end();
+    }
+  },
+);

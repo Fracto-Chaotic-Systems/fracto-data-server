@@ -82,3 +82,50 @@ modify an asset. Public asset-service /environment-catalog/folders GET/POST
 forwards this contract under the existing user/trusted-origin policy. Folder
 movement continues through revision-checked asset PATCH, with history and
 portable catalog persistence; it does not move resource files.
+
+## Model tree management (additive v1)
+
+Public POST /environment-catalog/manage uses the existing enabled-user and trusted
+mutation-origin policy and 128 KiB JSON limit. The UI uses the thin same-origin
+/api/environment-catalog/manage proxy. SDK FractoModelManagement.js validates:
+
+- rename-model: {action,id,revision,name}; name is trimmed, nonempty, at most 255
+  characters, without controls. IDs remain stable; geometry/source paths do not move.
+- delete-model: {action,id,revision}; revision is the current 64-hex catalog digest.
+  Deletion is a retained-file archive (asset.json archived:true), recorded in history.
+  Deleted models are excluded from inventory and resource/metadata GET returns 404.
+- rename-folder: {action,category,folder_path,name}; name is one valid folder segment.
+  All active descendants in that category receive the new prefix. Definition
+  collisions and paths exceeding SDK depth/length bounds are rejected before writes.
+- delete-folder: {action,category,folder_path}; only empty folders can be deleted,
+  including no nested folder definitions. No contained model is implicitly deleted.
+
+Unknown fields fail 400 invalid_record; invalid folder paths are 400 invalid_folder.
+Stale model revisions are 409 file_conflict. Folder conflicts, missing folders and
+nonempty deletion are 409 folder_conflict/folder_not_found/folder_not_empty. Success
+is 200 {id} for models or {folder_path,target?} for folders; unavailable services
+return 503 catalog_unavailable. Tree operations are queued in the asset process;
+normal catalog edits retain per-model revision checks. There is no automatic
+mutation retry. Refresh and review after a timeout or conflict.
+
+The asset service owns portable record changes and compensates completed folder
+edits on failure without overwriting newer revisions. Files and SQL are not one
+distributed transaction: external edits or an uncertain final database response
+may require reviewing both folder definitions and assignments after refreshing.
+Reads reconcile registry projections from the authoritative catalogs. Provenance
+and resources remain intact, including during compensation.
+
+The private POST /internal/environment-assets/folders/manage accepts only the two
+folder actions under existing internal authorization and the 8 MiB parser limit.
+It updates definitions transactionally, rechecks nonempty deletion and collisions,
+and returns the same folder success/error shape. The asset service first saves
+model assignments and then requests this definition operation. SQL, transactions
+and migration 023 belong to the data service; no service imports another's code.
+
+Registration PUT adds optional boolean record.archived. The shared SDK registration
+projects it from asset.json. The data service persists it as environment_assets.archived
+(migration 023). Listings query active rows only. Legacy registration bodies that
+omit archived preserve an existing value on upsert and default false on insert.
+Operators can recover a deleted model by clearing archived in its retained catalog
+and allowing a subsequent list/read to reconcile the registry. IDs stay reserved;
+reimporting archived source files creates a new identity rather than reviving it.

@@ -55,3 +55,7 @@ and forwards via the registry client with a 15-second timeout. UI same-origin
 Move uses the existing revision-checked asset PATCH contract, preserving
 attribution and appending move-folder history. Conflicts return 409 and leave
 the editor's selection intact for review.
+
+Folder definition rename/delete transactions live in folders.js; database.js
+provides the service-owned pool. See CONTRACT.md for management actions and the
+archived model projection introduced by migration 023.

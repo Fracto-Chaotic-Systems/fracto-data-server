@@ -68,3 +68,6 @@ while preserving asynchronous execution, cancellation and backpressure checks.
 
 Folder registry tests cover authenticated folder endpoints and category isolation.
 The opt-in MySQL test creates only connection-local temporary folder/asset tables.
+
+Temporary MySQL tables also verify archive filtering and legacy preservation,
+folder definition transactions, target conflicts and nonempty deletion refusal.
