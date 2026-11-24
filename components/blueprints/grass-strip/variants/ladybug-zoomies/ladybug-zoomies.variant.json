@@ -1,0 +1,44 @@
+{
+  "format": "fracto.component-construction-variant",
+  "format_version": 1,
+  "variant_key": "ladybug-zoomies",
+  "variant_revision": 6,
+  "name": "Ladybug zoomies",
+  "description_document": "README.md",
+  "base": {
+    "component_id": "0bb37175-0459-49bf-b5fc-f918bf090563",
+    "blueprint_key": "grass-strip",
+    "blueprint_revision": 7,
+    "description_document": "../../grass-strip.md",
+    "parameters_document": "../../grass-strip.construction.json",
+    "scene_revision": 17,
+    "scene_snapshot": "../../grass-strip.component.json",
+    "canonical_scene_sha256": "e734fc425c2d1b8438510e10783af8b37c766c2e8fa49712f83aaa451d83bb5d"
+  },
+  "overrides": [
+    {
+      "target": {
+        "role": "walking_insects",
+        "property": "motion.speed_mps"
+      },
+      "operation": "multiply",
+      "value": 8
+    },
+    {
+      "target": {
+        "role": "walking_insects",
+        "property": "walk_clip.playback_rate"
+      },
+      "operation": "multiply",
+      "value": 8
+    }
+  ],
+  "semantics": {
+    "inherit_omitted_properties": true,
+    "apply_once_to_base": true,
+    "scope": "Every member of the walking_insects role in the referenced base.",
+    "walk_clip_playback_rate": "Semantic clip-rate multiplier relative to the base walk clip, under the inherited component clock; not an existing SDK scene field."
+  },
+  "status": "authored_delta",
+  "implementation_status": "Saved delta only. The component stage previews the supported patrol-speed and walk-clip-rate overrides without saving a full scene or modifying the base."
+}

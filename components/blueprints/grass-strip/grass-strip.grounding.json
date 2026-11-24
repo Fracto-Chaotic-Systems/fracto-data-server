@@ -1,0 +1,22 @@
+{
+  "from_revision": 16,
+  "saved_revision": 17,
+  "floor_y_m": -0.005,
+  "previous_anchor_y_m": 0,
+  "anchor_y_m": -0.015,
+  "vertical_translation_m": -0.015,
+  "dense_grass_count": 420,
+  "sparse_grass_count": 140,
+  "minimum_required_overlap_m": 0.005,
+  "sampled_frames_per_native_clip": 49,
+  "measured_native_base_y_range_m": {
+    "yard-grass": [-0.0010971635529509402, 0.005734671211337541],
+    "animated-grass": [-0.00588385959522561, -4.959058762243895e-8]
+  },
+  "minimum_sampled_dense_overlap_m": 0.006847658896648492,
+  "minimum_sampled_sparse_overlap_m": 0.010000009487255804,
+  "method": "Actual registered GLBs, stage anchoring/unit transforms, first wind clip sampled at 49 evenly spaced poses, precise posed vertex bounds and every current object vertical scale.",
+  "preserved": "All object IDs, X/Z positions, yaw, scales, material pins and clocks; floor, insects and 84 unique rocks unchanged.",
+  "exact_save_reload_verified": true,
+  "canonical_scene_sha256": "e734fc425c2d1b8438510e10783af8b37c766c2e8fa49712f83aaa451d83bb5d"
+}

@@ -6,10 +6,12 @@ import {
   validate_component_id,
 } from "@fracto/sdk/FractoComponentDocument.js";
 import { create_component_database } from "./database.js";
+import { create_component_variants } from "./variants.js";
 
 export function create_component_router({
   database = create_component_database(),
   authorize = require_enabled_user_if_configured,
+  list_variants = create_component_variants(),
 } = {}) {
   const router = express.Router();
   router.use((req, res, next) => {
@@ -30,11 +32,9 @@ export function create_component_router({
           component_not_found: 404,
           component_conflict: 409,
         }[error.message] || 503;
-      res
-        .status(status)
-        .json({
-          error: status === 503 ? "component_unavailable" : error.message,
-        });
+      res.status(status).json({
+        error: status === 503 ? "component_unavailable" : error.message,
+      });
     }
   };
   router.get(
@@ -47,6 +47,15 @@ export function create_component_router({
         throw new Error("invalid_component_document");
       if (req.query.after) validate_component_id(req.query.after);
       return database.list(req.query.after || "");
+    }),
+  );
+  router.get(
+    "/:id/variants",
+    handle((req) => {
+      validate_component_id(req.params.id);
+      if (Object.keys(req.query).length)
+        throw new Error("invalid_component_document");
+      return list_variants(req.params.id);
     }),
   );
   router.get(

@@ -1,0 +1,57 @@
+{
+  "base_revision_before": 13,
+  "saved_revision": 14,
+  "generation": {
+    "expected_revision": 13,
+    "seed": 174284,
+    "retained_edge_tufts": 120,
+    "patrol_shelter_tufts": 20,
+    "object_animation_speed": 1,
+    "component_animation_speed": 0.125,
+    "shelter_planar_scale_range": [0.028, 0.04],
+    "shelter_centers": "Exact patrol midpoints in existing insect order; yaw draw then planar-scale draw; UUIDs independent.",
+    "height_rule": "Match nearest original grass patch: target height = 0.5173413 * original.scale[1], sparse.scale[1] = target / 1.2169935.",
+    "height_range_m": [0.2328250016654505, 0.283924744193142],
+    "original_grass_unchanged": true,
+    "insects_unchanged": true,
+    "floor_unchanged": true
+  },
+  "verification": {
+    "saved": false,
+    "objects": 580,
+    "grass": 560,
+    "edge_grass": 140,
+    "ladybugs": 20,
+    "frames": 73,
+    "real_time_step_seconds": 1.0922373941499892,
+    "visibility_rays": 7300,
+    "blocked_rays": 4679,
+    "edge_blocked_rays": 4679,
+    "opaque_blocked_rays": 0,
+    "fully_hidden_bug_frames": 197,
+    "per_bug_frames_with_clear_ray": [
+      46, 70, 51, 52, 65, 65, 69, 64, 64, 70, 65, 53, 70, 69, 66, 66, 59, 67,
+      59, 73
+    ],
+    "animated_vertices_outside_floor": 0,
+    "edge_height_range_m": [-0.001357445753229724, 0.2843936836713977],
+    "animated_edge_meshes": 140,
+    "passed": true
+  },
+  "exact_save_reload_verified": true,
+  "native_clip_verification": {
+    "saved_revision": 14,
+    "instances": 140,
+    "object_animation_speed": 1,
+    "inherited_component_animation_speed": 0.125,
+    "real_time_steps_seconds": [0.19, 0.27, 0.41],
+    "all_local_rig_and_morph_poses_match_native_clip": true,
+    "base_save_unchanged_by_verification": true
+  },
+  "zoomies_rebase_verification": {
+    "variant_revision": 3,
+    "base_scene_revision": 14,
+    "unchanged_insect_overrides": [8, 8],
+    "live_patrol_and_walk_bone_test_passed": true
+  }
+}

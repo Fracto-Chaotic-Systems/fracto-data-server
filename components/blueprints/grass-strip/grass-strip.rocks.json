@@ -1,0 +1,1624 @@
+{
+  "base_revision_before": 14,
+  "saved_revision": 15,
+  "source_array_glb_sha256": "f84b3b0313f8614565825ba4b3e1bc1e9ac560597f499dbf74a4301202c9185d",
+  "source_credit": {
+    "author": "Loïc Norgeot (https://sketchfab.com/norgeotloic)",
+    "license": "CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)",
+    "source": "https://sketchfab.com/3d-models/lowpoly-rocks-free-download-c5da5675001f4bec9ecfbc8343453417",
+    "title": "Lowpoly Rocks - Free Download"
+  },
+  "generation": {
+    "expected_revision": 14,
+    "source_array": {
+      "id": "rocks",
+      "revision": "66ca8209def0dd483e5a9b329e6c310f575f2084078d4f259d29144dfa5efa49"
+    },
+    "seed": 841025,
+    "rocks": 84,
+    "unique_source_meshes": 84,
+    "open": 42,
+    "between_clumps": 42,
+    "attempts": 882,
+    "group_id": "d38a349b-591e-44d7-af47-496060bb801a",
+    "section_counts": [
+      4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 4, 5, 4, 4, 4, 4, 4, 4, 4, 4
+    ],
+    "diameter_range_m": [0.010041932073654607, 0.024592722629895432],
+    "grass_height_m_range": [0.232825, 0.283925],
+    "minimum_patrol_clearance_beyond_rock_radius_m": 0.032370968643416,
+    "static_foliage_projection_grid_m": 0.01,
+    "foliage_projection_coverage_fraction": 0.66802,
+    "burial_fraction_of_height": 0.08,
+    "existing_objects_unchanged": true,
+    "assignments": [
+      {
+        "asset": {
+          "id": "rocks-piece-040",
+          "revision": "23d71e4d876be09c14ba20a057602aa1cc21ae78faaaecfa519e8f20cedda14f"
+        },
+        "source_mesh_index": 39,
+        "source_node_name": "rock046_lod4_rock046_LOD4_0",
+        "glb_sha256": "75852faf91d573ffb46c1b9d14a0c7c61f483de6d2e5bef660e7c7f2bac39a78",
+        "mode": "open",
+        "section": 0,
+        "x": 0.46283418,
+        "z": -9.670352059,
+        "radius": 0.005877379383947903,
+        "diameter_m": 0.011722063861088827,
+        "native_horizontal_diameter_m": 1.0024923289825782,
+        "dimensions_m": [1, 0.8875705407743022, 0.879520372692334],
+        "object_id": "acb638aa-2904-463d-988e-0ce0e161dead"
+      },
+      {
+        "asset": {
+          "id": "rocks-piece-079",
+          "revision": "a46b61a8c054672f331deb63cd65676cf5974e4e973dd803f87babedced9ac34"
+        },
+        "source_mesh_index": 78,
+        "source_node_name": "rock006_lod4_rock006_LOD4_0",
+        "glb_sha256": "89fac9b8367d9407322c109c4a42df2f24702da8ddc5e57cf2b4f76d223bffd6",
+        "mode": "between-clumps",
+        "section": 14,
+        "x": -0.459618328,
+        "z": 4.452262018,
+        "radius": 0.005317993947855288,
+        "diameter_m": 0.010396522326627746,
+        "native_horizontal_diameter_m": 1.0039081201156224,
+        "dimensions_m": [1, 0.6945975023375242, 0.5429837851548048],
+        "object_id": "b259528e-c1ad-44cc-b1bf-0c3dc68094a9"
+      },
+      {
+        "asset": {
+          "id": "rocks-piece-078",
+          "revision": "f47b838f190f1322e46e05e74da460d3a48dbd1a67d2f8fdc44841e581f0a23f"
+        },
+        "source_mesh_index": 77,
+        "source_node_name": "rock007_lod4_rock007_LOD4_0",
+        "glb_sha256": "016ce7d052d86cc6fdb191a7acba8b241b1abc49cec3e89ca907f465d71a73ef",
+        "mode": "open",
+        "section": 4,
+        "x": -0.486739569,
+        "z": -5.429284273,
+        "radius": 0.01026884403074647,
+        "diameter_m": 0.02008221964701079,
+        "native_horizontal_diameter_m": 1.0069379674183228,
+        "dimensions_m": [1, 0.6464285752835428, 0.6206653161037052],
+        "object_id": "d0bb212b-e256-4e3c-a279-5d2019b6dcb5"
+      },
+      {
+        "asset": {
+          "id": "rocks-piece-047",
+          "revision": "f4dcef7f6c55f0381fc5e34987053694aec7ae101635e238e3037e700998c2c8"
+        },
+        "source_mesh_index": 46,
+        "source_node_name": "rock039_lod4_rock039_LOD4_0",
+        "glb_sha256": "82ddece66ba5e468d4339bcbc7a2767ad8334090327677bd50c093100bad0760",
+        "mode": "between-clumps",
+        "section": 3,
+        "x": 0.239053382,
+        "z": -6.366109447,
+        "radius": 0.011275718357786233,
+        "diameter_m": 0.022480394343147053,
+        "native_horizontal_diameter_m": 1.0585856771542346,
+        "dimensions_m": [1, 0.8458526539159492, 0.5479067638446053],
+        "object_id": "ebb2af19-f91a-452f-b11f-34e1f193b3d7"
+      },
+      {
+        "asset": {
+          "id": "rocks-piece-017",
+          "revision": "d8e5adbda4b8da8c213d3b9ac2a50103f9b3e4f8fac55dcc37a224a1fc3cedfe"
+        },
+        "source_mesh_index": 16,
+        "source_node_name": "rock073_lod4_rock073_LOD4_0",
+        "glb_sha256": "7a87511588ceab5ee015d6b14a044c54d4ab26cd11dc8abb3674d80c1fd09e33",
+        "mode": "open",
+        "section": 16,
+        "x": -0.422558476,
+        "z": 6.819314692,
+        "radius": 0.012108837583268032,
+        "diameter_m": 0.023629804983502256,
+        "native_horizontal_diameter_m": 1.0000694452119114,
+        "dimensions_m": [1, 0.7426036369066213, 0.6759182704750295],
+        "object_id": "fcda607c-1da6-40af-9db2-8bba1b8a2097"
+      },
+      {
+        "asset": {
+          "id": "rocks-piece-051",
+          "revision": "97a18d551a992f947c60d37d6864b757184d922101fcd8991f50d6e474af6924"
+        },
+        "source_mesh_index": 50,
+        "source_node_name": "rock034_lod4_rock034_LOD4_0",
+        "glb_sha256": "ad17aabd1c7ffd32fa59a692267ecae5f604e4e4798dc8e19e1e0d9d65644058",
+        "mode": "between-clumps",
+        "section": 18,
+        "x": 0.436120125,
+        "z": 8.168031042,
+        "radius": 0.005185408556183551,
+        "diameter_m": 0.010360769346589223,
+        "native_horizontal_diameter_m": 1.0000636566012222,
+        "dimensions_m": [
+          0.9999999999999999, 0.7817315668853339, 0.6907157863892075
+        ],
+        "object_id": "79c0038a-0c38-4f85-af80-bcb56abafaed"
+      },
+      {
+        "asset": {
+          "id": "rocks-piece-083",
+          "revision": "d2604f8352a3b636f0a552bb59467c38dc7003b9e84d96ba336c2fe8c13ebc34"
+        },
+        "source_mesh_index": 82,
+        "source_node_name": "rock002_lod4_rock002_LOD4_0",
+        "glb_sha256": "4f7a567f7096c38a379acfdec63966a14927cfcce802541d90c7194e7b8b9844",
+        "mode": "open",
+        "section": 5,
+        "x": -0.434586299,
+        "z": -4.346656411,
+        "radius": 0.0059497697146950355,
+        "diameter_m": 0.011581571149872617,
+        "native_horizontal_diameter_m": 1.0004372957350272,
+        "dimensions_m": [
+          0.9999999999999999, 0.728664074216379, 0.6344987165823763
+        ],
+        "object_id": "25451661-0ffa-4636-a2c1-56176e5377b7"
+      },
+      {
+        "asset": {
+          "id": "rocks-piece-058",
+          "revision": "49998b3a8db9bb76a9a41dbd60e3c48e01cccd77b14d715eddb19a3ce892b471"
+        },
+        "source_mesh_index": 57,
+        "source_node_name": "rock027_lod4_rock027_LOD4_0",
+        "glb_sha256": "59a8b30f2cbf2bd89902d6de1bc0aa3da92dc5444a5b3c122442940df8515185",
+        "mode": "between-clumps",
+        "section": 0,
+        "x": 0.440904341,
+        "z": -9.320528643,
+        "radius": 0.01242947839336756,
+        "diameter_m": 0.024592722629895432,
+        "native_horizontal_diameter_m": 1.002209486213273,
+        "dimensions_m": [
+          0.9999999999999999, 0.4311046080049383, 0.34221744771867035
+        ],
+        "object_id": "25c6dead-9cf5-4683-807c-b19901756c10"
+      },
+      {
+        "asset": {
+          "id": "rocks-piece-046",
+          "revision": "8212e30b0bedb77425b711b8e6099c8ce242637a83bdf6e80fffbb0c047d82b3"
+        },
+        "source_mesh_index": 45,
+        "source_node_name": "rock040_lod4_rock040_LOD4_0",
+        "glb_sha256": "9c8bd8c13ab8cf74ac409be457e30b73c9391d15ee171134a8746a9e52d924aa",
+        "mode": "open",
+        "section": 12,
+        "x": -0.399322093,
+        "z": 2.610453744,
+        "radius": 0.012581583204216745,
+        "diameter_m": 0.021619832132710144,
+        "native_horizontal_diameter_m": 1.09359522315958,
+        "dimensions_m": [
+          0.8585531266567216, 0.7886611907045512, 1.0000000000000004
+        ],
+        "object_id": "9661b503-c7da-4fbc-9372-34e6074f79fe"
+      },
+      {
+        "asset": {
+          "id": "rocks-piece-059",
+          "revision": "c9ec70f7dbd19bfebce1fe7071c123b58ad53ea2e51f50d1fced1c6a7228a377"
+        },
+        "source_mesh_index": 58,
+        "source_node_name": "rock026_lod4_rock026_LOD4_0",
+        "glb_sha256": "10d7295cd6f858abbbc62d6b0aff99350e7274cee2d66f86708a153c7a92504f",
+        "mode": "between-clumps",
+        "section": 10,
+        "x": -0.225134137,
+        "z": 0.506659917,
+        "radius": 0.0108187583951936,
+        "diameter_m": 0.021324953112052753,
+        "native_horizontal_diameter_m": 1.015265634386259,
+        "dimensions_m": [1, 0.8205582481862551, 0.7433264425733246],
+        "object_id": "e94b39be-4a93-48a3-aa00-e144c81ac194"
+      },
+      {
+        "asset": {
+          "id": "rocks-piece-038",
+          "revision": "d0a548e34a0449af42d474b878370834befacfa138ddc0a7453de75be737ad35"
+        },
+        "source_mesh_index": 37,
+        "source_node_name": "rock048_lod4_rock048_LOD4_0",
+        "glb_sha256": "193c1d15d5c2f198bd0845216453ba44a96a190c65044a69734ae0cf56f8e303",
+        "mode": "open",
+        "section": 16,
+        "x": -0.478552491,
+        "z": 6.962417182,
+        "radius": 0.007586940389506087,
+        "diameter_m": 0.015017877201316879,
+        "native_horizontal_diameter_m": 1.0066885040409812,
+        "dimensions_m": [1, 0.7645059347994181, 0.6731568104269131],
+        "object_id": "192f7612-730b-4570-b761-aa778241b25f"
+      },
+      {
+        "asset": {
+          "id": "rocks-piece-056",
+          "revision": "cc633f270621c77a48c32c474babbc250027a7643ae6ae87561215d694b6c063"
+        },
+        "source_mesh_index": 55,
+        "source_node_name": "rock029_lod4_rock029_LOD4_0",
+        "glb_sha256": "ba3cfd8ebae1e0d460cc6b72f8db2d2fe71c911d8893e408274330be42a0295f",
+        "mode": "between-clumps",
+        "section": 10,
+        "x": -0.446199353,
+        "z": 0.592162556,
+        "radius": 0.010287858798491985,
+        "diameter_m": 0.02044021933688782,
+        "native_horizontal_diameter_m": 1.0011683110905214,
+        "dimensions_m": [1, 0.9041811837475773, 0.5334679620827756],
+        "object_id": "575e96b0-ea3f-449c-8277-d4f918bd15f9"
+      },
+      {
+        "asset": {
+          "id": "rocks-piece-028",
+          "revision": "fcaed31a98274943a198882facce71bf963684d0bc45cb9c5454203c19813588"
+        },
+        "source_mesh_index": 27,
+        "source_node_name": "rock061_lod4_rock061_LOD4_0",
+        "glb_sha256": "960ca75ebab0b4fc5050db3179b0c68d0c8c13aa9dde82457e31ea866c5ed50c",
+        "mode": "open",
+        "section": 7,
+        "x": 0.434723784,
+        "z": -2.372734875,
+        "radius": 0.010204666216555507,
+        "diameter_m": 0.019219281488331033,
+        "native_horizontal_diameter_m": 1.0863004315742282,
+        "dimensions_m": [1, 1.1990325031779034, 0.9241316899756793],
+        "object_id": "b37ccdbe-9442-4e32-8037-9763deab53e4"
+      },
+      {
+        "asset": {
+          "id": "rocks-piece-068",
+          "revision": "4e722f405415ffa30ae2271b1e0fcefa3ed51b81e4843466d8e00daa1fbc2601"
+        },
+        "source_mesh_index": 67,
+        "source_node_name": "rock017_lod4_rock017_LOD4_0",
+        "glb_sha256": "9cdd2d15a00783aa5b3a47744a4aa42af3630fa3938e9099b88f88879d0db338",
+        "mode": "between-clumps",
+        "section": 5,
+        "x": 0.442896139,
+        "z": -4.820401214,
+        "radius": 0.010777762178016816,
+        "diameter_m": 0.020775062831817195,
+        "native_horizontal_diameter_m": 1.0226376194557338,
+        "dimensions_m": [
+          1.0000000000000002, 0.721201166337646, 0.6123053009732145
+        ],
+        "object_id": "8d594ab1-0e52-4017-bc9b-82f0330807a6"
+      },
+      {
+        "asset": {
+          "id": "rocks-piece-033",
+          "revision": "d51c95204d95ee762e21c33d2bef5ed27c8142464b77a0841939baa5abac08db"
+        },
+        "source_mesh_index": 32,
+        "source_node_name": "rock055_lod4_rock055_LOD4_0",
+        "glb_sha256": "6cfa5c20e94822c60ea97b99c75d54eb0f9ab7b82bf7ecf81514106ee555c55d",
+        "mode": "open",
+        "section": 11,
+        "x": -0.450401895,
+        "z": 1.303611951,
+        "radius": 0.012608912560148228,
+        "diameter_m": 0.023578442182624712,
+        "native_horizontal_diameter_m": 1.0093918572907588,
+        "dimensions_m": [1, 0.7913017393663218, 0.6621800152835575],
+        "object_id": "5e74c5de-8072-4c64-a4b6-8c6a4dc64652"
+      },
+      {
+        "asset": {
+          "id": "rocks-piece-069",
+          "revision": "036f5fc98711f8bd67f1118628cdde4f634ab0a0c8bc61cad7be7156136d0c20"
+        },
+        "source_mesh_index": 68,
+        "source_node_name": "rock016_lod4_rock016_LOD4_0",
+        "glb_sha256": "c82bcf71f6af40b685b9969c0ccdbb8c2d05cab65ef1b4d4f6921a01ce3f7dc1",
+        "mode": "between-clumps",
+        "section": 2,
+        "x": -0.478011146,
+        "z": -7.010970654,
+        "radius": 0.012143060887342957,
+        "diameter_m": 0.02378081622184254,
+        "native_horizontal_diameter_m": 1.0191051835981682,
+        "dimensions_m": [1, 0.7472179104389545, 0.6598634359556499],
+        "object_id": "d88b7878-9886-41c0-960d-ac0fa811f5b3"
+      },
+      {
+        "asset": {
+          "id": "rocks-piece-039",
+          "revision": "ab4cf500f915142c2da7a8e0a403c86987316ed7b6b068b65bfc784f8755dab4"
+        },
+        "source_mesh_index": 38,
+        "source_node_name": "rock047_lod4_rock047_LOD4_0",
+        "glb_sha256": "ea3633b8ecdd0238d7e788934bb82df25400ae74e0876164c91a4fb1bf84dec6",
+        "mode": "open",
+        "section": 11,
+        "x": -0.454588964,
+        "z": 1.864487308,
+        "radius": 0.007702826622800372,
+        "diameter_m": 0.014612499949289485,
+        "native_horizontal_diameter_m": 1.0051828742994309,
+        "dimensions_m": [1, 1.0236209659330409, 0.7202645990964984],
+        "object_id": "46e437fd-98d4-41db-84e2-44951aaa1afa"
+      },
+      {
+        "asset": {
+          "id": "rocks-piece-036",
+          "revision": "ce77260a5c3b19c83202b6a466ad860a3f566ae88dd25210e67e830c950125c2"
+        },
+        "source_mesh_index": 35,
+        "source_node_name": "rock052_lod4_rock052_LOD4_0",
+        "glb_sha256": "44afaa930df5ad2c761fe2b2385e1159a6ae764c4944c46f3cd5e8c2b9032f98",
+        "mode": "between-clumps",
+        "section": 14,
+        "x": 0.374917707,
+        "z": 4.126725467,
+        "radius": 0.012901479066463079,
+        "diameter_m": 0.024588185456814245,
+        "native_horizontal_diameter_m": 1.0701730493807946,
+        "dimensions_m": [
+          0.9999999999999999, 0.7341884969446815, 0.8433916309745325
+        ],
+        "object_id": "ec4151fe-092f-4c5e-a714-3ffe83bdc935"
+      },
+      {
+        "asset": {
+          "id": "rocks-piece-052",
+          "revision": "14a6cfec03c2b7bcf703e1b43679bab33de10e78064a3764bf352ce9e89ed9e3"
+        },
+        "source_mesh_index": 51,
+        "source_node_name": "rock033_lod4_rock033_LOD4_0",
+        "glb_sha256": "b001f92d70034d644ca396ff0426858175d0c735a7e5ad66374a31cf57b53fc6",
+        "mode": "open",
+        "section": 10,
+        "x": 0.430084291,
+        "z": 0.565745129,
+        "radius": 0.012410201894337527,
+        "diameter_m": 0.024158442864427344,
+        "native_horizontal_diameter_m": 1.010818111498954,
+        "dimensions_m": [1, 0.909741406248074, 0.6772671765217035],
+        "object_id": "04144e58-b541-4873-8871-2989985efdce"
+      },
+      {
+        "asset": {
+          "id": "rocks-piece-064",
+          "revision": "9a3fa645d9a9680404875e8d3515ab196ede7ff3463bd01201536549fb5594bf"
+        },
+        "source_mesh_index": 63,
+        "source_node_name": "rock021_lod4_rock021_LOD4_0",
+        "glb_sha256": "27accf418ce7d788dccfa801b18e245c0b518e0e481e8bb397f0d8114340e6b8",
+        "mode": "between-clumps",
+        "section": 1,
+        "x": 0.438029573,
+        "z": -8.108392345,
+        "radius": 0.006113595945187318,
+        "diameter_m": 0.012209992186399177,
+        "native_horizontal_diameter_m": 1.0006036251869193,
+        "dimensions_m": [1, 0.6468075264770876, 0.6539422913530649],
+        "object_id": "461bb639-2e47-4259-bf7c-db0fd578b70e"
+      },
+      {
+        "asset": {
+          "id": "rocks-piece-065",
+          "revision": "47ffaca3ce12db522d61d535bc6f2c1c410799e81eb2ae0e2a5e9d02e6f034e6"
+        },
+        "source_mesh_index": 64,
+        "source_node_name": "rock020_lod4_rock020_LOD4_0",
+        "glb_sha256": "4419e80889550bee1cfe75c13dd9d075970294e60d99ff0fa29fe209e777d4bb",
+        "mode": "open",
+        "section": 9,
+        "x": -0.432247686,
+        "z": -0.329355267,
+        "radius": 0.008997212065715684,
+        "diameter_m": 0.017013776403618976,
+        "native_horizontal_diameter_m": 1.0651707218402189,
+        "dimensions_m": [
+          0.9999999999999999, 1.0508026835880244, 0.9064468299291788
+        ],
+        "object_id": "7187c0d9-85c3-4c3b-a7fb-948d8efb8b2d"
+      },
+      {
+        "asset": {
+          "id": "rocks-piece-020",
+          "revision": "f82e01a0a86648a31d203ac22bf63873044e5843490b0ba6e0da2ef22bfb6a69"
+        },
+        "source_mesh_index": 19,
+        "source_node_name": "rock070_lod4_rock070_LOD4_0",
+        "glb_sha256": "3a1e74d4d3a6f337921a479b0ce309cfb2e626c36054d9ea359ceac972d78ae8",
+        "mode": "between-clumps",
+        "section": 8,
+        "x": -0.020835922,
+        "z": -1.313411586,
+        "radius": 0.006222364851763958,
+        "diameter_m": 0.012407055032672362,
+        "native_horizontal_diameter_m": 1.0011625453438568,
+        "dimensions_m": [1, 0.6134675754221066, 0.5186287274358018],
+        "object_id": "6e9b78f4-23e8-4553-8c7c-e05061ade3a4"
+      },
+      {
+        "asset": {
+          "id": "rocks-piece-034",
+          "revision": "247c75ee763096cdb1f03b8d13afee6690d7b0a0c110262b7149b261794d3258"
+        },
+        "source_mesh_index": 33,
+        "source_node_name": "rock054_lod4_rock054_LOD4_0",
+        "glb_sha256": "ef469c1bf504ae47a10fe3538b299c6732e3e511d6ccfc6fd777a49850572a6e",
+        "mode": "open",
+        "section": 12,
+        "x": -0.125095803,
+        "z": 2.752981253,
+        "radius": 0.0111897636410257,
+        "diameter_m": 0.022238554056966675,
+        "native_horizontal_diameter_m": 1.000021439723164,
+        "dimensions_m": [
+          0.9999999999999999, 0.7921175053097309, 0.5274527121520218
+        ],
+        "object_id": "6d9765b7-be59-4fb9-8040-3c4a8afe8ceb"
+      },
+      {
+        "asset": {
+          "id": "rocks-piece-055",
+          "revision": "a4d9678f174dd5acc9475ff6386fd43d9cde5e38559f2c29157266df3ef2f398"
+        },
+        "source_mesh_index": 54,
+        "source_node_name": "rock030_lod4_rock030_LOD4_0",
+        "glb_sha256": "37f84d5512f817d45cf45111f95faacaa6c18d5ee120867ff8e9938612b98d9c",
+        "mode": "between-clumps",
+        "section": 10,
+        "x": 0.461099735,
+        "z": 0.166680813,
+        "radius": 0.007752212146105042,
+        "diameter_m": 0.01535410234122537,
+        "native_horizontal_diameter_m": 1.0049142589777444,
+        "dimensions_m": [1, 0.5729482995736905, 0.6130626535295329],
+        "object_id": "2fde07cd-2b1f-445d-9c52-df81f5cd31b3"
+      },
+      {
+        "asset": {
+          "id": "rocks-piece-073",
+          "revision": "227e9a8f38687de8560299c15508e14df828df9255c8180dd59210251d4edb2d"
+        },
+        "source_mesh_index": 72,
+        "source_node_name": "rock012_lod4_rock012_LOD4_0",
+        "glb_sha256": "58e94c7bb4ab379dff6f445386979bae36edcc40e5b4d17735d75b7dc2bd18c2",
+        "mode": "open",
+        "section": 9,
+        "x": -0.231518647,
+        "z": -0.626470654,
+        "radius": 0.009911037961552882,
+        "diameter_m": 0.019240799580002202,
+        "native_horizontal_diameter_m": 1.0207690445197892,
+        "dimensions_m": [1, 0.7819747463078415, 0.6622512324653439],
+        "object_id": "1ec9af84-b286-4fa9-a780-f11da5e133f9"
+      },
+      {
+        "asset": {
+          "id": "rocks-piece-076",
+          "revision": "d6134bd5cbaf51efb5dfaeb18064f483461d9d655592c77a5710ddad3c74812b"
+        },
+        "source_mesh_index": 75,
+        "source_node_name": "rock009_lod4_rock009_LOD4_0",
+        "glb_sha256": "01b907f702a675bae26a0c2b0cbacd553c180ea0fb9560bbe66948557cda38eb",
+        "mode": "between-clumps",
+        "section": 16,
+        "x": 0.096374272,
+        "z": 6.285687383,
+        "radius": 0.006432072151917746,
+        "diameter_m": 0.012565626063151286,
+        "native_horizontal_diameter_m": 1.0162437589993827,
+        "dimensions_m": [1, 1.042949542127424, 0.814465855223218],
+        "object_id": "4869875d-82c7-406b-ac20-c526b5b8f1a5"
+      },
+      {
+        "asset": {
+          "id": "rocks-piece-024",
+          "revision": "a4c244fbc572b89be18830283a0b680beee7de45b64be85dbeb3ce9ce4d376b7"
+        },
+        "source_mesh_index": 23,
+        "source_node_name": "rock066_lod4_rock066_LOD4_0",
+        "glb_sha256": "a74bf58037c14d87a6e9368e3e888c2837a4469942a2c8e68038df4b36146780",
+        "mode": "open",
+        "section": 17,
+        "x": 0.456531928,
+        "z": 7.354309817,
+        "radius": 0.0055693756709525475,
+        "diameter_m": 0.010403813234297558,
+        "native_horizontal_diameter_m": 1.0069956234409938,
+        "dimensions_m": [1, 1.0227571706481742, 0.6383152851111549],
+        "object_id": "24d8eea6-7b01-4c92-b5c0-7caff0fba386"
+      },
+      {
+        "asset": {
+          "id": "rocks-piece-048",
+          "revision": "501e914f8929efc96ef80c98839cf17390fad4d74bf8ec696cfbc6dee5461019"
+        },
+        "source_mesh_index": 47,
+        "source_node_name": "rock038_lod4_rock038_LOD4_0",
+        "glb_sha256": "9317169c71184bde0cd98701cd0c99ad8a6eb5e1ed85f281e536d7f6eea38c44",
+        "mode": "between-clumps",
+        "section": 9,
+        "x": 0.455128355,
+        "z": -0.384365321,
+        "radius": 0.011569790985865299,
+        "diameter_m": 0.021770899061812087,
+        "native_horizontal_diameter_m": 1.011404735702199,
+        "dimensions_m": [1, 1.1390636890019723, 0.621877010303597],
+        "object_id": "04a156af-844b-4a13-b0eb-ff98818f7856"
+      },
+      {
+        "asset": {
+          "id": "rocks-piece-008",
+          "revision": "91495e5938c9075c9000e983d162f31c1cd0b1e6ab1a52155fda2c975b23dfb1"
+        },
+        "source_mesh_index": 7,
+        "source_node_name": "rock083_lod4_rock083_LOD4_0",
+        "glb_sha256": "d6d04e7538b6a696823db5595c10b548b222797d736001c0b30ac9d48fe04cc2",
+        "mode": "open",
+        "section": 13,
+        "x": 0.43601955,
+        "z": 3.318629321,
+        "radius": 0.009464446241744178,
+        "diameter_m": 0.01824853584286757,
+        "native_horizontal_diameter_m": 1.012967905008091,
+        "dimensions_m": [1, 0.8093952263504116, 0.753916823413509],
+        "object_id": "72f11f60-7065-4739-8065-eeb3e89104bb"
+      },
+      {
+        "asset": {
+          "id": "rocks-piece-005",
+          "revision": "1fada0480b2ff0bae8060d3a477906756a54fbc7574129d982454882e2d5fcfe"
+        },
+        "source_mesh_index": 4,
+        "source_node_name": "rock086_lod4_rock086_LOD4_0",
+        "glb_sha256": "08bf6e2c9840c017412cf3291acea74db7144d6cbb322df08ead25effb95b45f",
+        "mode": "between-clumps",
+        "section": 1,
+        "x": 0.433865643,
+        "z": -8.147775862,
+        "radius": 0.01048102019389849,
+        "diameter_m": 0.020591864191228524,
+        "native_horizontal_diameter_m": 1.0437431830207289,
+        "dimensions_m": [1, 1.0224046991537448, 0.7333145185336845],
+        "object_id": "9919e873-1f85-4062-a573-4418f9e775af"
+      },
+      {
+        "asset": {
+          "id": "rocks-piece-030",
+          "revision": "5c2f77c40b80d6b94f15a329fedfdfbc22e5526f864817e0f7bb282a63df4bd1"
+        },
+        "source_mesh_index": 29,
+        "source_node_name": "rock059_lod4_rock059_LOD4_0",
+        "glb_sha256": "d6648118f2b8c5e831c1268f75331d0e89ab3dbca813fa8dcbed418e32523d5d",
+        "mode": "open",
+        "section": 12,
+        "x": -0.466767863,
+        "z": 2.467426374,
+        "radius": 0.010168390606793214,
+        "diameter_m": 0.01929307564510964,
+        "native_horizontal_diameter_m": 1.02908029158535,
+        "dimensions_m": [1, 0.9112781678924677, 0.617978172128489],
+        "object_id": "1716ff86-bd8b-481d-99d5-ec6c88ddd09b"
+      },
+      {
+        "asset": {
+          "id": "rocks-piece-072",
+          "revision": "f8a498dc3d22670b323a56ad850a364c3f14069ff353f04d1bd1ef60dfd41348"
+        },
+        "source_mesh_index": 71,
+        "source_node_name": "rock013_lod4_rock013_LOD4_0",
+        "glb_sha256": "82100b68eec3a0437dc2301af193951851a3df335dc59167d298859d36d91b4e",
+        "mode": "between-clumps",
+        "section": 5,
+        "x": -0.457260793,
+        "z": -4.730850669,
+        "radius": 0.0059708892126767435,
+        "diameter_m": 0.011809349731775,
+        "native_horizontal_diameter_m": 1.0038439515859823,
+        "dimensions_m": [1, 0.7585072564440138, 0.6248827488517478],
+        "object_id": "701299a7-bf83-44c2-98c4-3cdb57dfc919"
+      },
+      {
+        "asset": {
+          "id": "rocks-piece-045",
+          "revision": "fa679d7e48e269be28e09bc50842d7683db861526eb2bd0bf02f2cdbd7c1d634"
+        },
+        "source_mesh_index": 44,
+        "source_node_name": "rock041_lod4_rock041_LOD4_0",
+        "glb_sha256": "8836b981e4f6cb629048cdbd0647f390c07f521ffa5ccf75379a531ede7e1d81",
+        "mode": "open",
+        "section": 6,
+        "x": -0.040163574,
+        "z": -3.614948432,
+        "radius": 0.005215869995415483,
+        "diameter_m": 0.010403148053446784,
+        "native_horizontal_diameter_m": 1.0006734667222346,
+        "dimensions_m": [1, 1.049017367072088, 0.7044613520884031],
+        "object_id": "08bee917-8951-4964-8a6f-01349247d19a"
+      },
+      {
+        "asset": {
+          "id": "rocks-piece-063",
+          "revision": "a3bae88e64cc39d2fb27e418278a0b696798b3f4e34abccab1586a352d4815df"
+        },
+        "source_mesh_index": 62,
+        "source_node_name": "rock022_lod4_rock022_LOD4_0",
+        "glb_sha256": "ad953ed93d79af8a01b9b1c137ad06b21e54dffc14f92cafeb0001d2a58397c0",
+        "mode": "between-clumps",
+        "section": 5,
+        "x": 0.458317693,
+        "z": -4.723914346,
+        "radius": 0.006554192229029447,
+        "diameter_m": 0.012948738815030083,
+        "native_horizontal_diameter_m": 1.0231117382375587,
+        "dimensions_m": [1, 0.5625261249727496, 0.5763300457513106],
+        "object_id": "e153e1f1-42ff-4651-9e66-bf6637acf8fc"
+      },
+      {
+        "asset": {
+          "id": "rocks-piece-081",
+          "revision": "2630f5931e72dccb8378c5b31a448dcf81fd1e6175959c81ddd0e640300e0364"
+        },
+        "source_mesh_index": 80,
+        "source_node_name": "rock004_lod4_rock004_LOD4_0",
+        "glb_sha256": "3be58cca1384c821a700135debf1e7a2d208b630a5e997066b0e5a07e189f865",
+        "mode": "open",
+        "section": 13,
+        "x": -0.45616203,
+        "z": 3.32290942,
+        "radius": 0.011685761589901552,
+        "diameter_m": 0.02063459020922892,
+        "native_horizontal_diameter_m": 1.034608806624124,
+        "dimensions_m": [
+          0.9999999999999999, 1.1548301738568814, 0.8957293685699683
+        ],
+        "object_id": "2229738e-6c6f-4d98-9cac-ce733d157192"
+      },
+      {
+        "asset": {
+          "id": "rocks-piece-019",
+          "revision": "df80a81d7654bbe49e89933bb52a289224029e5eab8aed3445b66882068fc1df"
+        },
+        "source_mesh_index": 18,
+        "source_node_name": "rock071_lod4_rock071_LOD4_0",
+        "glb_sha256": "2f4c28fc8a8a71237433d4a48d363827bf1c6f67a3d4fb96af5d2ccf3d1b4666",
+        "mode": "between-clumps",
+        "section": 1,
+        "x": 0.480851863,
+        "z": -8.890567196,
+        "radius": 0.005315796108459898,
+        "diameter_m": 0.010584794512251392,
+        "native_horizontal_diameter_m": 1.0027954698366437,
+        "dimensions_m": [
+          0.9999999999999999, 0.5832411103443715, 0.5831066560736192
+        ],
+        "object_id": "97f7149f-66a3-4fd5-8990-03c3ec0c3ece"
+      },
+      {
+        "asset": {
+          "id": "rocks-piece-077",
+          "revision": "74442ab949ec7651597773eccd32bc7d78b2f371bc5a54571c7174598d5049c0"
+        },
+        "source_mesh_index": 76,
+        "source_node_name": "rock008_lod4_rock008_LOD4_0",
+        "glb_sha256": "d2faefac86fef27efcf9b634f28289315a47c344840e045d8f69081bad527c8d",
+        "mode": "open",
+        "section": 18,
+        "x": -0.396650938,
+        "z": 8.712927041,
+        "radius": 0.011587662073431306,
+        "diameter_m": 0.023122134265722707,
+        "native_horizontal_diameter_m": 1.0039912171416008,
+        "dimensions_m": [
+          0.9999999999999999, 0.9209390765815724, 0.5922290167918043
+        ],
+        "object_id": "cd88d369-683e-4aa7-978b-b4ccd0c9c0dd"
+      },
+      {
+        "asset": {
+          "id": "rocks-piece-004",
+          "revision": "c48f5c8bbc8edc49295a3e7710e110d83b88b4180fb00a56fcb617ef20cc5c59"
+        },
+        "source_mesh_index": 3,
+        "source_node_name": "rock087_lod4_rock087_LOD4_0",
+        "glb_sha256": "8ec1fb506fc36e6136d90cf6831ca7be1c1d9d6934565454539d736537c24cb9",
+        "mode": "between-clumps",
+        "section": 7,
+        "x": -0.005004386,
+        "z": -2.808216469,
+        "radius": 0.00613593665764776,
+        "diameter_m": 0.011775938655482605,
+        "native_horizontal_diameter_m": 1.0149928009462132,
+        "dimensions_m": [1, 0.676239347655081, 0.6613137933916549],
+        "object_id": "54d83478-2b5b-4d48-a00c-2a8da39abaab"
+      },
+      {
+        "asset": {
+          "id": "rocks-piece-071",
+          "revision": "6482864bdd4f4e5edf4a6bf3533ed4e6a658b40528bd12d539bf9ac390fdb0b1"
+        },
+        "source_mesh_index": 70,
+        "source_node_name": "rock014_lod4_rock014_LOD4_0",
+        "glb_sha256": "9825a6c7a264a7f80a2596c398d1342cab0a5f216d7c84077f53ce9aab847872",
+        "mode": "open",
+        "section": 4,
+        "x": 0.477670792,
+        "z": -5.183904705,
+        "radius": 0.011027208180959841,
+        "diameter_m": 0.020761038406053558,
+        "native_horizontal_diameter_m": 1.0508002897570896,
+        "dimensions_m": [1, 0.9679460965037636, 0.72872112422111],
+        "object_id": "bead5480-2ac4-45e5-b8ec-5ece5c174952"
+      },
+      {
+        "asset": {
+          "id": "rocks-piece-002",
+          "revision": "8c8f95cbb5fdbfe77587354069496c5799721a2db435a54476eda20f5f0a35ed"
+        },
+        "source_mesh_index": 1,
+        "source_node_name": "rock089_lod4_rock089_LOD4_0",
+        "glb_sha256": "f5f3f2b7fb671fbe69c7834d98977cdd11c13720f2f88d884a31981d9e18e05d",
+        "mode": "between-clumps",
+        "section": 19,
+        "x": 0.459313365,
+        "z": 9.879306832,
+        "radius": 0.007351824551023234,
+        "diameter_m": 0.01386371044558473,
+        "native_horizontal_diameter_m": 1.0078391836537175,
+        "dimensions_m": [1, 0.675639457616803, 0.6950562483550912],
+        "object_id": "f585bd47-e166-4567-96c4-912bf24ca884"
+      },
+      {
+        "asset": {
+          "id": "rocks-piece-003",
+          "revision": "8fb8c6b6d7b767e797c03b02bbed43e83f2ec153a821f045e847b014ed313353"
+        },
+        "source_mesh_index": 2,
+        "source_node_name": "rock088_lod4_rock088_LOD4_0",
+        "glb_sha256": "3480c81024d55c6ddac62d03febf5f6fe62c6e560e7310b287e3befab16f0c7f",
+        "mode": "open",
+        "section": 18,
+        "x": 0.484706091,
+        "z": 8.910242792,
+        "radius": 0.00967591701542736,
+        "diameter_m": 0.019040024200221523,
+        "native_horizontal_diameter_m": 1.0042532325392632,
+        "dimensions_m": [
+          0.9999999999999999, 0.6007249011054796, 0.5628855012255116
+        ],
+        "object_id": "ba514cfd-2989-456f-903a-5fefd8b6191b"
+      },
+      {
+        "asset": {
+          "id": "rocks-piece-054",
+          "revision": "216807058fdaab96ff59f851bfe21dc053778ab1eb9502e0ce4251a139dc8a45"
+        },
+        "source_mesh_index": 53,
+        "source_node_name": "rock031_lod4_rock031_LOD4_0",
+        "glb_sha256": "cfe434969b325eac9fefcccce8a262b2e67c673c45a5fefa0453571b324e06e8",
+        "mode": "between-clumps",
+        "section": 7,
+        "x": -0.435541436,
+        "z": -2.982302228,
+        "radius": 0.00597176705006464,
+        "diameter_m": 0.011785166076151654,
+        "native_horizontal_diameter_m": 1.0035856912676404,
+        "dimensions_m": [
+          0.9999999999999999, 0.675268616494044, 0.4997507059666709
+        ],
+        "object_id": "7f86b69a-aef3-4dfb-92ce-d45c87fcac6c"
+      },
+      {
+        "asset": {
+          "id": "rocks-piece-082",
+          "revision": "df47c63c038cca389c1ca4fe14294ec19570bb71b49d9bb6b275f352a82e6a2f"
+        },
+        "source_mesh_index": 81,
+        "source_node_name": "rock003_lod4_rock003_LOD4_0",
+        "glb_sha256": "754637ebc9bccc4c278e799d793198ee7106fb6448843afc36b3e229223f7360",
+        "mode": "open",
+        "section": 8,
+        "x": -0.459999819,
+        "z": -1.970439281,
+        "radius": 0.009659833033098081,
+        "diameter_m": 0.019311999328201636,
+        "native_horizontal_diameter_m": 1.001982836379002,
+        "dimensions_m": [1, 0.7893752907869918, 0.6686550227835713],
+        "object_id": "0a841f1f-1c5f-4803-b81b-594a493d49eb"
+      },
+      {
+        "asset": {
+          "id": "rocks-piece-010",
+          "revision": "005486e352fa4e204484a0858c452994ffe803d21b8da4abb6e94f492c61a572"
+        },
+        "source_mesh_index": 9,
+        "source_node_name": "rock081_lod4_rock081_LOD4_0",
+        "glb_sha256": "d1438dc0e560e0431f865c64fd52f4f6220486b91314ec00af82d694d0398f06",
+        "mode": "between-clumps",
+        "section": 11,
+        "x": 0.250827291,
+        "z": 1.573878701,
+        "radius": 0.011055388994641672,
+        "diameter_m": 0.021870066538685933,
+        "native_horizontal_diameter_m": 1.0060633024267285,
+        "dimensions_m": [1, 0.6378297261572279, 0.5207642983817241],
+        "object_id": "c75b5311-71fc-4329-8015-902d979bbe7d"
+      },
+      {
+        "asset": {
+          "id": "rocks-piece-080",
+          "revision": "3bf5366b7ac2cd22c531f9d60984627afbb07e2f460a552ecde20d46d44f5cee"
+        },
+        "source_mesh_index": 79,
+        "source_node_name": "rock005_lod4_rock005_LOD4_0",
+        "glb_sha256": "e67964ffdb906635a0c581b4504d5191fe835132612d059873a8b2f3114d5ea5",
+        "mode": "open",
+        "section": 19,
+        "x": 0.225487187,
+        "z": 9.337895409,
+        "radius": 0.010130412493054351,
+        "diameter_m": 0.020208878536941484,
+        "native_horizontal_diameter_m": 1.041130031319488,
+        "dimensions_m": [
+          0.9999999999999999, 0.7786785182486098, 0.7991463807423682
+        ],
+        "object_id": "ada4535f-7d69-423e-963f-1f85c819dfa3"
+      },
+      {
+        "asset": {
+          "id": "rocks-piece-009",
+          "revision": "c6494915e1ee2e1e390a255a5112aa7dafc94e63128c52917960001191942649"
+        },
+        "source_mesh_index": 8,
+        "source_node_name": "rock082_lod4_rock082_LOD4_0",
+        "glb_sha256": "775c24efbe7ee6f13254a22fec263f7f6b0f22476cd176e98c025c237b7ad111",
+        "mode": "between-clumps",
+        "section": 6,
+        "x": -0.145267738,
+        "z": -3.595351249,
+        "radius": 0.005884505611724924,
+        "diameter_m": 0.01135483215446584,
+        "native_horizontal_diameter_m": 1.0171260004800056,
+        "dimensions_m": [1, 0.8673609655719356, 0.6914874126158782],
+        "object_id": "21f43c01-a56d-4df9-ba0c-494b4f6442c7"
+      },
+      {
+        "asset": {
+          "id": "rocks-piece-043",
+          "revision": "2262fcb899dfae3ce9584d8dc74d5edfcdf4c5168358a004b4eeada2a2b9a301"
+        },
+        "source_mesh_index": 42,
+        "source_node_name": "rock043_lod4_rock043_LOD4_0",
+        "glb_sha256": "5e92197ae48bc8e34783c71587b8d4e38281040acd470c3a2f0e7acf28ad4b85",
+        "mode": "open",
+        "section": 2,
+        "x": 0.426691114,
+        "z": -7.523351985,
+        "radius": 0.006902418366141611,
+        "diameter_m": 0.012975403849268333,
+        "native_horizontal_diameter_m": 1.0091802613727117,
+        "dimensions_m": [
+          0.9999999999999999, 1.0863931925914192, 0.6834560438927758
+        ],
+        "object_id": "2930ffc1-6a7a-46c3-ae4d-6513fedd4bbc"
+      },
+      {
+        "asset": {
+          "id": "rocks-piece-037",
+          "revision": "d7f0db5483aa8d544fd4a900084045fac09b057ee12755352038bc508e106846"
+        },
+        "source_mesh_index": 36,
+        "source_node_name": "rock051_lod4_rock051_LOD4_0",
+        "glb_sha256": "cdab40617916ff28e2eef6b57edc3174354b9e80378cd896101dc5a0c9bdc745",
+        "mode": "between-clumps",
+        "section": 13,
+        "x": 0.373231001,
+        "z": 3.283364918,
+        "radius": 0.011045951396594074,
+        "diameter_m": 0.021597791771637273,
+        "native_horizontal_diameter_m": 1.0061277548363443,
+        "dimensions_m": [
+          0.9999999999999999, 0.5557392616444718, 0.586331563889438
+        ],
+        "object_id": "bc3a14c4-d056-43f5-8b18-03d22e0bf3b8"
+      },
+      {
+        "asset": {
+          "id": "rocks-piece-070",
+          "revision": "ca0e9a2fc03147924592173d926b7db55562c8ceaf81d141dc0e092b40f46338"
+        },
+        "source_mesh_index": 69,
+        "source_node_name": "rock015_lod4_rock015_LOD4_0",
+        "glb_sha256": "c50cc1d3d4240cf2722f6a34db9b1a3d45286bc7bc8de5efc43564a329aa2a90",
+        "mode": "open",
+        "section": 3,
+        "x": 0.450554513,
+        "z": -6.096701853,
+        "radius": 0.006797901719719824,
+        "diameter_m": 0.013383473417488858,
+        "native_horizontal_diameter_m": 1.000471812457013,
+        "dimensions_m": [1, 0.9189031610367043, 0.6649238315605297],
+        "object_id": "f0ed74d5-0025-4e66-8487-4a7f7bd48302"
+      },
+      {
+        "asset": {
+          "id": "rocks-piece-023",
+          "revision": "3485b375283e6050f28ecbc4a09883cdf2f07d320535321bc98f9585307e2962"
+        },
+        "source_mesh_index": 22,
+        "source_node_name": "rock067_lod4_rock067_LOD4_0",
+        "glb_sha256": "dafbe6ef14c13f5c3d790720e6c57ba9a813b1de61a47b535b88d2a890431f74",
+        "mode": "between-clumps",
+        "section": 3,
+        "x": 0.316101142,
+        "z": -6.050519611,
+        "radius": 0.009807608537142682,
+        "diameter_m": 0.018763614591443913,
+        "native_horizontal_diameter_m": 1.0162787568343437,
+        "dimensions_m": [1, 0.867402726831989, 0.6354974815401911],
+        "object_id": "e3dc4f17-9a9f-47e7-b13c-ed3de54b7fd6"
+      },
+      {
+        "asset": {
+          "id": "rocks-piece-074",
+          "revision": "e1a0eb14c6103dacf8f57b8d82f58aac73046b9de34b8353ee9c65be9f36718a"
+        },
+        "source_mesh_index": 73,
+        "source_node_name": "rock011_lod4_rock011_LOD4_0",
+        "glb_sha256": "6539c65c872faccff0525b1415c476157b677b9f094e9692e56810a4626dc17b",
+        "mode": "open",
+        "section": 4,
+        "x": -0.450419418,
+        "z": -5.117324729,
+        "radius": 0.005766966889681637,
+        "diameter_m": 0.011203009890159592,
+        "native_horizontal_diameter_m": 1.0270248466299363,
+        "dimensions_m": [1, 1.103087304912111, 0.8723971343571666],
+        "object_id": "22da530e-6adf-4c84-b5f9-8cc17b0de36c"
+      },
+      {
+        "asset": {
+          "id": "rocks-piece-067",
+          "revision": "3af9cace390eed8f8895fde25cdbbca1701524bdd31de3f3aece6ade19292a87"
+        },
+        "source_mesh_index": 66,
+        "source_node_name": "rock018_lod4_rock018_LOD4_0",
+        "glb_sha256": "923ecf7ef595641d0d272dafb9c1774845a780f0acdaec05a71f804eb3492375",
+        "mode": "between-clumps",
+        "section": 7,
+        "x": 0.453637256,
+        "z": -2.709348613,
+        "radius": 0.007404331241480144,
+        "diameter_m": 0.014384955145651475,
+        "native_horizontal_diameter_m": 1.0376253731031715,
+        "dimensions_m": [1, 0.7048660474092132, 0.6648228738772657],
+        "object_id": "a6fcf5c7-97fe-435d-986b-3aaca6a11a55"
+      },
+      {
+        "asset": {
+          "id": "rocks-piece-061",
+          "revision": "5fd0a1601e47037f920f090fcd2132864c5d25498777228435db7e3ebe183788"
+        },
+        "source_mesh_index": 60,
+        "source_node_name": "rock024_lod4_rock024_LOD4_0",
+        "glb_sha256": "bda2a337699f671ab25d292efd1db24660dbe049584983df5ea5e137e6d6602e",
+        "mode": "open",
+        "section": 9,
+        "x": -0.09101503,
+        "z": -0.667533342,
+        "radius": 0.011011464797047897,
+        "diameter_m": 0.021041944347089156,
+        "native_horizontal_diameter_m": 1.0153672746534659,
+        "dimensions_m": [1, 0.5516637695308568, 0.639968757093317],
+        "object_id": "6ada1837-fc8e-4912-99e4-18801b95db10"
+      },
+      {
+        "asset": {
+          "id": "rocks-piece-044",
+          "revision": "207399089adcd70af105001486cf69328ad371a7af58df3db17daf9cffa3eafb"
+        },
+        "source_mesh_index": 43,
+        "source_node_name": "rock042_lod4_rock042_LOD4_0",
+        "glb_sha256": "ecc472a0bb3b3fb9f1209761c2040f2dbc42b14b2a29d6adb5a8cb32d53e079c",
+        "mode": "between-clumps",
+        "section": 1,
+        "x": -0.013848771,
+        "z": -8.272885888,
+        "radius": 0.007441108474500593,
+        "diameter_m": 0.0144931180390995,
+        "native_horizontal_diameter_m": 1.0042931811290234,
+        "dimensions_m": [1, 0.6857964397848899, 0.6146776442954971],
+        "object_id": "653a2bcd-c264-4ba6-8276-d2e1257d7a5e"
+      },
+      {
+        "asset": {
+          "id": "rocks-piece-007",
+          "revision": "070be1d5f9e104e52b7a7f83e1acd2d826c5cf1ec56afd7d9fb4e82517591943"
+        },
+        "source_mesh_index": 6,
+        "source_node_name": "rock084_lod4_rock084_LOD4_0",
+        "glb_sha256": "3d0be3e8bf9edc2e3223b68203c687e8938df7c0f90d5b326fdf851412fd4f2c",
+        "mode": "open",
+        "section": 13,
+        "x": 0.454891828,
+        "z": 3.915611821,
+        "radius": 0.011838455078812291,
+        "diameter_m": 0.02280307776411064,
+        "native_horizontal_diameter_m": 1.0067935894438511,
+        "dimensions_m": [
+          1.0000000000000002, 0.6833948048435445, 0.6838027414374842
+        ],
+        "object_id": "8adb2874-46d9-4466-b0c8-5432f86a6fee"
+      },
+      {
+        "asset": {
+          "id": "rocks-piece-006",
+          "revision": "fe34ec473f07bef10ed75ac64df1a9c880b34da7cf25ca6137a894e5ff0f697f"
+        },
+        "source_mesh_index": 5,
+        "source_node_name": "rock085_lod4_rock085_LOD4_0",
+        "glb_sha256": "d6a11383d22fc08506c8a261859f2d99346aa4aa000b8f47886912f502b2ae28",
+        "mode": "between-clumps",
+        "section": 11,
+        "x": 0.471397926,
+        "z": 1.013937256,
+        "radius": 0.005133462731404146,
+        "diameter_m": 0.010041932073654607,
+        "native_horizontal_diameter_m": 1.0000527110063246,
+        "dimensions_m": [1, 0.5449533386670401, 0.5088029039501311],
+        "object_id": "1168170d-ec7c-4ac5-b2ca-66f8ec3f396e"
+      },
+      {
+        "asset": {
+          "id": "rocks-piece-001",
+          "revision": "d229d84fb8db048dd0d157755d4b76cf0326799aef15fe96c2445ddc171da77d"
+        },
+        "source_mesh_index": 0,
+        "source_node_name": "rock090_lod4_rock090_LOD4_0",
+        "glb_sha256": "485cef25e53abfe2d1b65270521b261cf7abbc888e8629d14f53c83d9a829345",
+        "mode": "open",
+        "section": 0,
+        "x": -0.39820077,
+        "z": -9.924919183,
+        "radius": 0.0062527831128568415,
+        "diameter_m": 0.01220250839716755,
+        "native_horizontal_diameter_m": 1.0044814527782908,
+        "dimensions_m": [1, 0.6412076031938827, 0.6146034412251478],
+        "object_id": "b148b6c4-17d4-4397-a5a8-03940279fb09"
+      },
+      {
+        "asset": {
+          "id": "rocks-piece-057",
+          "revision": "146a4fbaaa86e02de7d73c0c4f374d21c4ee8a2675d0140e53073f5c845957a6"
+        },
+        "source_mesh_index": 56,
+        "source_node_name": "rock028_lod4_rock028_LOD4_0",
+        "glb_sha256": "121ffb27916ed3c4e3a06117c4f429114344a89c000702f77f283e83f5751f93",
+        "mode": "between-clumps",
+        "section": 8,
+        "x": 0.088546574,
+        "z": -1.425479171,
+        "radius": 0.011769119160704415,
+        "diameter_m": 0.023492646565428002,
+        "native_horizontal_diameter_m": 1.0016581855361053,
+        "dimensions_m": [1, 0.529110720124557, 0.4647462475935643],
+        "object_id": "33de61d8-9069-43ef-954a-14c625b25591"
+      },
+      {
+        "asset": {
+          "id": "rocks-piece-060",
+          "revision": "cf7f4408552e1b88b809d384d36ad2640f58bafdf46eca20af827907a60dcda5"
+        },
+        "source_mesh_index": 59,
+        "source_node_name": "rock025_lod4_rock025_LOD4_0",
+        "glb_sha256": "103ac5b7c25888e88fe633d09e0f25e8dd03a66bc87c2f649761933112349fc9",
+        "mode": "open",
+        "section": 19,
+        "x": -0.472369877,
+        "z": 9.705260067,
+        "radius": 0.008889510129076919,
+        "diameter_m": 0.01777609933516942,
+        "native_horizontal_diameter_m": 1.0003783619112085,
+        "dimensions_m": [1, 0.8945668460041145, 0.53615906471162],
+        "object_id": "9418c708-e070-4330-ab50-2e35037b47e6"
+      },
+      {
+        "asset": {
+          "id": "rocks-piece-026",
+          "revision": "50835c642deed8ad3d7a54e3e9dd413c35b5d2ec7ce1bcbc91cb41fcc4787c3f"
+        },
+        "source_mesh_index": 25,
+        "source_node_name": "rock063_lod4_rock063_LOD4_0",
+        "glb_sha256": "d10edbcfb847b2acff03bf9aaac2eed9765e48a48d5743f23637df9d3c7ebd05",
+        "mode": "between-clumps",
+        "section": 16,
+        "x": -0.390372939,
+        "z": 6.034826622,
+        "radius": 0.005407723931914813,
+        "diameter_m": 0.01080316403065808,
+        "native_horizontal_diameter_m": 1.0001203970659358,
+        "dimensions_m": [1, 0.6007044542879112, 0.4902864336234638],
+        "object_id": "42e3e1d5-11ce-4e2f-814f-e058a7986289"
+      },
+      {
+        "asset": {
+          "id": "rocks-piece-041",
+          "revision": "6030ca201277efd84f4171c98c62d53febdd09f8e8638e9a9a3fd0376609518a"
+        },
+        "source_mesh_index": 40,
+        "source_node_name": "rock045_lod4_rock045_LOD4_0",
+        "glb_sha256": "4142e909c16bb411113d7242401b3ce7300fc7b241052da4198ca8eaeedce68f",
+        "mode": "open",
+        "section": 17,
+        "x": 0.47809352,
+        "z": 7.417996467,
+        "radius": 0.005168860490757821,
+        "diameter_m": 0.010282764037838206,
+        "native_horizontal_diameter_m": 1.0010263036038087,
+        "dimensions_m": [1, 0.7275609800368789, 0.5348350653975403],
+        "object_id": "915d4681-7d71-4c73-9b67-09d90e19d8be"
+      },
+      {
+        "asset": {
+          "id": "rocks-piece-053",
+          "revision": "1f97def4374080a76e081cf070731fee12ec2db62e088e78390b43c9abe22bf4"
+        },
+        "source_mesh_index": 52,
+        "source_node_name": "rock032_lod4_rock032_LOD4_0",
+        "glb_sha256": "24ad89e6a463d239feeac9092d9709355e963450dd8a96067d81230f04d1b457",
+        "mode": "between-clumps",
+        "section": 11,
+        "x": -0.421168832,
+        "z": 1.113881166,
+        "radius": 0.011616877878334314,
+        "diameter_m": 0.02207016629516147,
+        "native_horizontal_diameter_m": 1.0729029941846597,
+        "dimensions_m": [1, 0.8843390347226012, 0.7498336728293256],
+        "object_id": "3bfe543b-262b-409e-93ad-9ecc449a2220"
+      },
+      {
+        "asset": {
+          "id": "rocks-piece-042",
+          "revision": "edb99a1178c572fa8cf1dd008d435a22d4d4f4cc21316e21fa57e13e7c0986fe"
+        },
+        "source_mesh_index": 41,
+        "source_node_name": "rock044_lod4_rock044_LOD4_0",
+        "glb_sha256": "52c59ede9adbe59e26f7318ec7bdd9903f09eaccc75b6b41feb2adca39cdb7e4",
+        "mode": "open",
+        "section": 6,
+        "x": 0.453699058,
+        "z": -3.377243342,
+        "radius": 0.007234338314260011,
+        "diameter_m": 0.014249258566414937,
+        "native_horizontal_diameter_m": 1.0292554236919644,
+        "dimensions_m": [1, 1.0456045472176716, 0.7867360033281261],
+        "object_id": "00bf8133-beb5-4ca6-a8f4-3be2af6e4031"
+      },
+      {
+        "asset": {
+          "id": "rocks-piece-062",
+          "revision": "d80e021765ff3ba79390365c7dd618d08c50d0a817ea97b9c51ab5108d5c0c53"
+        },
+        "source_mesh_index": 61,
+        "source_node_name": "rock023_lod4_rock023_LOD4_0",
+        "glb_sha256": "7479ef0b01434e660328e853d6d6c9e64c213f7852e019fb69ae2ffbd73f5c5b",
+        "mode": "between-clumps",
+        "section": 2,
+        "x": 0.313394545,
+        "z": -7.74570846,
+        "radius": 0.006993917106316736,
+        "diameter_m": 0.013924799439264461,
+        "native_horizontal_diameter_m": 1.0387182149747858,
+        "dimensions_m": [1, 0.6943868605637196, 0.6534360988285],
+        "object_id": "6f61f546-5b18-4c26-9dde-054c2abac1f8"
+      },
+      {
+        "asset": {
+          "id": "rocks-piece-027",
+          "revision": "0d40d98b118ec781b0c2129fc1bbcc49518ba8682545796607ccdca4b79c3af1"
+        },
+        "source_mesh_index": 26,
+        "source_node_name": "rock062_lod4_rock062_LOD4_0",
+        "glb_sha256": "eff551bb46a23f0f93ddfc2e6e3784187d936422f31d01286f6dba310777f804",
+        "mode": "open",
+        "section": 14,
+        "x": -0.478961516,
+        "z": 4.553838736,
+        "radius": 0.011654262900999315,
+        "diameter_m": 0.02292559080407955,
+        "native_horizontal_diameter_m": 1.0390597805565231,
+        "dimensions_m": [1, 1.0230945155804076, 0.5905315133472149],
+        "object_id": "6dd5f616-00f6-42cd-953c-b173d2f625fc"
+      },
+      {
+        "asset": {
+          "id": "rocks-piece-012",
+          "revision": "400cc35558d608f9eff86202034bfc058c6d247521a9f601a33c5c97b8d13498"
+        },
+        "source_mesh_index": 11,
+        "source_node_name": "rock079_lod4_rock079_LOD4_0",
+        "glb_sha256": "57548dbd5bea7f017fb6190a3fb4fdbcb9f53ec9a508f1579af6d9d3db69dc1f",
+        "mode": "between-clumps",
+        "section": 18,
+        "x": -0.276711386,
+        "z": 8.646217411,
+        "radius": 0.009974681383629698,
+        "diameter_m": 0.019881054871948436,
+        "native_horizontal_diameter_m": 1.0000056361698413,
+        "dimensions_m": [1, 0.8062501411267574, 0.5849539924537288],
+        "object_id": "cff9cd4c-cf71-49fd-b328-8a368b771f1e"
+      },
+      {
+        "asset": {
+          "id": "rocks-piece-011",
+          "revision": "f599e6a235939348edf060945e1f51c359095447d937b335e77c583fa049bc56"
+        },
+        "source_mesh_index": 10,
+        "source_node_name": "rock080_lod4_rock080_LOD4_0",
+        "glb_sha256": "ccde150845730c8aff8eee88a63f0c16ccd8e31ae1798e821c06f444c30b6f99",
+        "mode": "open",
+        "section": 7,
+        "x": 0.454638428,
+        "z": -2.554206167,
+        "radius": 0.007128229308793115,
+        "diameter_m": 0.014079651971114798,
+        "native_horizontal_diameter_m": 1.000066747661551,
+        "dimensions_m": [1, 1.041359791863154, 0.8418473993773951],
+        "object_id": "d4c97467-019e-429e-9f1f-77595ff9c625"
+      },
+      {
+        "asset": {
+          "id": "rocks-piece-075",
+          "revision": "5f33d1a2d1714da0199c9ec39eb21ee2256955a68fa0181d8b5e21b8c19944ef"
+        },
+        "source_mesh_index": 74,
+        "source_node_name": "rock010_lod4_rock010_LOD4_0",
+        "glb_sha256": "3c50684fa2ab9b7d18979a7a9fcfca632e00ddbfb0c77d07a653e32e16675227",
+        "mode": "between-clumps",
+        "section": 14,
+        "x": -0.433930201,
+        "z": 4.467555963,
+        "radius": 0.006886045943408144,
+        "diameter_m": 0.013230452408315614,
+        "native_horizontal_diameter_m": 1.0028593969079616,
+        "dimensions_m": [1, 1.0132485257130497, 0.5525235423587653],
+        "object_id": "db49ae77-41a1-4a84-a800-bf3e23751bf8"
+      },
+      {
+        "asset": {
+          "id": "rocks-piece-018",
+          "revision": "da4ed998bb362e78b27ff09e27db81d6d6e74d6b9b84d9070546ab1940501cbb"
+        },
+        "source_mesh_index": 17,
+        "source_node_name": "rock072_lod4_rock072_LOD4_0",
+        "glb_sha256": "f1561af35ecdadf1092c1645fd005775b94f468a40879b85916f85c5c4909dba",
+        "mode": "open",
+        "section": 17,
+        "x": -0.400982341,
+        "z": 7.982282661,
+        "radius": 0.011399413491836785,
+        "diameter_m": 0.022368298094952478,
+        "native_horizontal_diameter_m": 1.0219571565128291,
+        "dimensions_m": [1, 0.6439583669811637, 0.48432754170855763],
+        "object_id": "813835a5-14c4-47b5-816d-ffa32ad01f49"
+      },
+      {
+        "asset": {
+          "id": "rocks-piece-032",
+          "revision": "ac640f4d54de79e329ff4520182ec2bb3f6495ae3e8098d1c139cbad8012ab94"
+        },
+        "source_mesh_index": 31,
+        "source_node_name": "rock057_lod4_rock057_LOD4_0",
+        "glb_sha256": "833868d5d72e6d9a58fdb28aba01fa532fc9f695ecea403fee904d57df6216fa",
+        "mode": "between-clumps",
+        "section": 15,
+        "x": -0.436532909,
+        "z": 5.193596871,
+        "radius": 0.007123540822004321,
+        "diameter_m": 0.01424470336525701,
+        "native_horizontal_diameter_m": 1.0000861563393169,
+        "dimensions_m": [1, 0.5594268773440559, 0.4860312627220863],
+        "object_id": "abd5be56-5595-4963-acb8-fd2061cd3d30"
+      },
+      {
+        "asset": {
+          "id": "rocks-piece-022",
+          "revision": "8d49f042659809ff86e0efb5192a6d8bb30d536f3bb34d5210cd31caf2e5a0f8"
+        },
+        "source_mesh_index": 21,
+        "source_node_name": "rock068_lod4_rock068_LOD4_0",
+        "glb_sha256": "9274c870e82902584d0bd44074aa6a90d77de5e380c3521743cac227e0bdc3ec",
+        "mode": "open",
+        "section": 0,
+        "x": -0.453906238,
+        "z": -9.468855126,
+        "radius": 0.005950026319038844,
+        "diameter_m": 0.01100751108606346,
+        "native_horizontal_diameter_m": 1.0195340216206439,
+        "dimensions_m": [1, 0.7198345616386165, 0.6856410136501281],
+        "object_id": "755fdf1b-0804-4d15-a53a-ef6079b9de63"
+      },
+      {
+        "asset": {
+          "id": "rocks-piece-025",
+          "revision": "f458bb88e795c6078f62617904ca1f7ef72b268742f894a7c77037461884a507"
+        },
+        "source_mesh_index": 24,
+        "source_node_name": "rock064_lod4_rock064_LOD4_0",
+        "glb_sha256": "5b89e1087bec626c2c7e3729cf3f247b32e9d7028b8e00170363ff7efb7a8629",
+        "mode": "between-clumps",
+        "section": 3,
+        "x": 0.320168787,
+        "z": -6.369091791,
+        "radius": 0.010076966113094462,
+        "diameter_m": 0.019949382093036545,
+        "native_horizontal_diameter_m": 1.0203913156913886,
+        "dimensions_m": [
+          0.9999999999999999, 0.8487211048866312, 0.6666949233026809
+        ],
+        "object_id": "10a4d8a9-0c85-4014-bf50-b6c090269257"
+      },
+      {
+        "asset": {
+          "id": "rocks-piece-066",
+          "revision": "55e01356ce27897af8469229144116bf28df68dcb77f6984e6c973065bf3ebc1"
+        },
+        "source_mesh_index": 65,
+        "source_node_name": "rock019_lod4_rock019_LOD4_0",
+        "glb_sha256": "aabb2338bc6cb38bedcbe57bf80faa58bd018f3c1a0aa5eab6c47bf40d3a5dac",
+        "mode": "open",
+        "section": 8,
+        "x": -0.430373538,
+        "z": -1.868430986,
+        "radius": 0.010840494092150732,
+        "diameter_m": 0.0208372887049336,
+        "native_horizontal_diameter_m": 1.0341271424903775,
+        "dimensions_m": [1, 0.6812572720822274, 0.7452476817020545],
+        "object_id": "beec585e-0d33-4e0d-ba4e-0615b9a48819"
+      },
+      {
+        "asset": {
+          "id": "rocks-piece-031",
+          "revision": "d5b62e41847e9fb559cd62b60af046fb8ff7c0235ae85e7e3558d76afea1a254"
+        },
+        "source_mesh_index": 30,
+        "source_node_name": "rock058_lod4_rock058_LOD4_0",
+        "glb_sha256": "5d66d7a93732123a896195e2b356c00de8adde0ba27424b883b0b3120ad015da",
+        "mode": "between-clumps",
+        "section": 6,
+        "x": -0.030546252,
+        "z": -3.50488174,
+        "radius": 0.00623859924388341,
+        "diameter_m": 0.012246345066232607,
+        "native_horizontal_diameter_m": 1.0147829109463684,
+        "dimensions_m": [1, 0.8373744130684762, 0.4848502808822377],
+        "object_id": "1735b9bc-8267-4a03-ac4e-d24ee194c813"
+      },
+      {
+        "asset": {
+          "id": "rocks-piece-016",
+          "revision": "65c0e407b93abad9b01c1bb952b8641e5fa7db28da867eaa5c85c5e22e9b84c4"
+        },
+        "source_mesh_index": 15,
+        "source_node_name": "rock075_lod4_rock075_LOD4_0",
+        "glb_sha256": "63fc28c8380cba78d4dd306872cb3e12e39c63cf924bcd3f2e0a57333f45d2af",
+        "mode": "open",
+        "section": 12,
+        "x": -0.32122892,
+        "z": 2.674740975,
+        "radius": 0.012239782530201285,
+        "diameter_m": 0.024364868345437572,
+        "native_horizontal_diameter_m": 1.0008064081219623,
+        "dimensions_m": [1, 0.6840616552755096, 0.5637047772741364],
+        "object_id": "f859c2cd-5091-406c-b1b8-5fed092bc195"
+      },
+      {
+        "asset": {
+          "id": "rocks-piece-050",
+          "revision": "321010f80c223227f65a4d0c33ccb2dc873186dfcc14aa484db711997fb51bc6"
+        },
+        "source_mesh_index": 49,
+        "source_node_name": "rock035_lod4_rock035_LOD4_0",
+        "glb_sha256": "6eb6e7ed9eb5b6a2747d46572f1557fef14d10c094d75a46e4e30fab605be296",
+        "mode": "between-clumps",
+        "section": 8,
+        "x": -0.489862536,
+        "z": -1.107779882,
+        "radius": 0.008440393989447164,
+        "diameter_m": 0.016856988120125607,
+        "native_horizontal_diameter_m": 1.0000204586415666,
+        "dimensions_m": [
+          0.9999999999999999, 0.779430208088869, 0.5262508282255303
+        ],
+        "object_id": "573cfac7-8a99-459a-af62-3f08a6163c46"
+      },
+      {
+        "asset": {
+          "id": "rocks-piece-084",
+          "revision": "f7aaaeec170d87cd0c9b4d21b37f3033c040e26677434281446a7bdc5e87ee96"
+        },
+        "source_mesh_index": 83,
+        "source_node_name": "rock001_lod4_rock001_LOD4_0",
+        "glb_sha256": "513b0ec9919e75e5805f80390a86d1abf4b1c327d6eea93e105d6dbd6eeab068",
+        "mode": "open",
+        "section": 15,
+        "x": 0.462021136,
+        "z": 5.464847025,
+        "radius": 0.011964437385434274,
+        "diameter_m": 0.023921802669065073,
+        "native_horizontal_diameter_m": 1.000020420417223,
+        "dimensions_m": [1, 0.7952790161649226, 0.5453820770116949],
+        "object_id": "1309c3e9-558e-4329-a0e7-69881eb093fa"
+      },
+      {
+        "asset": {
+          "id": "rocks-piece-021",
+          "revision": "b7863ece8906076eeb4335a9846025dc8325a0de812836056bd8a52258e0c5cb"
+        },
+        "source_mesh_index": 20,
+        "source_node_name": "rock069_lod4_rock069_LOD4_0",
+        "glb_sha256": "5bab13e8b5d28edbb7f38126c156a8e6bfe19725d00b5b9342a3d55807cc3fb6",
+        "mode": "between-clumps",
+        "section": 9,
+        "x": 0.452875433,
+        "z": -0.231451435,
+        "radius": 0.010870063966341461,
+        "diameter_m": 0.02096686401520856,
+        "native_horizontal_diameter_m": 1.0010261098718598,
+        "dimensions_m": [1, 0.8504287760120379, 0.6329343459424076],
+        "object_id": "6ed87169-f17b-4f24-8a2e-0223050294bb"
+      },
+      {
+        "asset": {
+          "id": "rocks-piece-013",
+          "revision": "2d22e7d426ac18739985b2187b1898e513f4d6e4ccf407c6752dd7bded9ada5e"
+        },
+        "source_mesh_index": 12,
+        "source_node_name": "rock078_lod4_rock078_LOD4_0",
+        "glb_sha256": "00c76d995a4a94de088997a447a22843f1295bb3a1512c9d90cd38eaa2934538",
+        "mode": "open",
+        "section": 15,
+        "x": -0.461585438,
+        "z": 5.676363122,
+        "radius": 0.009131407527133092,
+        "diameter_m": 0.01805463087162934,
+        "native_horizontal_diameter_m": 1.0153877203271755,
+        "dimensions_m": [1, 0.8674652292579621, 0.7286217841984479],
+        "object_id": "272c8ccc-b68d-4c72-862f-80683ce65514"
+      },
+      {
+        "asset": {
+          "id": "rocks-piece-014",
+          "revision": "597af5c405da822932cd7313c64ca93dd44004ae480757caf25956c948aef905"
+        },
+        "source_mesh_index": 13,
+        "source_node_name": "rock077_lod4_rock077_LOD4_0",
+        "glb_sha256": "e45b668ca75f56d40f0f77208a35a8522da92a5aaa9c0a9b79690faf8d7b6e03",
+        "mode": "between-clumps",
+        "section": 4,
+        "x": -0.156602687,
+        "z": -5.762650194,
+        "radius": 0.009339272955485704,
+        "diameter_m": 0.018430315175792203,
+        "native_horizontal_diameter_m": 1.0042231106427408,
+        "dimensions_m": [1, 0.8325787459428449, 0.7290081563912187],
+        "object_id": "2eb80910-8ce8-4935-9d94-de34ad64d486"
+      },
+      {
+        "asset": {
+          "id": "rocks-piece-029",
+          "revision": "7d7729937cd5d723731c4a4ac19b86122c10b4b8a9745c748ced5a704d5c3afb"
+        },
+        "source_mesh_index": 28,
+        "source_node_name": "rock060_lod4_rock060_LOD4_0",
+        "glb_sha256": "75d224de4e57758e969434c25d030f3214cf359c5d9ba4f1f35fd0d5f321f93a",
+        "mode": "open",
+        "section": 17,
+        "x": 0.473725879,
+        "z": 7.762374726,
+        "radius": 0.011934464048595248,
+        "diameter_m": 0.02382570016081445,
+        "native_horizontal_diameter_m": 1.0014514839498154,
+        "dimensions_m": [
+          0.9999999999999999, 0.7189243211890259, 0.7100821228516919
+        ],
+        "object_id": "8b6037fe-1f69-437a-aa8b-4eb8adef0c6d"
+      },
+      {
+        "asset": {
+          "id": "rocks-piece-049",
+          "revision": "fb31a9b35dca1ebe7212cdc1dda0339e0af1ce67fada5e5bc8ea034a25c0ef64"
+        },
+        "source_mesh_index": 48,
+        "source_node_name": "rock036_lod4_rock036_LOD4_0",
+        "glb_sha256": "86bfa880f993dc8f44a63b0eeee750dbc230cc745a6dcb3caad000ca27ede184",
+        "mode": "between-clumps",
+        "section": 19,
+        "x": -0.408642272,
+        "z": 9.258779732,
+        "radius": 0.005520186147910588,
+        "diameter_m": 0.0103944189788308,
+        "native_horizontal_diameter_m": 1.0269049432692652,
+        "dimensions_m": [
+          0.8938966972711628, 0.6440407501655239, 0.9999999999999997
+        ],
+        "object_id": "513db7b5-c169-4c1d-a574-964c0e1c3101"
+      },
+      {
+        "asset": {
+          "id": "rocks-piece-035",
+          "revision": "1c9a39bec7c672ecbd00b5665b76ad420d0193ac94cf688e8bec8c4962e01965"
+        },
+        "source_mesh_index": 34,
+        "source_node_name": "rock053_lod4_rock053_LOD4_0",
+        "glb_sha256": "567e0c4cdebd52560bca4f56e70dd5dee5eb27fae399b932d61ebe59dd8376c7",
+        "mode": "open",
+        "section": 15,
+        "x": -0.459566902,
+        "z": 5.91471614,
+        "radius": 0.007508559243090172,
+        "diameter_m": 0.014782447254983708,
+        "native_horizontal_diameter_m": 1.015584821193529,
+        "dimensions_m": [
+          0.9999999999999999, 1.055250992263934, 0.8048106559596722
+        ],
+        "object_id": "1b677ac6-46d5-4015-a21a-9e77e29e96ab"
+      },
+      {
+        "asset": {
+          "id": "rocks-piece-015",
+          "revision": "bc174f6e6c060cf809a659c4bf07dc837385d384b92a963015cc590a66b3c934"
+        },
+        "source_mesh_index": 14,
+        "source_node_name": "rock076_lod4_rock076_LOD4_0",
+        "glb_sha256": "31ad9a25df7e1bb4ba9fdb2f6f188351febfe7d4dc62c808b090a6a0c47a18dd",
+        "mode": "between-clumps",
+        "section": 2,
+        "x": 0.483346904,
+        "z": -7.138588496,
+        "radius": 0.005981571620001877,
+        "diameter_m": 0.011782560994615778,
+        "native_horizontal_diameter_m": 1.0015913447626024,
+        "dimensions_m": [
+          1.0000000000000002, 0.6855142065146811, 0.5482881201950721
+        ],
+        "object_id": "edb58761-1460-44d5-a1b8-aa5f00d1ffaa"
+      }
+    ]
+  },
+  "verification": {
+    "saved": false,
+    "rocks": 84,
+    "unique_source_meshes": 84,
+    "mesh_instances": 84,
+    "outside_floor": 0,
+    "floating": 0,
+    "diameter_range_m": [0.01004193229245699, 0.024592722488491956],
+    "height_above_floor_range_m": [0.005034328089751251, 0.022557304504688895],
+    "original_objects_unchanged": true,
+    "patrol_clearance_m": 0.032370968643416,
+    "passed": true
+  },
+  "minimum_pair_surface_clearance_m": 0.017692191015510558,
+  "exact_save_reload_verified": true,
+  "saved_verification": {
+    "saved": true,
+    "rocks": 84,
+    "unique_source_meshes": 84,
+    "mesh_instances": 84,
+    "outside_floor": 0,
+    "floating": 0,
+    "diameter_range_m": [0.01004193229245699, 0.024592722488491956],
+    "height_above_floor_range_m": [0.005034328089751251, 0.022557304504688895],
+    "original_objects_unchanged": true,
+    "patrol_clearance_m": 0.032370968643416,
+    "passed": true
+  },
+  "inherited_animation_and_zoomies_live_tests_passed": true
+}

@@ -1,5 +1,29 @@
 # Component document persistence
 
+`ground_grass_strip.js` records the accepted revision-16 → 17 grounding edit.
+It reads the live scene and description, verifies the pinned blueprint hash,
+backs up the original scene, lowers only grass Y anchors, saves with an expected
+revision, checks exact reopen, and updates blueprint/variant exports. It is a
+guarded one-time editorial command, not a migration or startup seed; running it
+against any revision other than 16 fails before writing.
+
+Optional `lighting: {direction_degrees, intensity}` stores the component's viewer
+defaults in its existing JSON document, atomically with geometry and construction
+description. Direction must be 0–360° and intensity 0.25–6; new documents store
+45° / 3. Legacy documents remain valid without the field. No schema migration is
+required. The UI edits these values above the stage and includes them in history.
+
+The current authoring workflow is collaborative construction with maintained
+[construction descriptions](blueprints/README.md). Those describe material roles,
+generation rules and physical/behavioral relationships independently of concrete
+placements. The first complete description is [grass strip](blueprints/grass-strip/grass-strip.md),
+paired with structured parameters and the existing realized example snapshot.
+Readable descriptions now persist in the scene's optional `construction_description`
+Markdown string (maximum 65,536 characters). Text and model share one saved
+revision, conflict check and atomic write; no table migration is needed. Missing
+fields remain omitted for legacy compatibility. A separate structured-blueprint
+API is future work; the repository JSON companion is not accepted as a scene.
+
 Representative construction save/load evaluation is covered by service tests:
 eight complete fixture documents roundtrip through actual MySQL temporary tables,
 preserve generated transforms and reject stale revisions.
@@ -43,6 +67,18 @@ personal-data remediation rule.
 - GET `/`: `{documents:[{id,name,revision}],next_cursor:null|id}`. At most 50
   entries, ordered by ID. Optional `?after=<id>` pages forward. No other query keys.
 - GET `/:id`: `{document,revision}`. IDs are lowercase UUID v4.
+- GET `/:id/variants`: `{variants:[{key,name,revision,base,role_groups,overrides}]}`. Lists authored
+  variant deltas from this service's `blueprints/<key>/variants/<variant-key>/`
+  folders by base component ID. Each override contains `{target:{role,property},
+operation,value}`. No query parameters. At most 100 variants, 100 overrides per
+  variant, 64 KiB per JSON file and 1,000 entries per scanned directory. Files
+  must be regular files; symbolic-link directories are not followed. A component
+  with no authored variants returns an empty list, including unsaved components.
+  Names sort alphabetically. This read-only endpoint shares the router's
+  authorization and no-store policy; malformed/unavailable files return 503.
+  `base` includes the component ID and pinned scene revision; `role_groups` maps
+  blueprint roles to authored group IDs. The SDK uses these to resolve supported
+  stage previews. This endpoint does not resolve scenes or change the base.
 - PUT `/:id`: exact body `{document,expected_revision}`; document id must match
   the path. Revision 0 inserts only; positive revisions atomically update only
   that revision. Response `{document,revision:expected_revision+1}`.
@@ -52,6 +88,13 @@ element IDs, dangling groups, nonfinite/out-of-bound transforms and excessive
 counts. Documents are limited to 1,000 total authored/scattered instances, 100
 groups, 100 scatter rules and 32 exclusion rectangles per rule. It validates
 reference shapes, not live asset existence; catalog tools will add that check.
+
+Objects can optionally persist `animation_speed` (finite 0–10) to set an explicit
+clip clock independent of the component multiplier. Omission inherits component
+speed and remains omitted for legacy records. This is stored in the same JSON
+record and optimistic revision; no migration is needed. Patrol translation still
+uses the component clock. An explicit object clock also runs when component speed
+is zero; hiding the stage pauses all rendering.
 
 400 invalid_component_document; 404 component_not_found; 409 component_conflict;
 413 oversized request; 503 component_unavailable. Authorization may return

@@ -124,6 +124,9 @@ test("component API authorizes before parsing, enforces origin/schema and preser
   );
   const document = create_component_document(randomUUID(), "Path");
   document.animation_speed = 0.25;
+  document.lighting = { direction_degrees: 270, intensity: 1.25 };
+  document.construction_description =
+    "# Path\n\nUse grass around visible insect openings.";
   const root = `http://127.0.0.1:${server.address().port}/documents`;
   const origin =
     process.env.FRACTO_UI_ORIGIN ||
@@ -320,6 +323,7 @@ test(
     const changed = {
       ...document,
       name: "Component persistence integration fixture revised",
+      lighting: { direction_degrees: 135, intensity: 1.75 },
     };
     const headers = {
       "Content-Type": "application/json",

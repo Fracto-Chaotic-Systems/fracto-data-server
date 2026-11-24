@@ -1,0 +1,88 @@
+{
+  "base_revision_before": 12,
+  "base_hash_before": "036b50b05b2796e08b497cb0314fe644f00ce91b197da56150ace43415af864c",
+  "saved_revision": 13,
+  "generation": {
+    "expected_revision": 12,
+    "seed": 282706,
+    "group_id": "33b60781-50f4-4466-a514-3f14272e4b4f",
+    "material": {
+      "id": "animated-grass",
+      "revision": "b1480d423b720d458a8ed8050372c8c2e314e8e83a95ab873a33d61f69599f0d"
+    },
+    "new_grass_count": 120,
+    "accepted_per_selected_patch_section": [
+      6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6
+    ],
+    "attempt_counts": [
+      186, 273, 85, 292, 121, 400, 140, 95, 545, 51, 374, 203, 298, 222, 127,
+      214, 203, 91, 151, 222
+    ],
+    "rejected": {
+      "bounds": 565,
+      "opening": 512,
+      "spacing": 557,
+      "buried_or_detached": 2227,
+      "coverage": 312
+    },
+    "original_objects_unchanged": true,
+    "base_projected_coverage": 0.65072,
+    "new_projected_coverage": 0.66642,
+    "animation_clip": {
+      "name": "Object_0",
+      "duration_seconds": 9.966666221618652,
+      "envelope_frames": 24
+    },
+    "native_animated_bounds": {
+      "min": [-1.7337258727508544, -0.004729170432000149, -1.9690254965166811],
+      "max": [1.7441348380438675, 1.218972554090252, 1.974383656800583]
+    },
+    "triangle_counts": {
+      "yard": 5173,
+      "edge": 3138
+    },
+    "planar_scale_range": [0.028, 0.046],
+    "vertical_scale_range": [0.16, 0.21],
+    "minimum_center_spacing_m": 0.13,
+    "opening_guard_radii_m": [0.075, 0.115]
+  },
+  "verification": {
+    "saved": false,
+    "objects": 560,
+    "grass": 540,
+    "edge_grass": 120,
+    "ladybugs": 20,
+    "frames": 24,
+    "real_time_step_seconds": 3.3222220738728843,
+    "visibility_rays": 2400,
+    "blocked_rays": 0,
+    "edge_blocked_rays": 0,
+    "animated_vertices_outside_floor": 0,
+    "edge_height_range_m": [-0.0009912884843613495, 0.2555106594268261],
+    "animated_edge_meshes": 120,
+    "passed": true
+  },
+  "exact_save_reload_verified": true,
+  "saved_verification": {
+    "saved": true,
+    "objects": 560,
+    "grass": 540,
+    "edge_grass": 120,
+    "ladybugs": 20,
+    "frames": 24,
+    "real_time_step_seconds": 3.3222220738728843,
+    "visibility_rays": 2400,
+    "blocked_rays": 0,
+    "edge_blocked_rays": 0,
+    "animated_vertices_outside_floor": 0,
+    "edge_height_range_m": [-0.0009912884843613495, 0.2555106594268261],
+    "animated_edge_meshes": 120,
+    "passed": true
+  },
+  "zoomies_rebase_verification": {
+    "base_scene_revision": 13,
+    "variant_revision": 2,
+    "unchanged_overrides": [8, 8],
+    "live_patrol_and_bone_transform_test_passed": true
+  }
+}

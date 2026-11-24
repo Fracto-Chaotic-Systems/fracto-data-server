@@ -1,0 +1,930 @@
+{
+  "format": "fracto.component-construction",
+  "format_version": 1,
+  "blueprint_key": "grass-strip",
+  "blueprint_revision": 7,
+  "description_document": "grass-strip.md",
+  "status": "component_associated_description",
+  "authoring_mode": "collaborative",
+  "description": "Grass with sparse insect shelter and 84 unique larger, partially buried rocks, concentrated in central grass gaps.",
+  "realization": {
+    "component_id": "0bb37175-0459-49bf-b5fc-f918bf090563",
+    "observed_saved_revision": 17,
+    "snapshot": "grass-strip.component.json",
+    "canonical_scene_sha256": "e734fc425c2d1b8438510e10783af8b37c766c2e8fa49712f83aaa451d83bb5d",
+    "role_groups": {
+      "grass_cover": "4e31f7e0-3eda-4344-9966-7e79da33273b",
+      "walking_insects": "854b759b-83ed-42fc-929a-5b460126651e",
+      "edge_softening": "33b60781-50f4-4466-a514-3f14272e4b4f",
+      "unique_pebbles": "d38a349b-591e-44d7-af47-496060bb801a"
+    }
+  },
+  "frame": {
+    "units": "m",
+    "coordinates": "right-handed-y-up",
+    "floor_size_xz_m": [1, 20],
+    "floor_bounds_xz_m": [-0.5, -10, 0.5, 10],
+    "logical_ground_y_m": 0,
+    "current_renderer_floor_y_m": -0.005,
+    "metre_sections": 20
+  },
+  "material_roles": {
+    "ground_surface": {
+      "purpose": "Textured dirt beneath vegetation and openings",
+      "reference": {
+        "id": "dry-dirt",
+        "revision": "a563a5d353eb706879d6eed7dd1600e45a16276cd2c9b41610af6db2e0c326e5"
+      },
+      "display_name": "dry_dirt",
+      "requires": {
+        "kind": "surface",
+        "placement": "floor",
+        "calibrated_texture_size_m": true
+      },
+      "reference_color_resource": "runtime/surface-base-color-6f30180943ade5c3.png",
+      "reference_tile_size_m": [1, 1],
+      "reference_texture_repeat": [1, 20],
+      "replacement_rule": "Select a registered color image and derive repeats from floor size divided by calibrated physical tile size."
+    },
+    "grass_cover": {
+      "purpose": "Tall narrow clumps with broad overall coverage and intentional gaps",
+      "reference": {
+        "id": "yard-grass",
+        "revision": "19dd4d284c20898f84e197a7d8ec965c2377404edc0b24262e780c61cf7ab5d2"
+      },
+      "display_name": "yard_grass_motion",
+      "requires": {
+        "kind": "model",
+        "placement": "ground",
+        "calibrated_dimensions_and_footprint": true,
+        "wind_animation": true
+      },
+      "reference_footprint_xz_m": [1.617138, 1.4689622],
+      "reference_vertical_extent_m": 0.5173413,
+      "reference_planar_scale_range": [0.15, 0.34],
+      "reference_vertical_scale_range": [0.45, 0.55],
+      "anchor_y_m": -0.015,
+      "reference_clip": {
+        "index": 0,
+        "name": "Object_0"
+      },
+      "replacement_rule": "Preserve physical patch width/depth and height distributions using replacement calibration; remeasure projected coverage."
+    },
+    "walking_insects": {
+      "purpose": "One small ground-crawling insect per metre, visible through an interior opening",
+      "reference": {
+        "id": "ladybug-with-animated-walk-cycle-only",
+        "revision": "8b43c46da330feb4f16944b63723e085fbfbb5a15d7baa3cd9da6fff56524f8f"
+      },
+      "display_name": "ladybug_with_animated_walk_cycle_only",
+      "requires": {
+        "kind": "model",
+        "placement": "ground",
+        "calibrated_dimensions_and_forward_axis": true,
+        "in_place_walk_animation": true
+      },
+      "reference_object_scale": [1.5, 1.5, 1.5],
+      "target_total_length_m": 0.0133384141635,
+      "reference_total_width_m": 0.012700771599,
+      "reference_total_height_m": 0.0066142531305,
+      "ground_clearance_m": 0.0002,
+      "reference_anchor_y_m": -0.0048,
+      "reference_clip": {
+        "index": 0,
+        "name": "ArmatureAction"
+      },
+      "replacement_rule": "Uniformly scale to total forward length, verify body/blade proportions and use calibrated feet/forward axis. Do not stretch an incompatible insect or invent a walk clip."
+    },
+    "edge_softening": {
+      "purpose": "Sparse grass at retained patch edges and over insect patrols for light shelter",
+      "reference": {
+        "id": "animated-grass",
+        "revision": "b1480d423b720d458a8ed8050372c8c2e314e8e83a95ab873a33d61f69599f0d"
+      },
+      "display_name": "animated_grass",
+      "requires": {
+        "kind": "model",
+        "placement": "ground",
+        "calibrated_dimensions_and_footprint": true,
+        "wind_animation": true
+      },
+      "reference_footprint_xz_m": [3.4674518, 3.9124897],
+      "reference_vertical_extent_m": 1.2169935,
+      "reference_ground_anchor_m": [-0.1333994, -0.0890255, -0.0571738],
+      "reference_planar_scale_range": [0.028, 0.046],
+      "reference_vertical_scale_range": [0.191311623, 0.233300132],
+      "anchor_y_m": -0.015,
+      "reference_clip": {
+        "index": 0,
+        "name": "Object_0"
+      },
+      "replacement_rule": "Preserve small sparse footprints, nearby dense-grass height, light patrol shelter and native 1x clip clocks; recalibrate replacement geometry.",
+      "object_animation_speed": 1,
+      "height_rule": "Match nearest original grass patch: target height = 0.5173413 * original.scale[1], sparse.scale[1] = target / 1.2169935."
+    },
+    "unique_pebbles": {
+      "purpose": "Same 84 rocks, doubled in size and partially buried mainly among central grass clumps",
+      "source_array": {
+        "id": "rocks",
+        "revision": "66ca8209def0dd483e5a9b329e6c310f575f2084078d4f259d29144dfa5efa49",
+        "model": "source/files/lowpoly_rocks_-_free_download.glb",
+        "glb_sha256": "f84b3b0313f8614565825ba4b3e1bc1e9ac560597f499dbf74a4301202c9185d"
+      },
+      "derived_folder": "terrain/rocks/individual-rocks",
+      "requires": {
+        "kind": "model",
+        "placement": "ground",
+        "calibrated_dimensions_and_footprint": true,
+        "distinct_original_meshes": 84,
+        "original_materials_and_textures": true
+      },
+      "target_horizontal_diameter_m_range": [0.02, 0.05],
+      "uniform_scale_rule": "Exactly twice the per-object XYZ scale at base revision 15; apply once; preserve yaw and aspect ratio",
+      "normalization": "One-metre maximum XZ extent, centred XZ, min Y zero; original mesh/UV/image data retained.",
+      "parts_document": "grass-strip.buried-rocks.json",
+      "references": [
+        {
+          "id": "rocks-piece-040",
+          "revision": "23d71e4d876be09c14ba20a057602aa1cc21ae78faaaecfa519e8f20cedda14f",
+          "source_mesh_index": 39,
+          "object_id": "acb638aa-2904-463d-988e-0ce0e161dead"
+        },
+        {
+          "id": "rocks-piece-079",
+          "revision": "a46b61a8c054672f331deb63cd65676cf5974e4e973dd803f87babedced9ac34",
+          "source_mesh_index": 78,
+          "object_id": "b259528e-c1ad-44cc-b1bf-0c3dc68094a9"
+        },
+        {
+          "id": "rocks-piece-078",
+          "revision": "f47b838f190f1322e46e05e74da460d3a48dbd1a67d2f8fdc44841e581f0a23f",
+          "source_mesh_index": 77,
+          "object_id": "d0bb212b-e256-4e3c-a279-5d2019b6dcb5"
+        },
+        {
+          "id": "rocks-piece-047",
+          "revision": "f4dcef7f6c55f0381fc5e34987053694aec7ae101635e238e3037e700998c2c8",
+          "source_mesh_index": 46,
+          "object_id": "ebb2af19-f91a-452f-b11f-34e1f193b3d7"
+        },
+        {
+          "id": "rocks-piece-017",
+          "revision": "d8e5adbda4b8da8c213d3b9ac2a50103f9b3e4f8fac55dcc37a224a1fc3cedfe",
+          "source_mesh_index": 16,
+          "object_id": "fcda607c-1da6-40af-9db2-8bba1b8a2097"
+        },
+        {
+          "id": "rocks-piece-051",
+          "revision": "97a18d551a992f947c60d37d6864b757184d922101fcd8991f50d6e474af6924",
+          "source_mesh_index": 50,
+          "object_id": "79c0038a-0c38-4f85-af80-bcb56abafaed"
+        },
+        {
+          "id": "rocks-piece-083",
+          "revision": "d2604f8352a3b636f0a552bb59467c38dc7003b9e84d96ba336c2fe8c13ebc34",
+          "source_mesh_index": 82,
+          "object_id": "25451661-0ffa-4636-a2c1-56176e5377b7"
+        },
+        {
+          "id": "rocks-piece-058",
+          "revision": "49998b3a8db9bb76a9a41dbd60e3c48e01cccd77b14d715eddb19a3ce892b471",
+          "source_mesh_index": 57,
+          "object_id": "25c6dead-9cf5-4683-807c-b19901756c10"
+        },
+        {
+          "id": "rocks-piece-046",
+          "revision": "8212e30b0bedb77425b711b8e6099c8ce242637a83bdf6e80fffbb0c047d82b3",
+          "source_mesh_index": 45,
+          "object_id": "9661b503-c7da-4fbc-9372-34e6074f79fe"
+        },
+        {
+          "id": "rocks-piece-059",
+          "revision": "c9ec70f7dbd19bfebce1fe7071c123b58ad53ea2e51f50d1fced1c6a7228a377",
+          "source_mesh_index": 58,
+          "object_id": "e94b39be-4a93-48a3-aa00-e144c81ac194"
+        },
+        {
+          "id": "rocks-piece-038",
+          "revision": "d0a548e34a0449af42d474b878370834befacfa138ddc0a7453de75be737ad35",
+          "source_mesh_index": 37,
+          "object_id": "192f7612-730b-4570-b761-aa778241b25f"
+        },
+        {
+          "id": "rocks-piece-056",
+          "revision": "cc633f270621c77a48c32c474babbc250027a7643ae6ae87561215d694b6c063",
+          "source_mesh_index": 55,
+          "object_id": "575e96b0-ea3f-449c-8277-d4f918bd15f9"
+        },
+        {
+          "id": "rocks-piece-028",
+          "revision": "fcaed31a98274943a198882facce71bf963684d0bc45cb9c5454203c19813588",
+          "source_mesh_index": 27,
+          "object_id": "b37ccdbe-9442-4e32-8037-9763deab53e4"
+        },
+        {
+          "id": "rocks-piece-068",
+          "revision": "4e722f405415ffa30ae2271b1e0fcefa3ed51b81e4843466d8e00daa1fbc2601",
+          "source_mesh_index": 67,
+          "object_id": "8d594ab1-0e52-4017-bc9b-82f0330807a6"
+        },
+        {
+          "id": "rocks-piece-033",
+          "revision": "d51c95204d95ee762e21c33d2bef5ed27c8142464b77a0841939baa5abac08db",
+          "source_mesh_index": 32,
+          "object_id": "5e74c5de-8072-4c64-a4b6-8c6a4dc64652"
+        },
+        {
+          "id": "rocks-piece-069",
+          "revision": "036f5fc98711f8bd67f1118628cdde4f634ab0a0c8bc61cad7be7156136d0c20",
+          "source_mesh_index": 68,
+          "object_id": "d88b7878-9886-41c0-960d-ac0fa811f5b3"
+        },
+        {
+          "id": "rocks-piece-039",
+          "revision": "ab4cf500f915142c2da7a8e0a403c86987316ed7b6b068b65bfc784f8755dab4",
+          "source_mesh_index": 38,
+          "object_id": "46e437fd-98d4-41db-84e2-44951aaa1afa"
+        },
+        {
+          "id": "rocks-piece-036",
+          "revision": "ce77260a5c3b19c83202b6a466ad860a3f566ae88dd25210e67e830c950125c2",
+          "source_mesh_index": 35,
+          "object_id": "ec4151fe-092f-4c5e-a714-3ffe83bdc935"
+        },
+        {
+          "id": "rocks-piece-052",
+          "revision": "14a6cfec03c2b7bcf703e1b43679bab33de10e78064a3764bf352ce9e89ed9e3",
+          "source_mesh_index": 51,
+          "object_id": "04144e58-b541-4873-8871-2989985efdce"
+        },
+        {
+          "id": "rocks-piece-064",
+          "revision": "9a3fa645d9a9680404875e8d3515ab196ede7ff3463bd01201536549fb5594bf",
+          "source_mesh_index": 63,
+          "object_id": "461bb639-2e47-4259-bf7c-db0fd578b70e"
+        },
+        {
+          "id": "rocks-piece-065",
+          "revision": "47ffaca3ce12db522d61d535bc6f2c1c410799e81eb2ae0e2a5e9d02e6f034e6",
+          "source_mesh_index": 64,
+          "object_id": "7187c0d9-85c3-4c3b-a7fb-948d8efb8b2d"
+        },
+        {
+          "id": "rocks-piece-020",
+          "revision": "f82e01a0a86648a31d203ac22bf63873044e5843490b0ba6e0da2ef22bfb6a69",
+          "source_mesh_index": 19,
+          "object_id": "6e9b78f4-23e8-4553-8c7c-e05061ade3a4"
+        },
+        {
+          "id": "rocks-piece-034",
+          "revision": "247c75ee763096cdb1f03b8d13afee6690d7b0a0c110262b7149b261794d3258",
+          "source_mesh_index": 33,
+          "object_id": "6d9765b7-be59-4fb9-8040-3c4a8afe8ceb"
+        },
+        {
+          "id": "rocks-piece-055",
+          "revision": "a4d9678f174dd5acc9475ff6386fd43d9cde5e38559f2c29157266df3ef2f398",
+          "source_mesh_index": 54,
+          "object_id": "2fde07cd-2b1f-445d-9c52-df81f5cd31b3"
+        },
+        {
+          "id": "rocks-piece-073",
+          "revision": "227e9a8f38687de8560299c15508e14df828df9255c8180dd59210251d4edb2d",
+          "source_mesh_index": 72,
+          "object_id": "1ec9af84-b286-4fa9-a780-f11da5e133f9"
+        },
+        {
+          "id": "rocks-piece-076",
+          "revision": "d6134bd5cbaf51efb5dfaeb18064f483461d9d655592c77a5710ddad3c74812b",
+          "source_mesh_index": 75,
+          "object_id": "4869875d-82c7-406b-ac20-c526b5b8f1a5"
+        },
+        {
+          "id": "rocks-piece-024",
+          "revision": "a4c244fbc572b89be18830283a0b680beee7de45b64be85dbeb3ce9ce4d376b7",
+          "source_mesh_index": 23,
+          "object_id": "24d8eea6-7b01-4c92-b5c0-7caff0fba386"
+        },
+        {
+          "id": "rocks-piece-048",
+          "revision": "501e914f8929efc96ef80c98839cf17390fad4d74bf8ec696cfbc6dee5461019",
+          "source_mesh_index": 47,
+          "object_id": "04a156af-844b-4a13-b0eb-ff98818f7856"
+        },
+        {
+          "id": "rocks-piece-008",
+          "revision": "91495e5938c9075c9000e983d162f31c1cd0b1e6ab1a52155fda2c975b23dfb1",
+          "source_mesh_index": 7,
+          "object_id": "72f11f60-7065-4739-8065-eeb3e89104bb"
+        },
+        {
+          "id": "rocks-piece-005",
+          "revision": "1fada0480b2ff0bae8060d3a477906756a54fbc7574129d982454882e2d5fcfe",
+          "source_mesh_index": 4,
+          "object_id": "9919e873-1f85-4062-a573-4418f9e775af"
+        },
+        {
+          "id": "rocks-piece-030",
+          "revision": "5c2f77c40b80d6b94f15a329fedfdfbc22e5526f864817e0f7bb282a63df4bd1",
+          "source_mesh_index": 29,
+          "object_id": "1716ff86-bd8b-481d-99d5-ec6c88ddd09b"
+        },
+        {
+          "id": "rocks-piece-072",
+          "revision": "f8a498dc3d22670b323a56ad850a364c3f14069ff353f04d1bd1ef60dfd41348",
+          "source_mesh_index": 71,
+          "object_id": "701299a7-bf83-44c2-98c4-3cdb57dfc919"
+        },
+        {
+          "id": "rocks-piece-045",
+          "revision": "fa679d7e48e269be28e09bc50842d7683db861526eb2bd0bf02f2cdbd7c1d634",
+          "source_mesh_index": 44,
+          "object_id": "08bee917-8951-4964-8a6f-01349247d19a"
+        },
+        {
+          "id": "rocks-piece-063",
+          "revision": "a3bae88e64cc39d2fb27e418278a0b696798b3f4e34abccab1586a352d4815df",
+          "source_mesh_index": 62,
+          "object_id": "e153e1f1-42ff-4651-9e66-bf6637acf8fc"
+        },
+        {
+          "id": "rocks-piece-081",
+          "revision": "2630f5931e72dccb8378c5b31a448dcf81fd1e6175959c81ddd0e640300e0364",
+          "source_mesh_index": 80,
+          "object_id": "2229738e-6c6f-4d98-9cac-ce733d157192"
+        },
+        {
+          "id": "rocks-piece-019",
+          "revision": "df80a81d7654bbe49e89933bb52a289224029e5eab8aed3445b66882068fc1df",
+          "source_mesh_index": 18,
+          "object_id": "97f7149f-66a3-4fd5-8990-03c3ec0c3ece"
+        },
+        {
+          "id": "rocks-piece-077",
+          "revision": "74442ab949ec7651597773eccd32bc7d78b2f371bc5a54571c7174598d5049c0",
+          "source_mesh_index": 76,
+          "object_id": "cd88d369-683e-4aa7-978b-b4ccd0c9c0dd"
+        },
+        {
+          "id": "rocks-piece-004",
+          "revision": "c48f5c8bbc8edc49295a3e7710e110d83b88b4180fb00a56fcb617ef20cc5c59",
+          "source_mesh_index": 3,
+          "object_id": "54d83478-2b5b-4d48-a00c-2a8da39abaab"
+        },
+        {
+          "id": "rocks-piece-071",
+          "revision": "6482864bdd4f4e5edf4a6bf3533ed4e6a658b40528bd12d539bf9ac390fdb0b1",
+          "source_mesh_index": 70,
+          "object_id": "bead5480-2ac4-45e5-b8ec-5ece5c174952"
+        },
+        {
+          "id": "rocks-piece-002",
+          "revision": "8c8f95cbb5fdbfe77587354069496c5799721a2db435a54476eda20f5f0a35ed",
+          "source_mesh_index": 1,
+          "object_id": "f585bd47-e166-4567-96c4-912bf24ca884"
+        },
+        {
+          "id": "rocks-piece-003",
+          "revision": "8fb8c6b6d7b767e797c03b02bbed43e83f2ec153a821f045e847b014ed313353",
+          "source_mesh_index": 2,
+          "object_id": "ba514cfd-2989-456f-903a-5fefd8b6191b"
+        },
+        {
+          "id": "rocks-piece-054",
+          "revision": "216807058fdaab96ff59f851bfe21dc053778ab1eb9502e0ce4251a139dc8a45",
+          "source_mesh_index": 53,
+          "object_id": "7f86b69a-aef3-4dfb-92ce-d45c87fcac6c"
+        },
+        {
+          "id": "rocks-piece-082",
+          "revision": "df47c63c038cca389c1ca4fe14294ec19570bb71b49d9bb6b275f352a82e6a2f",
+          "source_mesh_index": 81,
+          "object_id": "0a841f1f-1c5f-4803-b81b-594a493d49eb"
+        },
+        {
+          "id": "rocks-piece-010",
+          "revision": "005486e352fa4e204484a0858c452994ffe803d21b8da4abb6e94f492c61a572",
+          "source_mesh_index": 9,
+          "object_id": "c75b5311-71fc-4329-8015-902d979bbe7d"
+        },
+        {
+          "id": "rocks-piece-080",
+          "revision": "3bf5366b7ac2cd22c531f9d60984627afbb07e2f460a552ecde20d46d44f5cee",
+          "source_mesh_index": 79,
+          "object_id": "ada4535f-7d69-423e-963f-1f85c819dfa3"
+        },
+        {
+          "id": "rocks-piece-009",
+          "revision": "c6494915e1ee2e1e390a255a5112aa7dafc94e63128c52917960001191942649",
+          "source_mesh_index": 8,
+          "object_id": "21f43c01-a56d-4df9-ba0c-494b4f6442c7"
+        },
+        {
+          "id": "rocks-piece-043",
+          "revision": "2262fcb899dfae3ce9584d8dc74d5edfcdf4c5168358a004b4eeada2a2b9a301",
+          "source_mesh_index": 42,
+          "object_id": "2930ffc1-6a7a-46c3-ae4d-6513fedd4bbc"
+        },
+        {
+          "id": "rocks-piece-037",
+          "revision": "d7f0db5483aa8d544fd4a900084045fac09b057ee12755352038bc508e106846",
+          "source_mesh_index": 36,
+          "object_id": "bc3a14c4-d056-43f5-8b18-03d22e0bf3b8"
+        },
+        {
+          "id": "rocks-piece-070",
+          "revision": "ca0e9a2fc03147924592173d926b7db55562c8ceaf81d141dc0e092b40f46338",
+          "source_mesh_index": 69,
+          "object_id": "f0ed74d5-0025-4e66-8487-4a7f7bd48302"
+        },
+        {
+          "id": "rocks-piece-023",
+          "revision": "3485b375283e6050f28ecbc4a09883cdf2f07d320535321bc98f9585307e2962",
+          "source_mesh_index": 22,
+          "object_id": "e3dc4f17-9a9f-47e7-b13c-ed3de54b7fd6"
+        },
+        {
+          "id": "rocks-piece-074",
+          "revision": "e1a0eb14c6103dacf8f57b8d82f58aac73046b9de34b8353ee9c65be9f36718a",
+          "source_mesh_index": 73,
+          "object_id": "22da530e-6adf-4c84-b5f9-8cc17b0de36c"
+        },
+        {
+          "id": "rocks-piece-067",
+          "revision": "3af9cace390eed8f8895fde25cdbbca1701524bdd31de3f3aece6ade19292a87",
+          "source_mesh_index": 66,
+          "object_id": "a6fcf5c7-97fe-435d-986b-3aaca6a11a55"
+        },
+        {
+          "id": "rocks-piece-061",
+          "revision": "5fd0a1601e47037f920f090fcd2132864c5d25498777228435db7e3ebe183788",
+          "source_mesh_index": 60,
+          "object_id": "6ada1837-fc8e-4912-99e4-18801b95db10"
+        },
+        {
+          "id": "rocks-piece-044",
+          "revision": "207399089adcd70af105001486cf69328ad371a7af58df3db17daf9cffa3eafb",
+          "source_mesh_index": 43,
+          "object_id": "653a2bcd-c264-4ba6-8276-d2e1257d7a5e"
+        },
+        {
+          "id": "rocks-piece-007",
+          "revision": "070be1d5f9e104e52b7a7f83e1acd2d826c5cf1ec56afd7d9fb4e82517591943",
+          "source_mesh_index": 6,
+          "object_id": "8adb2874-46d9-4466-b0c8-5432f86a6fee"
+        },
+        {
+          "id": "rocks-piece-006",
+          "revision": "fe34ec473f07bef10ed75ac64df1a9c880b34da7cf25ca6137a894e5ff0f697f",
+          "source_mesh_index": 5,
+          "object_id": "1168170d-ec7c-4ac5-b2ca-66f8ec3f396e"
+        },
+        {
+          "id": "rocks-piece-001",
+          "revision": "d229d84fb8db048dd0d157755d4b76cf0326799aef15fe96c2445ddc171da77d",
+          "source_mesh_index": 0,
+          "object_id": "b148b6c4-17d4-4397-a5a8-03940279fb09"
+        },
+        {
+          "id": "rocks-piece-057",
+          "revision": "146a4fbaaa86e02de7d73c0c4f374d21c4ee8a2675d0140e53073f5c845957a6",
+          "source_mesh_index": 56,
+          "object_id": "33de61d8-9069-43ef-954a-14c625b25591"
+        },
+        {
+          "id": "rocks-piece-060",
+          "revision": "cf7f4408552e1b88b809d384d36ad2640f58bafdf46eca20af827907a60dcda5",
+          "source_mesh_index": 59,
+          "object_id": "9418c708-e070-4330-ab50-2e35037b47e6"
+        },
+        {
+          "id": "rocks-piece-026",
+          "revision": "50835c642deed8ad3d7a54e3e9dd413c35b5d2ec7ce1bcbc91cb41fcc4787c3f",
+          "source_mesh_index": 25,
+          "object_id": "42e3e1d5-11ce-4e2f-814f-e058a7986289"
+        },
+        {
+          "id": "rocks-piece-041",
+          "revision": "6030ca201277efd84f4171c98c62d53febdd09f8e8638e9a9a3fd0376609518a",
+          "source_mesh_index": 40,
+          "object_id": "915d4681-7d71-4c73-9b67-09d90e19d8be"
+        },
+        {
+          "id": "rocks-piece-053",
+          "revision": "1f97def4374080a76e081cf070731fee12ec2db62e088e78390b43c9abe22bf4",
+          "source_mesh_index": 52,
+          "object_id": "3bfe543b-262b-409e-93ad-9ecc449a2220"
+        },
+        {
+          "id": "rocks-piece-042",
+          "revision": "edb99a1178c572fa8cf1dd008d435a22d4d4f4cc21316e21fa57e13e7c0986fe",
+          "source_mesh_index": 41,
+          "object_id": "00bf8133-beb5-4ca6-a8f4-3be2af6e4031"
+        },
+        {
+          "id": "rocks-piece-062",
+          "revision": "d80e021765ff3ba79390365c7dd618d08c50d0a817ea97b9c51ab5108d5c0c53",
+          "source_mesh_index": 61,
+          "object_id": "6f61f546-5b18-4c26-9dde-054c2abac1f8"
+        },
+        {
+          "id": "rocks-piece-027",
+          "revision": "0d40d98b118ec781b0c2129fc1bbcc49518ba8682545796607ccdca4b79c3af1",
+          "source_mesh_index": 26,
+          "object_id": "6dd5f616-00f6-42cd-953c-b173d2f625fc"
+        },
+        {
+          "id": "rocks-piece-012",
+          "revision": "400cc35558d608f9eff86202034bfc058c6d247521a9f601a33c5c97b8d13498",
+          "source_mesh_index": 11,
+          "object_id": "cff9cd4c-cf71-49fd-b328-8a368b771f1e"
+        },
+        {
+          "id": "rocks-piece-011",
+          "revision": "f599e6a235939348edf060945e1f51c359095447d937b335e77c583fa049bc56",
+          "source_mesh_index": 10,
+          "object_id": "d4c97467-019e-429e-9f1f-77595ff9c625"
+        },
+        {
+          "id": "rocks-piece-075",
+          "revision": "5f33d1a2d1714da0199c9ec39eb21ee2256955a68fa0181d8b5e21b8c19944ef",
+          "source_mesh_index": 74,
+          "object_id": "db49ae77-41a1-4a84-a800-bf3e23751bf8"
+        },
+        {
+          "id": "rocks-piece-018",
+          "revision": "da4ed998bb362e78b27ff09e27db81d6d6e74d6b9b84d9070546ab1940501cbb",
+          "source_mesh_index": 17,
+          "object_id": "813835a5-14c4-47b5-816d-ffa32ad01f49"
+        },
+        {
+          "id": "rocks-piece-032",
+          "revision": "ac640f4d54de79e329ff4520182ec2bb3f6495ae3e8098d1c139cbad8012ab94",
+          "source_mesh_index": 31,
+          "object_id": "abd5be56-5595-4963-acb8-fd2061cd3d30"
+        },
+        {
+          "id": "rocks-piece-022",
+          "revision": "8d49f042659809ff86e0efb5192a6d8bb30d536f3bb34d5210cd31caf2e5a0f8",
+          "source_mesh_index": 21,
+          "object_id": "755fdf1b-0804-4d15-a53a-ef6079b9de63"
+        },
+        {
+          "id": "rocks-piece-025",
+          "revision": "f458bb88e795c6078f62617904ca1f7ef72b268742f894a7c77037461884a507",
+          "source_mesh_index": 24,
+          "object_id": "10a4d8a9-0c85-4014-bf50-b6c090269257"
+        },
+        {
+          "id": "rocks-piece-066",
+          "revision": "55e01356ce27897af8469229144116bf28df68dcb77f6984e6c973065bf3ebc1",
+          "source_mesh_index": 65,
+          "object_id": "beec585e-0d33-4e0d-ba4e-0615b9a48819"
+        },
+        {
+          "id": "rocks-piece-031",
+          "revision": "d5b62e41847e9fb559cd62b60af046fb8ff7c0235ae85e7e3558d76afea1a254",
+          "source_mesh_index": 30,
+          "object_id": "1735b9bc-8267-4a03-ac4e-d24ee194c813"
+        },
+        {
+          "id": "rocks-piece-016",
+          "revision": "65c0e407b93abad9b01c1bb952b8641e5fa7db28da867eaa5c85c5e22e9b84c4",
+          "source_mesh_index": 15,
+          "object_id": "f859c2cd-5091-406c-b1b8-5fed092bc195"
+        },
+        {
+          "id": "rocks-piece-050",
+          "revision": "321010f80c223227f65a4d0c33ccb2dc873186dfcc14aa484db711997fb51bc6",
+          "source_mesh_index": 49,
+          "object_id": "573cfac7-8a99-459a-af62-3f08a6163c46"
+        },
+        {
+          "id": "rocks-piece-084",
+          "revision": "f7aaaeec170d87cd0c9b4d21b37f3033c040e26677434281446a7bdc5e87ee96",
+          "source_mesh_index": 83,
+          "object_id": "1309c3e9-558e-4329-a0e7-69881eb093fa"
+        },
+        {
+          "id": "rocks-piece-021",
+          "revision": "b7863ece8906076eeb4335a9846025dc8325a0de812836056bd8a52258e0c5cb",
+          "source_mesh_index": 20,
+          "object_id": "6ed87169-f17b-4f24-8a2e-0223050294bb"
+        },
+        {
+          "id": "rocks-piece-013",
+          "revision": "2d22e7d426ac18739985b2187b1898e513f4d6e4ccf407c6752dd7bded9ada5e",
+          "source_mesh_index": 12,
+          "object_id": "272c8ccc-b68d-4c72-862f-80683ce65514"
+        },
+        {
+          "id": "rocks-piece-014",
+          "revision": "597af5c405da822932cd7313c64ca93dd44004ae480757caf25956c948aef905",
+          "source_mesh_index": 13,
+          "object_id": "2eb80910-8ce8-4935-9d94-de34ad64d486"
+        },
+        {
+          "id": "rocks-piece-029",
+          "revision": "7d7729937cd5d723731c4a4ac19b86122c10b4b8a9745c748ced5a704d5c3afb",
+          "source_mesh_index": 28,
+          "object_id": "8b6037fe-1f69-437a-aa8b-4eb8adef0c6d"
+        },
+        {
+          "id": "rocks-piece-049",
+          "revision": "fb31a9b35dca1ebe7212cdc1dda0339e0af1ce67fada5e5bc8ea034a25c0ef64",
+          "source_mesh_index": 48,
+          "object_id": "513db7b5-c169-4c1d-a574-964c0e1c3101"
+        },
+        {
+          "id": "rocks-piece-035",
+          "revision": "1c9a39bec7c672ecbd00b5665b76ad420d0193ac94cf688e8bec8c4962e01965",
+          "source_mesh_index": 34,
+          "object_id": "1b677ac6-46d5-4015-a21a-9e77e29e96ab"
+        },
+        {
+          "id": "rocks-piece-015",
+          "revision": "bc174f6e6c060cf809a659c4bf07dc837385d384b92a963015cc590a66b3c934",
+          "source_mesh_index": 14,
+          "object_id": "edb58761-1460-44d5-a1b8-aa5f00d1ffaa"
+        }
+      ],
+      "burial_fraction_range": [0.25, 0.75]
+    }
+  },
+  "rules": {
+    "random_source": {
+      "algorithm": "lcg32-v1",
+      "seed": 941723,
+      "multiplier": 1664525,
+      "increment": 1013904223,
+      "modulus": 4294967296,
+      "scope": "Revision-8 insect positions followed by grass candidates; retained insect headings and behavior come from the realization."
+    },
+    "insect_placement": {
+      "count_per_metre": 1,
+      "x_range_m": [-0.23, 0.23],
+      "z_offset_in_section_m": [0.25, 0.7],
+      "preserve_existing_headings_and_motion_on_material_swap": true
+    },
+    "insect_motion": {
+      "algorithm": "facing-patrol-v1",
+      "distance_m_range": [0.025, 0.04],
+      "speed_mps_per_component_second_range": [0.0056, 0.008],
+      "turn_degrees_at_endpoint": 180,
+      "remain_in_original_metre_section": true
+    },
+    "component_animation_speed": 0.125,
+    "protected_openings": {
+      "shape": "xz-ellipse",
+      "radius_x_m": 0.065,
+      "radius_z_m": 0.105,
+      "center": "Midpoint between the insect's initial position and forward patrol endpoint",
+      "priority": "Keep dense grass clear of moving insects. Sparse grass may partially screen them.",
+      "scope": "Dense yard-grass only; sparse animated-grass may overlap insect patrols."
+    },
+    "grass_distribution": {
+      "method": "coverage-guided randomized explicit clumps",
+      "yaw_radians_range": [0, 6.283185307179586],
+      "candidate_limit": 22000,
+      "instance_budget": 420,
+      "coverage_goal_fraction": 0.67,
+      "accepted_total_coverage_fraction_range": [0.6, 0.7],
+      "reference_minimum_per_metre_fraction": 0.6,
+      "coverage_grid_step_m": 0.02,
+      "coverage_grid_xz_cells": [50, 1000],
+      "minimum_candidate_projected_cells": 35,
+      "minimum_new_coverage_fraction_of_candidate": 0.3,
+      "attempt_selection": "Every third attempt selects the first least-covered metre; others select a random metre. Independently sample yaw, horizontal size, height and position, keeping rotated footprints inside the floor.",
+      "exclusion": "Reject candidates whose projected leaf triangles cover protected opening samples.",
+      "final_clearance": "Remove clumps blocking overhead insect-body rays at patrol start, midpoint or end, then recompute coverage.",
+      "scope": "Original yard-grass cover only; edge accents have their own budget."
+    },
+    "transform_rounding_decimal_places": 9,
+    "dependency_order": [
+      "resolve_and_calibrate_roles",
+      "floor",
+      "insect_anchors_and_behavior",
+      "protected_openings",
+      "grass_coverage",
+      "edge_softening",
+      "sparse_patrol_shelter",
+      "central_buried_rocks",
+      "moving_visibility_and_bounds",
+      "visual_review",
+      "revision_checked_save"
+    ],
+    "edge_softening": {
+      "algorithm_description": "patch-edge-feather-v1",
+      "random_source": {
+        "algorithm": "lcg32-v1",
+        "seed": 282706
+      },
+      "scope": "Historical generation of the retained 120 edge anchors. Current heights match nearest original grass; sparse shelter is allowed in patrol regions.",
+      "target_instances": 120,
+      "target_per_selected_patch_section": 6,
+      "attempts_per_section": 1000,
+      "overall_attempt_limit": 20000,
+      "section_selection": "Lowest accepted count, then lowest attempted count, then lowest section index; sections derive from original patch anchors.",
+      "draw_order": [
+        "patch_index",
+        "side_index",
+        "side_fraction",
+        "outward_offset",
+        "planar_scale",
+        "yaw",
+        "vertical_scale"
+      ],
+      "side_fraction_range": [-0.5, 0.5],
+      "outward_offset_m_range": [-0.025, 0.025],
+      "planar_scale_range": [0.028, 0.046],
+      "minimum_center_spacing_m": 0.13,
+      "animated_envelope_frames": 24,
+      "animated_clip_duration_seconds": 9.966666221618652,
+      "native_animated_bounds": {
+        "min": [
+          -1.7337258727508544, -0.004729170432000149, -1.9690254965166811
+        ],
+        "max": [1.7441348380438675, 1.218972554090252, 1.974383656800583]
+      },
+      "original_coverage_window_cells": [5, 5],
+      "original_window_coverage_fraction_range": [0.12, 0.8],
+      "minimum_original_overlap_cells": 1,
+      "minimum_new_cells": 5,
+      "new_coverage_fraction_of_candidate_range": [0.2, 0.85],
+      "preserve_floor_bounds": true,
+      "transform_rounding_decimal_places": 9,
+      "historical_anchor_opening_guard_radii_m": [0.075, 0.115],
+      "current_object_animation_speed": 1,
+      "height_rule": "Match nearest original grass patch: target height = 0.5173413 * original.scale[1], sparse.scale[1] = target / 1.2169935."
+    },
+    "sparse_patrol_shelter": {
+      "random_source": {
+        "algorithm": "lcg32-v1",
+        "seed": 174284
+      },
+      "count_per_patrol": 1,
+      "total": 20,
+      "position": "Exact patrol midpoint; existing insect snapshot order",
+      "draw_order": ["yaw", "planar_scale"],
+      "planar_scale_range": [0.028, 0.04],
+      "yaw_radians_range": [0, 6.283185307179586],
+      "height_rule": "Match nearest original grass patch: target height = 0.5173413 * original.scale[1], sparse.scale[1] = target / 1.2169935.",
+      "object_animation_speed": 1,
+      "patrol_exclusion": false,
+      "scope": "Add to sparse edge-softening role; preserve original grass, edge anchors, insects and floor",
+      "transform_rounding_decimal_places": 9
+    },
+    "unique_rock_scatter_historical": {
+      "algorithm_description": "unique-rock-scatter-v1",
+      "random_source": {
+        "algorithm": "lcg32-v1",
+        "seed": 841025
+      },
+      "count": 84,
+      "selection": "Each source mesh once; Fisher-Yates shuffle without replacement",
+      "section_distribution": {
+        "base_per_metre": 4,
+        "extra_distinct_sections": 4,
+        "shuffle_order": [
+          "84 source pieces",
+          "20 section IDs, take first four",
+          "84 slots"
+        ]
+      },
+      "modes": {
+        "open": 42,
+        "between_clumps": 42
+      },
+      "target_horizontal_diameter_m_range": [0.01, 0.025],
+      "uniform_scale": true,
+      "yaw_radians_range": [0, 6.283185307179586],
+      "object_draw_order": ["diameter", "yaw", "position attempts: X then Z"],
+      "position_attempt_limit_per_piece": 3000,
+      "classification_grid_m": 0.01,
+      "classification_clear_window": "ceil((scaled horizontal bounding radius + 0.005) / grid step) cells each side",
+      "between_clump_neighbor_circle_m": 0.08,
+      "between_clump_occupied_compass_samples_range": [2, 7],
+      "minimum_rock_surface_spacing_m": 0.005,
+      "minimum_patrol_clearance_beyond_rock_radius_m": 0.01,
+      "floor_y_m": -0.005,
+      "burial_fraction_of_height": 0.08,
+      "transform_rounding_decimal_places": 9,
+      "preserve_existing_objects": true
+    },
+    "central_buried_rocks": {
+      "algorithm_description": "central-buried-rocks-v1",
+      "random_source": {
+        "algorithm": "lcg32-v1",
+        "seed": 150216
+      },
+      "count": 84,
+      "preserve_ids_assets_yaw": true,
+      "baseline_scene_revision": 15,
+      "scale_multiplier": 2,
+      "apply_scale_multiplier_once": true,
+      "central_x_range_m": [-0.25, 0.25],
+      "central_count_per_metre": 3,
+      "central_total": 60,
+      "outer_absolute_x_range_m": [0.25, 0.43],
+      "outer_total": 24,
+      "preserve_previous_metre_assignments": true,
+      "burial_fraction_range": [0.25, 0.75],
+      "burial_draw_before_position_attempts": true,
+      "classification_grid_m": 0.01,
+      "dense_center_must_be_clear": true,
+      "dense_3x3_maximum_covered_cells": 3,
+      "neighbor_circle_m": 0.08,
+      "minimum_occupied_compass_samples": 3,
+      "minimum_pair_surface_clearance_m": 0.005,
+      "minimum_patrol_clearance_beyond_radius_m": 0.01,
+      "position_attempt_limit_per_piece": 12000,
+      "floor_y_m": -0.005,
+      "grounding_rule": "floor_y - burial_fraction * native_height * doubled_scale_y",
+      "position_rounding_decimal_places": 9
+    }
+  },
+  "observed_results": {
+    "saved_revision": 8,
+    "grass_instances": 420,
+    "walking_insects": 20,
+    "projected_grass_coverage_fraction": 0.65072,
+    "projected_coverage_per_metre_min_max": [0.608, 0.7072],
+    "coverage_stop_reason": "Instance budget reached before the 0.67 goal; accepted majority-coverage range met.",
+    "static_clearance_rays": 300,
+    "animated_visibility_rays": 300,
+    "animated_visibility_real_seconds": [0, 10, 20, 30, 40],
+    "blocked_animated_visibility_rays": 0,
+    "insect_geometry_outside_floor_or_own_section": 0,
+    "effective_insect_speed_mps_min_max": [0.000702993, 0.00097579],
+    "exact_save_reload_verified": true,
+    "visual_review": "Textured middle-section and interior-opening views inspected; visibility is not guaranteed from every camera angle.",
+    "scope": "Original revision-8 layout retained in current base; see edge_softening_results for additions."
+  },
+  "minor_edit_policy": {
+    "preserve_unaffected_roles_and_ids": true,
+    "read_current_component_revision_and_catalog_pins": true,
+    "check_blueprint_observed_revision_before_edit": true,
+    "regenerate_grass_if_openings_or_coverage_or_grass_material_change": true,
+    "preserve_insect_behavior_when_only_grass_changes": true,
+    "update_description_and_realization_after_accepted_changes": true,
+    "sparse_grass_may_overlap_insect_patrols": true,
+    "sparse_grass_clip_clock_independent_of_component": true
+  },
+  "implementation_status": "Readable Markdown is stored and editable with the component; structured blueprint ingestion and AI editing remain future work.",
+  "description_field": "construction_description",
+  "edge_softening_results": {
+    "saved_revision": 13,
+    "original_grass_instances": 420,
+    "edge_grass_instances": 120,
+    "total_grass_instances": 540,
+    "walking_insects": 20,
+    "projected_foliage_coverage_fraction": 0.66642,
+    "verification_document": "grass-strip.edge-softening.json"
+  },
+  "sparse_shelter_results": {
+    "saved_revision": 14,
+    "original_grass_instances": 420,
+    "sparse_grass_instances": 140,
+    "patrol_shelter_instances": 20,
+    "walking_insects": 20,
+    "target_sparse_height_range_m": [0.2328250016654505, 0.283924744193142],
+    "object_animation_speed": 1,
+    "component_animation_speed": 0.125,
+    "verification_document": "grass-strip.sparse-shelter.json",
+    "projected_coverage_fraction": null,
+    "coverage_note": "Revision-14 coverage not remeasured; revision-13 measurement is historical."
+  },
+  "unique_rock_results": {
+    "saved_revision": 15,
+    "rocks": 84,
+    "distinct_source_meshes": 84,
+    "diameter_range_m": [0.01004193229245699, 0.024592722488491956],
+    "height_above_floor_range_m": [0.005034328089751251, 0.022557304504688895],
+    "open_ground": 42,
+    "between_clumps": 42,
+    "central_half_width": 15,
+    "minimum_patrol_clearance_m": 0.032370968643416,
+    "minimum_pair_surface_clearance_m": 0.017692191015510558,
+    "verification_document": "grass-strip.rocks.json"
+  },
+  "buried_rock_results": {
+    "saved_revision": 16,
+    "rocks": 84,
+    "central_half_width": 60,
+    "previous_central_half_width": 15,
+    "diameter_range_m": [0.020083864584914124, 0.04918544497698391],
+    "burial_fraction_range": [0.2649434897872869, 0.7439452447394095],
+    "height_above_floor_range_m": [0.004337432786249271, 0.029731051009377788],
+    "minimum_patrol_clearance_m": 0.019153420455476675,
+    "minimum_pair_surface_clearance_m": 0.009047279538370812,
+    "verification_document": "grass-strip.buried-rocks.json"
+  },
+  "grass_grounding": {
+    "saved_revision": 17,
+    "floor_y_m": -0.005,
+    "anchor_y_m": -0.015,
+    "minimum_required_soil_overlap_m": 0.005,
+    "verification_document": "grass-strip.grounding.json",
+    "replacement_rule": "Recalibrate root anchor and sample wind; highest animated base must stay at least 0.005 m below the dirt plane."
+  }
+}
