@@ -1,5 +1,8 @@
 # Application database migrations
 
+`024_component-documents.sql` adds authored component documents and their save
+revisions. It is independent of published assets and preserves existing rows.
+
 `019_environment-assets.sql` defines the asset registry's identity, attribution,
 model references, source checksums and history. It was moved unchanged from the
 root migration directory; existing history/checksums remain valid. Apply through

@@ -1,5 +1,9 @@
 # fracto-data-server
 
+Authored component persistence is in [components/README.md](components/README.md):
+bounded save/load/list APIs, strict shared document validation and atomic expected-
+revision writes. Migration 024 adds its independent document table.
+
 The environment asset database registry, SQL and migration 019 are owned here;
 see [environment/README.md](environment/README.md). The asset service registers
 allowlisted provenance through `PUT /internal/environment-assets/:id`; this

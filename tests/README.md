@@ -1,5 +1,17 @@
 # Data service tests
 
+`node --test tests/component_documents.test.js` covers component authorization,
+origin/allowlist validation, conflict/error contracts and revision-bound SQL.
+Set `FRACTO_TEST_COMPONENT_DATABASE=1` to exercise real save/reopen/update/conflict
+behavior in a connection-local temporary table copied from migration 024.
+This includes eight representative construction documents with exact transform
+regeneration after reload and stale-save rejection, in a separate temporary
+evaluation table. No persistent component rows are created by that test.
+`FRACTO_TEST_COMPONENT_LIVE_URL=http://127.0.0.1:3106/api/component-documents`
+also exercises the deployed dev UI proxy and real persistence in an auth-disabled
+lab installation. It deletes only its own UUID/name/revision-constrained fixture
+in a finally block; it does not edit existing documents or change auth policy.
+
 `startup_configuration.test.js` runs the declared service configuration check
 in disposable checkouts with no SDK or database. It reproduces the lab failure
 where the root MySQL config exists but the service-owned file is missing, checks
