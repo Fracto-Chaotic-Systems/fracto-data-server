@@ -1,5 +1,9 @@
 # Data service tests
 
+`component_blueprint_restore.test.js` checks explicit missing-record creation,
+snapshot hash binding, exact reopen, retention of existing lab edits, rejection
+of proxy HTML/database failures and concurrent-create conflicts without retries.
+
 `node --test tests/component_documents.test.js` covers component authorization,
 origin/allowlist validation, conflict/error contracts and revision-bound SQL.
 Set `FRACTO_TEST_COMPONENT_DATABASE=1` to exercise real save/reopen/update/conflict

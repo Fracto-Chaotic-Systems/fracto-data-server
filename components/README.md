@@ -1,5 +1,21 @@
 # Component document persistence
 
+`restore_blueprint.js` explicitly imports a checked-in accepted snapshot through
+the component HTTP API for another installation. It verifies the companion's
+canonical hash, creates only after a JSON `component_not_found` response with
+`expected_revision:0`, checks exact save/reopen, and retains every existing record
+without edits. HTML proxy errors, database failures and conflicts fail closed;
+there is no write retry. It does not need database credentials. Example:
+
+```powershell
+node components/restore_blueprint.js --blueprint grass-strip --endpoint http://LAB-HOST:3000/api/data/component-documents
+```
+
+The destination receives its own revision 1, not the source installation's save
+counter. Rebase authored variants explicitly before previewing them against that
+new destination revision. Runtime background playback uses the base document.
+This is an explicit restore, not an automatic startup seed or publishing system.
+
 `ground_grass_strip.js` records the accepted revision-16 → 17 grounding edit.
 It reads the live scene and description, verifies the pinned blueprint hash,
 backs up the original scene, lowers only grass Y anchors, saves with an expected
