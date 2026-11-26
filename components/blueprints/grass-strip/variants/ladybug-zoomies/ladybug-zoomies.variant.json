@@ -2,7 +2,7 @@
   "format": "fracto.component-construction-variant",
   "format_version": 1,
   "variant_key": "ladybug-zoomies",
-  "variant_revision": 6,
+  "variant_revision": 7,
   "name": "Ladybug zoomies",
   "description_document": "README.md",
   "base": {
@@ -16,6 +16,11 @@
     "canonical_scene_sha256": "e734fc425c2d1b8438510e10783af8b37c766c2e8fa49712f83aaa451d83bb5d"
   },
   "overrides": [
+    {
+      "target": { "role": "walking_insects", "property": "motion.algorithm" },
+      "operation": "replace",
+      "value": "facing-wander-v1"
+    },
     {
       "target": {
         "role": "walking_insects",
@@ -37,8 +42,9 @@
     "inherit_omitted_properties": true,
     "apply_once_to_base": true,
     "scope": "Every member of the walking_insects role in the referenced base.",
-    "walk_clip_playback_rate": "Semantic clip-rate multiplier relative to the base walk clip, under the inherited component clock; not an existing SDK scene field."
+    "walk_clip_playback_rate": "Semantic clip-rate multiplier relative to the base walk clip, under the inherited component clock; not an existing SDK scene field.",
+    "facing_wander": "Each insect follows a deterministic ID-seeded varied-heading circuit inside an ellipse spanning the original forward patrol distance, with lateral radius one quarter of that distance. Face the current segment, retain ground height and speed, and preserve bounded placement."
   },
   "status": "authored_delta",
-  "implementation_status": "Saved delta only. The component stage previews the supported patrol-speed and walk-clip-rate overrides without saving a full scene or modifying the base."
+  "implementation_status": "Saved delta only. The component stage and game playback resolve the varied-heading motion algorithm, speed and walk-clip-rate overrides without modifying the base."
 }

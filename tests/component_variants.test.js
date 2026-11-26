@@ -42,6 +42,11 @@ test("variant list associates authored deltas only with their base component", a
         role_groups: blueprint.realization.role_groups,
         overrides: [
           {
+            target: { role: "walking_insects", property: "motion.algorithm" },
+            operation: "replace",
+            value: "facing-wander-v1",
+          },
+          {
             target: { role: "walking_insects", property: "motion.speed_mps" },
             operation: "multiply",
             value: 8,

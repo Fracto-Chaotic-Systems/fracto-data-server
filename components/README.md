@@ -55,7 +55,10 @@ JSON: finite 0–10, omitted meaning 1×, zero pausing clips. Legacy documents k
 their original fields and hashes; no backfill or table migration is needed.
 
 Objects may also persist optional SDK-validated `motion` records using
-`facing-patrol-v1`, a positive bounded speed and distance. Motion is authored
+`facing-patrol-v1` or `facing-wander-v1`, a positive bounded speed and distance. The
+second algorithm follows deterministic varied-heading segments within a local
+ellipse and is selected by the zoomies delta without changing its base scene.
+Motion is authored
 content carried through save/load and hashes; rendered poses never overwrite
 base transforms in SQL. Existing JSON storage requires no migration.
 

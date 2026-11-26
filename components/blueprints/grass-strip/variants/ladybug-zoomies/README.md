@@ -1,18 +1,19 @@
 # Ladybug zoomies
 
-Variant `ladybug-zoomies`, revision **6**.
+Variant `ladybug-zoomies`, revision **7**.
 
 ## Base
 
 Inherit all properties of the [grass strip](../../grass-strip.md), blueprint
 revision **7**, component `0bb37175-0459-49bf-b5fc-f918bf090563`, saved scene
 revision **17**. The [delta record](ladybug-zoomies.variant.json) pins the
-base scene hash and contains only the two overrides below.
+base scene hash and contains only the three overrides below.
 
 ## Changes
 
 | Target role       | Property                               | Operation           | Value |
 | ----------------- | -------------------------------------- | ------------------- | ----- |
+| `walking_insects` | Motion route (`motion.algorithm`) | Replace | `facing-wander-v1` |
 | `walking_insects` | Translation speed (`motion.speed_mps`) | Multiply base value | 8×    |
 | `walking_insects` | Walk-clip playback rate                | Multiply base value | 8×    |
 
@@ -20,6 +21,14 @@ Apply both multipliers once to each insect's base value, under the inherited
 component clock. Matching factors retain the base relationship between distance
 traveled and walk cycles. No placement regeneration is requested. All omitted
 properties inherit from the pinned base.
+
+The motion replacement adds heading variation to the same local patrol area.
+Each insect's ID seeds a repeatable circuit of angled segments in an ellipse:
+forward extent is the inherited patrol distance and lateral radius is one quarter
+of that distance. The bug faces each new segment and moves at its zoomies speed.
+Positions remain continuous, height stays fixed, and the circuit cannot drift
+away from its grass shelter. Separate IDs produce distinct paths. No base scene
+or material file is edited.
 
 ## Verification and realization
 
@@ -34,7 +43,7 @@ patrol bounds, facing, visibility and walk timing over complete out-and-back
 cycles. The inherited acceptance criteria remain in force.
 
 Only this delta is saved. No full scene copy or live component edit was made.
-The stage now previews these two overrides with insect-specific clip rates.
+The stage previews the route override and both rate overrides with insect-specific clip rates.
 Select Ladybug zoomies to preview it; click it again to restore the base.
 `walk_clip.playback_rate` names a semantic property resolved to renderer options,
 not a persisted SDK scene field. The base scene and delta remain separate.
@@ -65,3 +74,14 @@ buried rocks; vegetation and rock settings are unchanged by zoomies.
 Revision 6 rebases the unchanged two 8× insect overrides onto base scene 17 /
 blueprint 7. Both grasses inherit the deeper ground contact; insect rates,
 placements and rock settings remain unchanged by this variant.
+
+Revision 7 adds the `motion.algorithm` replacement above, retaining both 8× rate
+changes and the same scene-17 base. Streaming uses the full sideways motion
+envelope so an insect can change heading near a section boundary without vanishing.
+
+Live revision-7 verification sampled all 20 insects over 120 seconds at 0.1-second
+steps against the published scene-17 material calibration. Every bug used at
+least 13 headings, stayed on the floor and inside its protected grass opening,
+and retained constant height. Conservative silhouette/rock circles kept at least
+8.6mm clearance. SDK tests separately verify continuous positions across corners
+and circuit seams, forward-facing velocity, authored speed and deterministic seeks.
