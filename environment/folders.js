@@ -3,6 +3,7 @@ import {
   folder_contains,
   validate_model_management,
 } from "@fracto/sdk/FractoModelManagement.js";
+import { folder_move_entry } from "../components/history.js";
 
 const fail = (code) => {
   throw new Error(code);
@@ -26,7 +27,7 @@ export async function manage_model_folder(pool, input) {
     const [documents] =
       body.category === "component"
         ? await db.execute(
-            "SELECT document_id, folder_path FROM component_documents WHERE folder_path <> '' FOR UPDATE",
+            "SELECT document_id, folder_path, revision FROM component_documents WHERE folder_path <> '' FOR UPDATE",
           )
         : [[]];
     const paths = [
@@ -81,16 +82,21 @@ export async function manage_model_folder(pool, input) {
         );
       for (const row of documents.filter((row) =>
         folder_contains(body.folder_path, row.folder_path),
-      ))
+      )) {
+        const target = normalize_model_folder(
+          body.target + row.folder_path.slice(body.folder_path.length),
+        );
         await db.execute(
           "UPDATE component_documents SET folder_path=? WHERE document_id=?",
-          [
-            normalize_model_folder(
-              body.target + row.folder_path.slice(body.folder_path.length),
-            ),
-            row.document_id,
-          ],
+          [target, row.document_id],
         );
+        const entry = folder_move_entry(target);
+        // Same transaction: the move and its history entry commit together.
+        await db.execute(
+          "INSERT INTO component_document_history (document_id, revision, action, description) VALUES (?,?,?,?)",
+          [row.document_id, row.revision ?? 0, entry.action, entry.description],
+        );
+      }
     }
     await db.commit();
     return {

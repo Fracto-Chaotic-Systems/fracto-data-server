@@ -90,13 +90,20 @@ test("documents list their folder; legacy rows without one are at the root", asy
 });
 
 test("PUT /:id/folder validates the body and maps folder errors", async (t) => {
-  const moves = [];
+  const moves = [],
+    histories = [];
   const app = express();
   app.use(
     "/documents",
     create_component_router({
       authorize: (req, res, next) => next(),
       database: {
+        async load() {
+          return { revision: 4 };
+        },
+        async record_history(id, revision, entry) {
+          histories.push([id, revision, entry]);
+        },
         async move(id, folder_path) {
           if (folder_path === "../x") throw new Error("invalid_folder");
           if (folder_path === "missing") throw new Error("component_not_found");
@@ -142,6 +149,13 @@ test("PUT /:id/folder validates the body and maps folder errors", async (t) => {
     403,
   );
   assert.deepEqual(moves, [[id, "Plants"]]);
+  assert.deepEqual(histories, [
+    [
+      id,
+      4,
+      { action: "move-folder", description: 'Moved to the folder "Plants".' },
+    ],
+  ]);
 });
 
 test("component folder listing includes folders that hold authored documents", async () => {
@@ -176,12 +190,7 @@ function folder_pool({ folders = [], assets = [], documents = [] }) {
         return [folders.map((folder_path) => ({ folder_path }))];
       if (sql.startsWith("SELECT folder_path FROM environment_assets"))
         return [assets.map((folder_path) => ({ folder_path }))];
-      if (
-        sql.startsWith(
-          "SELECT document_id, folder_path FROM component_documents",
-        )
-      )
-        return [documents];
+      if (sql.startsWith("SELECT document_id, folder_path")) return [documents];
       return [{ affectedRows: 1 }];
     },
     beginTransaction: async () => {},
@@ -242,6 +251,18 @@ test("renaming a component folder moves its documents in the same transaction", 
     ["Flora/Herbs", "d1"],
     ["Flora", "d2"],
   ]);
+  // Each moved document gets a history entry in the same transaction.
+  assert.deepEqual(
+    f.calls
+      .filter((call) =>
+        call.sql.startsWith("INSERT INTO component_document_history"),
+      )
+      .map((call) => [call.values[0], call.values[2], call.values[3]]),
+    [
+      ["d1", "move-folder", 'Moved to the folder "Flora/Herbs".'],
+      ["d2", "move-folder", 'Moved to the folder "Flora".'],
+    ],
+  );
   assert.equal(f.state().committed, true);
 });
 

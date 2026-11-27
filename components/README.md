@@ -99,6 +99,19 @@ personal-data remediation rule.
   logical folder (normalized like model folders; `""` is the root) and records the
   folder definition. Returns `{id,folder_path}`; invalid paths return 400
   `invalid_folder`, unknown documents 404. Does not change the document revision.
+- GET `/:id/history`: `{history:[{date,recorded_at,revision,action,description}]}`,
+  newest first, at most 200. Like a material record's history: actions are
+  `create-component`, `update-component` (the description summarizes added,
+  removed and changed placed objects, scatter rules and groups, and floor,
+  lighting, animation speed and construction document changes),
+  `rename-component` (a save that only renames), `move-folder` (direct moves,
+  and documents moved by a folder rename or move, recorded in that transaction)
+  and `history-start` (added by migration 026 for existing documents).
+  `components/history.js` builds the summaries; entries are recorded after a
+  successful change, and a history failure never fails the save. A save's
+  optional `notes` (the editor's labels for the edits since the last save, e.g.
+  "placed 30 × yard-grass") lead the description; a rename with notes is an
+  `update-component`.
 - GET `/:id/variants`: `{variants:[{key,name,revision,base,role_groups,overrides}]}`. Lists authored
   variant deltas from this service's `blueprints/<key>/variants/<variant-key>/`
   folders by base component ID. Each override contains `{target:{role,property},
@@ -111,7 +124,8 @@ operation,value}`. No query parameters. At most 100 variants, 100 overrides per
   `base` includes the component ID and pinned scene revision; `role_groups` maps
   blueprint roles to authored group IDs. The SDK uses these to resolve supported
   stage previews. This endpoint does not resolve scenes or change the base.
-- PUT `/:id`: exact body `{document,expected_revision}`; document id must match
+- PUT `/:id`: body `{document,expected_revision,notes?}`; `notes` is at most 20
+  non-empty strings of up to 200 characters without control characters; document id must match
   the path. Revision 0 inserts only; positive revisions atomically update only
   that revision. Response `{document,revision:expected_revision+1}`.
 

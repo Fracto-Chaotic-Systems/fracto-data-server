@@ -3,6 +3,11 @@
 `024_component-documents.sql` adds authored component documents and their save
 revisions. It is independent of published assets and preserves existing rows.
 
+`026_component-document-history.sql` adds `component_document_history` (one
+row per create, save, rename or folder move: document, revision, time, action,
+description) and starts it with one `history-start` entry per existing
+document. Apply before deploying component history.
+
 `025_component-document-folders.sql` adds each component document's logical
 `folder_path` (default empty: category root) and an index. Existing documents and
 revisions are unchanged. Apply before deploying component document folders.

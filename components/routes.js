@@ -7,12 +7,27 @@ import {
 } from "@fracto/sdk/FractoComponentDocument.js";
 import { create_component_database } from "./database.js";
 import { create_component_variants } from "./variants.js";
+import {
+  summarize_component_change,
+  folder_move_entry,
+  validate_edit_notes,
+} from "./history.js";
 
 export function create_component_router({
   database = create_component_database(),
   authorize = require_enabled_user_if_configured,
   list_variants = create_component_variants(),
+  log = console,
 } = {}) {
+  // History is recorded after a successful change; a history failure never
+  // fails the save itself.
+  const record = async (id, revision, entry) => {
+    try {
+      await database.record_history?.(id, revision, entry);
+    } catch (error) {
+      log.warn?.(`Component history not recorded for ${id}: ${error.message}`);
+    }
+  };
   const router = express.Router();
   router.use((req, res, next) => {
     res.set("Cache-Control", "no-store");
@@ -60,6 +75,15 @@ export function create_component_router({
     }),
   );
   router.get(
+    "/:id/history",
+    handle((req) => {
+      validate_component_id(req.params.id);
+      if (Object.keys(req.query).length)
+        throw new Error("invalid_component_document");
+      return database.history(req.params.id);
+    }),
+  );
+  router.get(
     "/:id",
     handle((req) => {
       validate_component_id(req.params.id);
@@ -68,7 +92,7 @@ export function create_component_router({
   );
   router.put(
     "/:id/folder",
-    handle((req) => {
+    handle(async (req) => {
       validate_component_id(req.params.id);
       if (
         !req.body ||
@@ -76,16 +100,25 @@ export function create_component_router({
         typeof req.body.folder_path !== "string"
       )
         throw new Error("invalid_component_document");
-      return database.move(req.params.id, req.body.folder_path);
+      const result = await database.move(req.params.id, req.body.folder_path);
+      const { revision } = await database.load(req.params.id);
+      await record(
+        req.params.id,
+        revision,
+        folder_move_entry(result.folder_path),
+      );
+      return result;
     }),
   );
   router.put(
     "/:id",
-    handle((req) => {
+    handle(async (req) => {
       validate_component_id(req.params.id);
       if (
         !req.body ||
-        Object.keys(req.body).length !== 2 ||
+        Object.keys(req.body).some(
+          (key) => !["document", "expected_revision", "notes"].includes(key),
+        ) ||
         !Object.hasOwn(req.body, "document") ||
         !Object.hasOwn(req.body, "expected_revision") ||
         !Number.isInteger(req.body.expected_revision) ||
@@ -96,7 +129,27 @@ export function create_component_router({
       const document = validate_component_document(req.body.document);
       if (document.id !== req.params.id)
         throw new Error("invalid_component_document");
-      return database.save(document, req.body.expected_revision);
+      // Optional editor labels for the edits since the last save.
+      const notes = validate_edit_notes(req.body.notes);
+      // The saved version being replaced, to summarize what changed.
+      const before = req.body.expected_revision
+        ? await database
+            .load(req.params.id)
+            .then((saved) =>
+              saved.revision === req.body.expected_revision
+                ? saved.document
+                : null,
+            )
+            .catch(() => null)
+        : null;
+      const saved = await database.save(document, req.body.expected_revision);
+      if (!req.body.expected_revision || before)
+        await record(
+          document.id,
+          saved.revision,
+          summarize_component_change(before, saved.document, notes),
+        );
+      return saved;
     }),
   );
   router.use((error, req, res, next) => {

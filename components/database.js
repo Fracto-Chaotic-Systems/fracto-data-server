@@ -106,6 +106,38 @@ export function create_component_database({
         );
       return { id, folder_path };
     },
+    /** Appends one history entry (best effort is the caller's choice). */
+    async record_history(id, revision, { action, description }) {
+      validate_component_id(id);
+      await (
+        await database()
+      ).execute(
+        "INSERT INTO component_document_history (document_id, revision, action, description) VALUES (?, ?, ?, ?)",
+        [id, revision, action, String(description).slice(0, 1000)],
+      );
+    },
+    /** Newest first, at most 200 entries: {date, recorded_at, revision, action, description}. */
+    async history(id) {
+      validate_component_id(id);
+      const [rows] = await (
+        await database()
+      ).execute(
+        "SELECT revision, recorded_at, action, description FROM component_document_history WHERE document_id = ? ORDER BY history_id DESC LIMIT 200",
+        [id],
+      );
+      return {
+        history: rows.map((row) => {
+          const recorded = new Date(row.recorded_at);
+          return {
+            date: recorded.toISOString().slice(0, 10),
+            recorded_at: recorded.toISOString(),
+            revision: row.revision,
+            action: row.action,
+            description: row.description,
+          };
+        }),
+      };
+    },
     async close() {
       if (pool) await (await pool).end();
       pool = null;

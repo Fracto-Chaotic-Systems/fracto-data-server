@@ -3,7 +3,8 @@
 Authored component persistence is in [components/README.md](components/README.md):
 bounded save/load/list APIs, strict shared document validation and atomic expected-
 revision writes. Migration 024 adds its independent document table; migration 025
-adds each document's logical folder in the component category's folder tree.
+adds each document's logical folder in the component category's folder tree;
+migration 026 adds the component change history.
 
 The environment asset database registry, SQL and migration 019 are owned here;
 see [environment/README.md](environment/README.md). The asset service registers
