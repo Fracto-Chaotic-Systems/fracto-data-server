@@ -254,3 +254,51 @@ test("material folders never read component documents", async () => {
   });
   assert.ok(!f.calls.some((call) => call.sql.includes("component_documents")));
 });
+
+test("moving a component folder to another parent moves its documents and subfolders", async () => {
+  const f = folder_pool({
+    folders: ["Plants", "Plants/Herbs", "Terrain"],
+    documents: [
+      { document_id: "d1", folder_path: "Plants/Herbs" },
+      { document_id: "d2", folder_path: "Plants" },
+    ],
+  });
+  assert.deepEqual(
+    await manage_model_folder(f.pool, {
+      action: "move-folder",
+      category: "component",
+      folder_path: "Plants",
+      parent: "Terrain",
+    }),
+    { folder_path: "Plants", target: "Terrain/Plants" },
+  );
+  const inserted = f.calls
+    .filter((call) => call.sql.startsWith("INSERT INTO model_folders"))
+    .map((call) => call.values[1])
+    .sort();
+  assert.deepEqual(inserted, ["Terrain/Plants", "Terrain/Plants/Herbs"]);
+  assert.deepEqual(
+    f.calls
+      .filter((call) => call.sql.startsWith("UPDATE component_documents"))
+      .map((call) => call.values),
+    [
+      ["Terrain/Plants/Herbs", "d1"],
+      ["Terrain/Plants", "d2"],
+    ],
+  );
+  assert.equal(f.state().committed, true);
+});
+
+test("a folder cannot move into itself or one of its subfolders", async () => {
+  const f = folder_pool({ folders: ["Plants", "Plants/Herbs"] });
+  await assert.rejects(
+    manage_model_folder(f.pool, {
+      action: "move-folder",
+      category: "component",
+      folder_path: "Plants",
+      parent: "Plants/Herbs",
+    }),
+    /invalid_folder/,
+  );
+  assert.equal(f.calls.length, 0);
+});
