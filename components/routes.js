@@ -31,6 +31,7 @@ export function create_component_router({
           invalid_component_document: 400,
           component_not_found: 404,
           component_conflict: 409,
+          invalid_folder: 400,
         }[error.message] || 503;
       res.status(status).json({
         error: status === 503 ? "component_unavailable" : error.message,
@@ -63,6 +64,19 @@ export function create_component_router({
     handle((req) => {
       validate_component_id(req.params.id);
       return database.load(req.params.id);
+    }),
+  );
+  router.put(
+    "/:id/folder",
+    handle((req) => {
+      validate_component_id(req.params.id);
+      if (
+        !req.body ||
+        Object.keys(req.body).length !== 1 ||
+        typeof req.body.folder_path !== "string"
+      )
+        throw new Error("invalid_component_document");
+      return database.move(req.params.id, req.body.folder_path);
     }),
   );
   router.put(

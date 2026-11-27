@@ -295,7 +295,7 @@ test(
       });
       const listed = await reopened.list();
       assert.deepEqual(listed.documents, [
-        { id: document.id, name: changed.name, revision: 2 },
+        { id: document.id, name: changed.name, revision: 2, folder_path: "" },
       ]);
       assert.equal(listed.next_cursor, null);
     } finally {

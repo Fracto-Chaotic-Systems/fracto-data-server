@@ -76,8 +76,13 @@ export function create_environment_asset_database({
       if (typeof category !== "string") throw new Error("invalid_record");
       validate_model_category(category);
       const db = await database();
+      // Authored component documents share the component category's folders.
+      const documents =
+        category === "component"
+          ? " UNION SELECT folder_path FROM component_documents WHERE folder_path <> ''"
+          : "";
       const [rows] = await db.execute(
-        "SELECT folder_path FROM model_folders WHERE model_category = ? UNION SELECT folder_path FROM environment_assets WHERE archived = 0 AND model_category = ? AND folder_path <> '' ORDER BY folder_path LIMIT 1001",
+        `SELECT folder_path FROM model_folders WHERE model_category = ? UNION SELECT folder_path FROM environment_assets WHERE archived = 0 AND model_category = ? AND folder_path <> ''${documents} ORDER BY folder_path LIMIT 1001`,
         [category, category],
       );
       if (rows.length > 1000) throw new Error("catalog_unavailable");

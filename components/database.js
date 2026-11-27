@@ -1,4 +1,5 @@
 import { open_environment_asset_pool } from "../environment/database.js";
+import { normalize_model_folder } from "@fracto/sdk/FractoEnvironmentCatalog.js";
 import {
   validate_component_document,
   validate_component_id,
@@ -19,16 +20,15 @@ export function create_component_database({
       const [rows] = await (
         await database()
       ).execute(
-        "SELECT document_id, name, revision FROM component_documents WHERE document_id > ? ORDER BY document_id LIMIT 51",
+        "SELECT document_id, name, revision, folder_path FROM component_documents WHERE document_id > ? ORDER BY document_id LIMIT 51",
         [after],
       );
-      const documents = rows
-        .slice(0, 50)
-        .map((row) => ({
-          id: row.document_id,
-          name: row.name,
-          revision: row.revision,
-        }));
+      const documents = rows.slice(0, 50).map((row) => ({
+        id: row.document_id,
+        name: row.name,
+        revision: row.revision,
+        folder_path: normalize_model_folder(row.folder_path ?? ""),
+      }));
       return {
         documents,
         next_cursor: rows.length > 50 ? documents.at(-1).id : null,
@@ -86,6 +86,25 @@ export function create_component_database({
         if (result.affectedRows !== 1) throw new Error("component_conflict");
       }
       return { document, revision: expected_revision + 1 };
+    },
+    /** Folder placement is organization metadata: it never changes the document or its revision. */
+    async move(id, folder_path) {
+      validate_component_id(id);
+      if (typeof folder_path !== "string") throw new Error("invalid_folder");
+      folder_path = normalize_model_folder(folder_path);
+      const db = await database();
+      const [result] = await db.execute(
+        "UPDATE component_documents SET folder_path = ? WHERE document_id = ?",
+        [folder_path, id],
+      );
+      if (result.affectedRows !== 1) throw new Error("component_not_found");
+      // Keep the definition when the folder is later emptied (idempotent).
+      if (folder_path)
+        await db.execute(
+          "INSERT IGNORE INTO model_folders (model_category, folder_path) VALUES ('component', ?)",
+          [folder_path],
+        );
+      return { id, folder_path };
     },
     async close() {
       if (pool) await (await pool).end();

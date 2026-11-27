@@ -22,9 +22,18 @@ export async function manage_model_folder(pool, input) {
       "SELECT folder_path FROM environment_assets WHERE archived=0 AND model_category=? FOR UPDATE",
       [body.category],
     );
+    // Authored component documents are members of the component category's folders.
+    const [documents] =
+      body.category === "component"
+        ? await db.execute(
+            "SELECT document_id, folder_path FROM component_documents WHERE folder_path <> '' FOR UPDATE",
+          )
+        : [[]];
     const paths = [
       ...new Set(
-        [...folders, ...assets].map((row) => row.folder_path).filter(Boolean),
+        [...folders, ...assets, ...documents]
+          .map((row) => row.folder_path)
+          .filter(Boolean),
       ),
     ];
     const descendants = paths.filter((path) =>
@@ -34,7 +43,9 @@ export async function manage_model_folder(pool, input) {
     if (body.action === "delete-folder") {
       if (
         descendants.some((path) => path !== body.folder_path) ||
-        assets.some((row) => folder_contains(body.folder_path, row.folder_path))
+        [...assets, ...documents].some((row) =>
+          folder_contains(body.folder_path, row.folder_path),
+        )
       )
         fail("folder_not_empty");
       await db.execute(
@@ -67,6 +78,18 @@ export async function manage_model_folder(pool, input) {
         await db.execute(
           "INSERT INTO model_folders (model_category,folder_path) VALUES (?,?)",
           [body.category, target],
+        );
+      for (const row of documents.filter((row) =>
+        folder_contains(body.folder_path, row.folder_path),
+      ))
+        await db.execute(
+          "UPDATE component_documents SET folder_path=? WHERE document_id=?",
+          [
+            normalize_model_folder(
+              body.target + row.folder_path.slice(body.folder_path.length),
+            ),
+            row.document_id,
+          ],
         );
     }
     await db.commit();

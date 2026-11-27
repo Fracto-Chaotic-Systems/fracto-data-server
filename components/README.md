@@ -71,6 +71,14 @@ Apply additive migration `024_component-documents.sql` with the root migration
 runner before deploying. Saving documents does not register/publish runtime
 component assets. The table stores no account IDs, profile data or transcripts.
 
+Apply `025_component-document-folders.sql` (additive; existing documents stay at
+the root) before deploying document folders. Documents belong to the `component`
+category's logical folder tree: folder definitions stay in `model_folders`, and
+`environment/` folder listing, rename and delete include document folders
+(rename moves contained documents in the same transaction; delete refuses a
+folder that holds documents). Moving a document never changes its JSON or
+revision.
+
 ## HTTP contract v1
 
 The `/component-documents` router applies enabled-user authorization when
@@ -83,9 +91,14 @@ identity fields to the document contract; the existing authentication helper's
 identity-bearing session lookup remains subject to the project's documented
 personal-data remediation rule.
 
-- GET `/`: `{documents:[{id,name,revision}],next_cursor:null|id}`. At most 50
+- GET `/`: `{documents:[{id,name,revision,folder_path}],next_cursor:null|id}`.
+  `folder_path` is the document's logical folder (`""` is the category root). At most 50
   entries, ordered by ID. Optional `?after=<id>` pages forward. No other query keys.
 - GET `/:id`: `{document,revision}`. IDs are lowercase UUID v4.
+- PUT `/:id/folder` with `{folder_path}`: moves the document to an existing or new
+  logical folder (normalized like model folders; `""` is the root) and records the
+  folder definition. Returns `{id,folder_path}`; invalid paths return 400
+  `invalid_folder`, unknown documents 404. Does not change the document revision.
 - GET `/:id/variants`: `{variants:[{key,name,revision,base,role_groups,overrides}]}`. Lists authored
   variant deltas from this service's `blueprints/<key>/variants/<variant-key>/`
   folders by base component ID. Each override contains `{target:{role,property},
