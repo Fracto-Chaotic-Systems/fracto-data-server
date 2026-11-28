@@ -1,0 +1,1902 @@
+{
+  "schema_version": 1,
+  "id": "6d9ef545-91e9-47c1-8c56-a9f885276f4c",
+  "name": "torch_wall",
+  "units": "m",
+  "coordinates": "right-handed-y-up",
+  "floor": null,
+  "objects": [
+    {
+      "id": "6037e5d5-2bee-4cf2-83cf-83f91e48d6d9",
+      "asset": {
+        "id": "stone-pillar",
+        "revision": "39af194846964d3e2ec0def4f0b22a8461ed95f96a58f4ded303c1709ed9b489"
+      },
+      "position": [
+        -1.27,
+        0,
+        0.15
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "group_id": "478c1bfd-3a29-4524-a9f8-fd2a44c32907"
+    },
+    {
+      "id": "73b49f5f-ce6a-4ea9-b879-c53ecd41a433",
+      "asset": {
+        "id": "stone-pillar",
+        "revision": "39af194846964d3e2ec0def4f0b22a8461ed95f96a58f4ded303c1709ed9b489"
+      },
+      "position": [
+        1.27,
+        0,
+        0.15
+      ],
+      "rotation": [
+        0,
+        3.14159,
+        0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "group_id": "478c1bfd-3a29-4524-a9f8-fd2a44c32907"
+    },
+    {
+      "id": "7c084669-4766-4176-ab58-b4ef0d94536a",
+      "asset": {
+        "id": "stone-lintel",
+        "revision": "23ed2278e4609c266d9b277e75abcaa9c00b4fa7215707587382d263986ede49"
+      },
+      "position": [
+        0,
+        2.5044,
+        0.2
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "group_id": "478c1bfd-3a29-4524-a9f8-fd2a44c32907"
+    },
+    {
+      "id": "b7af9d9c-52f3-4359-8e65-bca31d6f1e3d",
+      "asset": {
+        "id": "stone-wall-block-large",
+        "revision": "43db3056b1754e50e4d498087b7e8792635de43b56926a88d6a8552f7d9e7557"
+      },
+      "position": [
+        -1.67595,
+        0,
+        -0.302
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "group_id": "14a984fe-f79a-4201-a384-096df12e2c74"
+    },
+    {
+      "id": "40982a52-993e-4903-8b7c-59605e6dc7e8",
+      "asset": {
+        "id": "stone-wall-block-medium",
+        "revision": "b645d312cc05f7363aad1e3d8f2f14c119941234f54a37ad696bac56f666e347"
+      },
+      "position": [
+        -3.19665,
+        0,
+        -0.302
+      ],
+      "rotation": [
+        0,
+        3.14159,
+        0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "group_id": "14a984fe-f79a-4201-a384-096df12e2c74"
+    },
+    {
+      "id": "748bc4b9-7ccf-4e49-a87e-53969ae0550c",
+      "asset": {
+        "id": "stone-wall-block-small",
+        "revision": "9f82dbdd15bdc7fd9d0e965d0c9093ccd1f5b8efe4d8bb2839ac840b4f21855d"
+      },
+      "position": [
+        -4.18625,
+        0,
+        -0.302
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "group_id": "14a984fe-f79a-4201-a384-096df12e2c74"
+    },
+    {
+      "id": "aa036bbe-115e-4682-bc4b-9cdce563b30c",
+      "asset": {
+        "id": "stone-wall-block-large",
+        "revision": "43db3056b1754e50e4d498087b7e8792635de43b56926a88d6a8552f7d9e7557"
+      },
+      "position": [
+        -5.47705,
+        0,
+        -0.302
+      ],
+      "rotation": [
+        0,
+        3.14159,
+        0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "group_id": "14a984fe-f79a-4201-a384-096df12e2c74"
+    },
+    {
+      "id": "0beaae91-bfc9-486a-a707-a67ef9ab6971",
+      "asset": {
+        "id": "stone-wall-block-large",
+        "revision": "43db3056b1754e50e4d498087b7e8792635de43b56926a88d6a8552f7d9e7557"
+      },
+      "position": [
+        1.67595,
+        0,
+        -0.302
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "group_id": "14a984fe-f79a-4201-a384-096df12e2c74"
+    },
+    {
+      "id": "f9adf75f-0778-49ea-ac55-09057bc601f1",
+      "asset": {
+        "id": "stone-wall-block-medium",
+        "revision": "b645d312cc05f7363aad1e3d8f2f14c119941234f54a37ad696bac56f666e347"
+      },
+      "position": [
+        3.19665,
+        0,
+        -0.302
+      ],
+      "rotation": [
+        0,
+        3.14159,
+        0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "group_id": "14a984fe-f79a-4201-a384-096df12e2c74"
+    },
+    {
+      "id": "241a8d2b-8397-4487-8fec-eb36dd180812",
+      "asset": {
+        "id": "stone-wall-block-small",
+        "revision": "9f82dbdd15bdc7fd9d0e965d0c9093ccd1f5b8efe4d8bb2839ac840b4f21855d"
+      },
+      "position": [
+        4.18625,
+        0,
+        -0.302
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "group_id": "14a984fe-f79a-4201-a384-096df12e2c74"
+    },
+    {
+      "id": "d53c077d-6873-4972-a1f6-9a0b77e19093",
+      "asset": {
+        "id": "stone-wall-block-large",
+        "revision": "43db3056b1754e50e4d498087b7e8792635de43b56926a88d6a8552f7d9e7557"
+      },
+      "position": [
+        5.47705,
+        0,
+        -0.302
+      ],
+      "rotation": [
+        0,
+        3.14159,
+        0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "group_id": "14a984fe-f79a-4201-a384-096df12e2c74"
+    },
+    {
+      "id": "2aed8e3e-98c4-43b3-95be-02bc2c5459d2",
+      "asset": {
+        "id": "stone-wall-block-large",
+        "revision": "43db3056b1754e50e4d498087b7e8792635de43b56926a88d6a8552f7d9e7557"
+      },
+      "position": [
+        -1.67595,
+        0.706,
+        -0.302
+      ],
+      "rotation": [
+        0,
+        3.14159,
+        0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "group_id": "14a984fe-f79a-4201-a384-096df12e2c74"
+    },
+    {
+      "id": "c4035897-e738-44e4-844a-ea8d25a40a65",
+      "asset": {
+        "id": "stone-wall-block-large",
+        "revision": "43db3056b1754e50e4d498087b7e8792635de43b56926a88d6a8552f7d9e7557"
+      },
+      "position": [
+        -3.49785,
+        0.706,
+        -0.302
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "group_id": "14a984fe-f79a-4201-a384-096df12e2c74"
+    },
+    {
+      "id": "64a6a884-b1f3-485f-8568-597c1431d94c",
+      "asset": {
+        "id": "stone-wall-block-small",
+        "revision": "9f82dbdd15bdc7fd9d0e965d0c9093ccd1f5b8efe4d8bb2839ac840b4f21855d"
+      },
+      "position": [
+        -4.78865,
+        0.706,
+        -0.302
+      ],
+      "rotation": [
+        0,
+        3.14159,
+        0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "group_id": "14a984fe-f79a-4201-a384-096df12e2c74"
+    },
+    {
+      "id": "002e9d7f-55be-4026-9583-c9c4faa67587",
+      "asset": {
+        "id": "stone-wall-block-medium",
+        "revision": "b645d312cc05f7363aad1e3d8f2f14c119941234f54a37ad696bac56f666e347"
+      },
+      "position": [
+        -5.77825,
+        0.706,
+        -0.302
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "group_id": "14a984fe-f79a-4201-a384-096df12e2c74"
+    },
+    {
+      "id": "929002f6-8d45-488a-8a6d-a7e1fb51ac29",
+      "asset": {
+        "id": "stone-wall-block-large",
+        "revision": "43db3056b1754e50e4d498087b7e8792635de43b56926a88d6a8552f7d9e7557"
+      },
+      "position": [
+        1.67595,
+        0.706,
+        -0.302
+      ],
+      "rotation": [
+        0,
+        3.14159,
+        0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "group_id": "14a984fe-f79a-4201-a384-096df12e2c74"
+    },
+    {
+      "id": "e9c56fef-06f1-4a08-b8db-9d082a3ed2e2",
+      "asset": {
+        "id": "stone-wall-block-large",
+        "revision": "43db3056b1754e50e4d498087b7e8792635de43b56926a88d6a8552f7d9e7557"
+      },
+      "position": [
+        3.49785,
+        0.706,
+        -0.302
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "group_id": "14a984fe-f79a-4201-a384-096df12e2c74"
+    },
+    {
+      "id": "5b77f162-1f3c-4575-9a62-cee7149f234c",
+      "asset": {
+        "id": "stone-wall-block-small",
+        "revision": "9f82dbdd15bdc7fd9d0e965d0c9093ccd1f5b8efe4d8bb2839ac840b4f21855d"
+      },
+      "position": [
+        4.78865,
+        0.706,
+        -0.302
+      ],
+      "rotation": [
+        0,
+        3.14159,
+        0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "group_id": "14a984fe-f79a-4201-a384-096df12e2c74"
+    },
+    {
+      "id": "a3c15c1d-b6e5-40a8-9f02-87730d84da62",
+      "asset": {
+        "id": "stone-wall-block-medium",
+        "revision": "b645d312cc05f7363aad1e3d8f2f14c119941234f54a37ad696bac56f666e347"
+      },
+      "position": [
+        5.77825,
+        0.706,
+        -0.302
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "group_id": "14a984fe-f79a-4201-a384-096df12e2c74"
+    },
+    {
+      "id": "6b8c6c9a-344d-4664-99d3-8ab90d61c15c",
+      "asset": {
+        "id": "stone-wall-block-medium",
+        "revision": "b645d312cc05f7363aad1e3d8f2f14c119941234f54a37ad696bac56f666e347"
+      },
+      "position": [
+        -1.37475,
+        1.412,
+        -0.302
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "group_id": "14a984fe-f79a-4201-a384-096df12e2c74"
+    },
+    {
+      "id": "9f5005d9-8c12-477f-8bfd-3e6a64155c6d",
+      "asset": {
+        "id": "stone-wall-block-large",
+        "revision": "43db3056b1754e50e4d498087b7e8792635de43b56926a88d6a8552f7d9e7557"
+      },
+      "position": [
+        -2.89545,
+        1.412,
+        -0.302
+      ],
+      "rotation": [
+        0,
+        3.14159,
+        0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "group_id": "14a984fe-f79a-4201-a384-096df12e2c74"
+    },
+    {
+      "id": "61f71de2-e5d4-4ffc-8b4c-5451d261092f",
+      "asset": {
+        "id": "stone-wall-block-large",
+        "revision": "43db3056b1754e50e4d498087b7e8792635de43b56926a88d6a8552f7d9e7557"
+      },
+      "position": [
+        -4.71735,
+        1.412,
+        -0.302
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "group_id": "14a984fe-f79a-4201-a384-096df12e2c74"
+    },
+    {
+      "id": "4bf4de5e-bd4d-4979-ba6c-d4a617dceda8",
+      "asset": {
+        "id": "stone-wall-block-small",
+        "revision": "9f82dbdd15bdc7fd9d0e965d0c9093ccd1f5b8efe4d8bb2839ac840b4f21855d"
+      },
+      "position": [
+        -6.00815,
+        1.412,
+        -0.302
+      ],
+      "rotation": [
+        0,
+        3.14159,
+        0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "group_id": "14a984fe-f79a-4201-a384-096df12e2c74"
+    },
+    {
+      "id": "02c1add9-cb00-4bec-8000-954a9f145713",
+      "asset": {
+        "id": "stone-wall-block-medium",
+        "revision": "b645d312cc05f7363aad1e3d8f2f14c119941234f54a37ad696bac56f666e347"
+      },
+      "position": [
+        1.37475,
+        1.412,
+        -0.302
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "group_id": "14a984fe-f79a-4201-a384-096df12e2c74"
+    },
+    {
+      "id": "a0ea1283-59fe-48e5-8b8f-7263092cc01b",
+      "asset": {
+        "id": "stone-wall-block-large",
+        "revision": "43db3056b1754e50e4d498087b7e8792635de43b56926a88d6a8552f7d9e7557"
+      },
+      "position": [
+        2.89545,
+        1.412,
+        -0.302
+      ],
+      "rotation": [
+        0,
+        3.14159,
+        0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "group_id": "14a984fe-f79a-4201-a384-096df12e2c74"
+    },
+    {
+      "id": "a5df87a9-87e2-4aba-9d1e-1971c6349163",
+      "asset": {
+        "id": "stone-wall-block-large",
+        "revision": "43db3056b1754e50e4d498087b7e8792635de43b56926a88d6a8552f7d9e7557"
+      },
+      "position": [
+        4.71735,
+        1.412,
+        -0.302
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "group_id": "14a984fe-f79a-4201-a384-096df12e2c74"
+    },
+    {
+      "id": "f21ccb7d-fe10-4044-af14-b596d3556696",
+      "asset": {
+        "id": "stone-wall-block-small",
+        "revision": "9f82dbdd15bdc7fd9d0e965d0c9093ccd1f5b8efe4d8bb2839ac840b4f21855d"
+      },
+      "position": [
+        6.00815,
+        1.412,
+        -0.302
+      ],
+      "rotation": [
+        0,
+        3.14159,
+        0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "group_id": "14a984fe-f79a-4201-a384-096df12e2c74"
+    },
+    {
+      "id": "4851d8f6-81c6-43bb-964f-9cefc293d5ba",
+      "asset": {
+        "id": "stone-wall-block-large",
+        "revision": "43db3056b1754e50e4d498087b7e8792635de43b56926a88d6a8552f7d9e7557"
+      },
+      "position": [
+        -1.67595,
+        2.118,
+        -0.302
+      ],
+      "rotation": [
+        0,
+        3.14159,
+        0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "group_id": "14a984fe-f79a-4201-a384-096df12e2c74"
+    },
+    {
+      "id": "fbe326f3-25e3-407b-b65f-6c444475691d",
+      "asset": {
+        "id": "stone-wall-block-medium",
+        "revision": "b645d312cc05f7363aad1e3d8f2f14c119941234f54a37ad696bac56f666e347"
+      },
+      "position": [
+        -3.19665,
+        2.118,
+        -0.302
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "group_id": "14a984fe-f79a-4201-a384-096df12e2c74"
+    },
+    {
+      "id": "b16cdb80-fde5-4882-85e1-bae0864a7e74",
+      "asset": {
+        "id": "stone-wall-block-large",
+        "revision": "43db3056b1754e50e4d498087b7e8792635de43b56926a88d6a8552f7d9e7557"
+      },
+      "position": [
+        -4.71735,
+        2.118,
+        -0.302
+      ],
+      "rotation": [
+        0,
+        3.14159,
+        0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "group_id": "14a984fe-f79a-4201-a384-096df12e2c74"
+    },
+    {
+      "id": "a8e68790-44f1-40fb-b596-bc0d74950272",
+      "asset": {
+        "id": "stone-wall-block-small",
+        "revision": "9f82dbdd15bdc7fd9d0e965d0c9093ccd1f5b8efe4d8bb2839ac840b4f21855d"
+      },
+      "position": [
+        -6.00815,
+        2.118,
+        -0.302
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "group_id": "14a984fe-f79a-4201-a384-096df12e2c74"
+    },
+    {
+      "id": "4de178a9-6064-4383-aa9a-2e1fec6e8361",
+      "asset": {
+        "id": "stone-wall-block-large",
+        "revision": "43db3056b1754e50e4d498087b7e8792635de43b56926a88d6a8552f7d9e7557"
+      },
+      "position": [
+        1.67595,
+        2.118,
+        -0.302
+      ],
+      "rotation": [
+        0,
+        3.14159,
+        0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "group_id": "14a984fe-f79a-4201-a384-096df12e2c74"
+    },
+    {
+      "id": "3866440b-7697-4949-86d7-2f2bb213f031",
+      "asset": {
+        "id": "stone-wall-block-medium",
+        "revision": "b645d312cc05f7363aad1e3d8f2f14c119941234f54a37ad696bac56f666e347"
+      },
+      "position": [
+        3.19665,
+        2.118,
+        -0.302
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "group_id": "14a984fe-f79a-4201-a384-096df12e2c74"
+    },
+    {
+      "id": "a084f376-121c-4b36-907c-f9ab0331ac60",
+      "asset": {
+        "id": "stone-wall-block-large",
+        "revision": "43db3056b1754e50e4d498087b7e8792635de43b56926a88d6a8552f7d9e7557"
+      },
+      "position": [
+        4.71735,
+        2.118,
+        -0.302
+      ],
+      "rotation": [
+        0,
+        3.14159,
+        0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "group_id": "14a984fe-f79a-4201-a384-096df12e2c74"
+    },
+    {
+      "id": "e1dd8487-5f60-4974-b3ed-e4dfc6460e34",
+      "asset": {
+        "id": "stone-wall-block-small",
+        "revision": "9f82dbdd15bdc7fd9d0e965d0c9093ccd1f5b8efe4d8bb2839ac840b4f21855d"
+      },
+      "position": [
+        6.00815,
+        2.118,
+        -0.302
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "group_id": "14a984fe-f79a-4201-a384-096df12e2c74"
+    },
+    {
+      "id": "e2135ea3-0d32-44e2-ae96-c47d47342a73",
+      "asset": {
+        "id": "stone-wall-block-medium",
+        "revision": "b645d312cc05f7363aad1e3d8f2f14c119941234f54a37ad696bac56f666e347"
+      },
+      "position": [
+        -5.99525,
+        2.824,
+        -0.302
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "group_id": "14a984fe-f79a-4201-a384-096df12e2c74"
+    },
+    {
+      "id": "55c377e8-1f60-4a7a-8c43-00cc91a2d16d",
+      "asset": {
+        "id": "stone-wall-block-medium",
+        "revision": "b645d312cc05f7363aad1e3d8f2f14c119941234f54a37ad696bac56f666e347"
+      },
+      "position": [
+        -4.77575,
+        2.824,
+        -0.302
+      ],
+      "rotation": [
+        0,
+        3.14159,
+        0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "group_id": "14a984fe-f79a-4201-a384-096df12e2c74"
+    },
+    {
+      "id": "e9e325c6-64f8-40ad-938d-454423b87991",
+      "asset": {
+        "id": "stone-wall-block-large",
+        "revision": "43db3056b1754e50e4d498087b7e8792635de43b56926a88d6a8552f7d9e7557"
+      },
+      "position": [
+        -3.25505,
+        2.824,
+        -0.302
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "group_id": "14a984fe-f79a-4201-a384-096df12e2c74"
+    },
+    {
+      "id": "1e0d1067-a1b5-4122-aa8e-c267accada78",
+      "asset": {
+        "id": "stone-wall-block-large",
+        "revision": "43db3056b1754e50e4d498087b7e8792635de43b56926a88d6a8552f7d9e7557"
+      },
+      "position": [
+        -1.43315,
+        2.824,
+        -0.302
+      ],
+      "rotation": [
+        0,
+        3.14159,
+        0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "group_id": "14a984fe-f79a-4201-a384-096df12e2c74"
+    },
+    {
+      "id": "0fba3e75-f185-4139-a19c-32f711582da9",
+      "asset": {
+        "id": "stone-wall-block-small",
+        "revision": "9f82dbdd15bdc7fd9d0e965d0c9093ccd1f5b8efe4d8bb2839ac840b4f21855d"
+      },
+      "position": [
+        -0.14235,
+        2.824,
+        -0.302
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "group_id": "14a984fe-f79a-4201-a384-096df12e2c74"
+    },
+    {
+      "id": "ca47ab0c-5304-4502-9565-37aa9d950f2d",
+      "asset": {
+        "id": "stone-wall-block-medium",
+        "revision": "b645d312cc05f7363aad1e3d8f2f14c119941234f54a37ad696bac56f666e347"
+      },
+      "position": [
+        0.84725,
+        2.824,
+        -0.302
+      ],
+      "rotation": [
+        0,
+        3.14159,
+        0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "group_id": "14a984fe-f79a-4201-a384-096df12e2c74"
+    },
+    {
+      "id": "6a378d49-d54a-4962-84b4-a68d317559df",
+      "asset": {
+        "id": "stone-wall-block-medium",
+        "revision": "b645d312cc05f7363aad1e3d8f2f14c119941234f54a37ad696bac56f666e347"
+      },
+      "position": [
+        2.06675,
+        2.824,
+        -0.302
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "group_id": "14a984fe-f79a-4201-a384-096df12e2c74"
+    },
+    {
+      "id": "3dc0d597-8a94-44b6-beac-a0a2ec4d9749",
+      "asset": {
+        "id": "stone-wall-block-large",
+        "revision": "43db3056b1754e50e4d498087b7e8792635de43b56926a88d6a8552f7d9e7557"
+      },
+      "position": [
+        3.58745,
+        2.824,
+        -0.302
+      ],
+      "rotation": [
+        0,
+        3.14159,
+        0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "group_id": "14a984fe-f79a-4201-a384-096df12e2c74"
+    },
+    {
+      "id": "62a3306c-7380-4ad2-a135-439eca405a7f",
+      "asset": {
+        "id": "stone-wall-block-large",
+        "revision": "43db3056b1754e50e4d498087b7e8792635de43b56926a88d6a8552f7d9e7557"
+      },
+      "position": [
+        5.40935,
+        2.824,
+        -0.302
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "group_id": "14a984fe-f79a-4201-a384-096df12e2c74"
+    },
+    {
+      "id": "07ff273f-1263-4cf3-9d4f-852e54f68a53",
+      "asset": {
+        "id": "stone-wall-block-small",
+        "revision": "9f82dbdd15bdc7fd9d0e965d0c9093ccd1f5b8efe4d8bb2839ac840b4f21855d"
+      },
+      "position": [
+        -5.77515,
+        3.53,
+        -0.302
+      ],
+      "rotation": [
+        0,
+        3.14159,
+        0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "group_id": "14a984fe-f79a-4201-a384-096df12e2c74"
+    },
+    {
+      "id": "12048a6c-8cd4-4f81-8c3d-d60832ddd740",
+      "asset": {
+        "id": "stone-wall-block-large",
+        "revision": "43db3056b1754e50e4d498087b7e8792635de43b56926a88d6a8552f7d9e7557"
+      },
+      "position": [
+        -4.48435,
+        3.53,
+        -0.302
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "group_id": "14a984fe-f79a-4201-a384-096df12e2c74"
+    },
+    {
+      "id": "07f2477e-8f54-487c-b7b4-df516763fbac",
+      "asset": {
+        "id": "stone-wall-block-medium",
+        "revision": "b645d312cc05f7363aad1e3d8f2f14c119941234f54a37ad696bac56f666e347"
+      },
+      "position": [
+        -2.96365,
+        3.53,
+        -0.302
+      ],
+      "rotation": [
+        0,
+        3.14159,
+        0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "group_id": "14a984fe-f79a-4201-a384-096df12e2c74"
+    },
+    {
+      "id": "bdec8d54-8241-43b9-9a08-9e1687ac43b7",
+      "asset": {
+        "id": "stone-wall-block-large",
+        "revision": "43db3056b1754e50e4d498087b7e8792635de43b56926a88d6a8552f7d9e7557"
+      },
+      "position": [
+        -1.44295,
+        3.53,
+        -0.302
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "group_id": "14a984fe-f79a-4201-a384-096df12e2c74"
+    },
+    {
+      "id": "b5dfbf09-023b-4295-9bf8-e18669402d05",
+      "asset": {
+        "id": "stone-wall-block-large",
+        "revision": "43db3056b1754e50e4d498087b7e8792635de43b56926a88d6a8552f7d9e7557"
+      },
+      "position": [
+        0.37895,
+        3.53,
+        -0.302
+      ],
+      "rotation": [
+        0,
+        3.14159,
+        0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "group_id": "14a984fe-f79a-4201-a384-096df12e2c74"
+    },
+    {
+      "id": "181899a9-d0f3-4222-9726-1fb807c5dea9",
+      "asset": {
+        "id": "stone-wall-block-small",
+        "revision": "9f82dbdd15bdc7fd9d0e965d0c9093ccd1f5b8efe4d8bb2839ac840b4f21855d"
+      },
+      "position": [
+        1.66975,
+        3.53,
+        -0.302
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "group_id": "14a984fe-f79a-4201-a384-096df12e2c74"
+    },
+    {
+      "id": "875cb742-72bc-4795-ad50-7434e9b9fd22",
+      "asset": {
+        "id": "stone-wall-block-large",
+        "revision": "43db3056b1754e50e4d498087b7e8792635de43b56926a88d6a8552f7d9e7557"
+      },
+      "position": [
+        2.96055,
+        3.53,
+        -0.302
+      ],
+      "rotation": [
+        0,
+        3.14159,
+        0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "group_id": "14a984fe-f79a-4201-a384-096df12e2c74"
+    },
+    {
+      "id": "fe21fea2-a054-4792-b262-737e86ed3ab0",
+      "asset": {
+        "id": "stone-wall-block-medium",
+        "revision": "b645d312cc05f7363aad1e3d8f2f14c119941234f54a37ad696bac56f666e347"
+      },
+      "position": [
+        4.48125,
+        3.53,
+        -0.302
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "group_id": "14a984fe-f79a-4201-a384-096df12e2c74"
+    },
+    {
+      "id": "45c06747-3094-4fc8-91db-0175ff1922c1",
+      "asset": {
+        "id": "stone-wall-block-medium",
+        "revision": "b645d312cc05f7363aad1e3d8f2f14c119941234f54a37ad696bac56f666e347"
+      },
+      "position": [
+        5.70075,
+        3.53,
+        -0.302
+      ],
+      "rotation": [
+        0,
+        3.14159,
+        0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "group_id": "14a984fe-f79a-4201-a384-096df12e2c74"
+    },
+    {
+      "id": "18bac9b0-8692-4c6a-9b78-3d538067250c",
+      "asset": {
+        "id": "stone-wall-block-medium",
+        "revision": "b645d312cc05f7363aad1e3d8f2f14c119941234f54a37ad696bac56f666e347"
+      },
+      "position": [
+        -5.99525,
+        4.236,
+        -0.302
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "group_id": "14a984fe-f79a-4201-a384-096df12e2c74"
+    },
+    {
+      "id": "87192627-3f5e-4eef-965a-b65e4545ff10",
+      "asset": {
+        "id": "stone-wall-block-small",
+        "revision": "9f82dbdd15bdc7fd9d0e965d0c9093ccd1f5b8efe4d8bb2839ac840b4f21855d"
+      },
+      "position": [
+        -5.00565,
+        4.236,
+        -0.302
+      ],
+      "rotation": [
+        0,
+        3.14159,
+        0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "group_id": "14a984fe-f79a-4201-a384-096df12e2c74"
+    },
+    {
+      "id": "68c9efb7-7165-4c6c-8f0b-0ec9009daf10",
+      "asset": {
+        "id": "stone-wall-block-large",
+        "revision": "43db3056b1754e50e4d498087b7e8792635de43b56926a88d6a8552f7d9e7557"
+      },
+      "position": [
+        -3.71485,
+        4.236,
+        -0.302
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "group_id": "14a984fe-f79a-4201-a384-096df12e2c74"
+    },
+    {
+      "id": "2ddb8f94-d5fe-46af-902f-9ada1ae6bcf4",
+      "asset": {
+        "id": "stone-wall-block-medium",
+        "revision": "b645d312cc05f7363aad1e3d8f2f14c119941234f54a37ad696bac56f666e347"
+      },
+      "position": [
+        -2.19415,
+        4.236,
+        -0.302
+      ],
+      "rotation": [
+        0,
+        3.14159,
+        0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "group_id": "14a984fe-f79a-4201-a384-096df12e2c74"
+    },
+    {
+      "id": "41d59188-aee6-4395-acca-30915e17fd7e",
+      "asset": {
+        "id": "stone-wall-block-large",
+        "revision": "43db3056b1754e50e4d498087b7e8792635de43b56926a88d6a8552f7d9e7557"
+      },
+      "position": [
+        -0.67345,
+        4.236,
+        -0.302
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "group_id": "14a984fe-f79a-4201-a384-096df12e2c74"
+    },
+    {
+      "id": "890d896f-c53e-448c-bf33-71c03a59a21d",
+      "asset": {
+        "id": "stone-wall-block-medium",
+        "revision": "b645d312cc05f7363aad1e3d8f2f14c119941234f54a37ad696bac56f666e347"
+      },
+      "position": [
+        0.84725,
+        4.236,
+        -0.302
+      ],
+      "rotation": [
+        0,
+        3.14159,
+        0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "group_id": "14a984fe-f79a-4201-a384-096df12e2c74"
+    },
+    {
+      "id": "42daa4f2-0392-431a-8f56-5506ba67fc95",
+      "asset": {
+        "id": "stone-wall-block-small",
+        "revision": "9f82dbdd15bdc7fd9d0e965d0c9093ccd1f5b8efe4d8bb2839ac840b4f21855d"
+      },
+      "position": [
+        1.83685,
+        4.236,
+        -0.302
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "group_id": "14a984fe-f79a-4201-a384-096df12e2c74"
+    },
+    {
+      "id": "1fb8f87a-daf7-4865-9af9-394516a85905",
+      "asset": {
+        "id": "stone-wall-block-large",
+        "revision": "43db3056b1754e50e4d498087b7e8792635de43b56926a88d6a8552f7d9e7557"
+      },
+      "position": [
+        3.12765,
+        4.236,
+        -0.302
+      ],
+      "rotation": [
+        0,
+        3.14159,
+        0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "group_id": "14a984fe-f79a-4201-a384-096df12e2c74"
+    },
+    {
+      "id": "42f04ede-63ec-46ca-867a-71c72cd21ea6",
+      "asset": {
+        "id": "stone-wall-block-medium",
+        "revision": "b645d312cc05f7363aad1e3d8f2f14c119941234f54a37ad696bac56f666e347"
+      },
+      "position": [
+        4.64835,
+        4.236,
+        -0.302
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "group_id": "14a984fe-f79a-4201-a384-096df12e2c74"
+    },
+    {
+      "id": "3fe2be24-8385-468a-b1d2-0a5417f8f2a3",
+      "asset": {
+        "id": "stone-wall-block-medium",
+        "revision": "b645d312cc05f7363aad1e3d8f2f14c119941234f54a37ad696bac56f666e347"
+      },
+      "position": [
+        5.86785,
+        4.236,
+        -0.302
+      ],
+      "rotation": [
+        0,
+        3.14159,
+        0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "group_id": "14a984fe-f79a-4201-a384-096df12e2c74"
+    },
+    {
+      "id": "0660bcc2-4c1d-4e5c-93ac-861f5ff06f8a",
+      "asset": {
+        "id": "stone-wall-block-large",
+        "revision": "43db3056b1754e50e4d498087b7e8792635de43b56926a88d6a8552f7d9e7557"
+      },
+      "position": [
+        -5.24405,
+        4.942,
+        -0.302
+      ],
+      "rotation": [
+        0,
+        3.14159,
+        0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "group_id": "14a984fe-f79a-4201-a384-096df12e2c74"
+    },
+    {
+      "id": "9ceed930-0a52-4332-af39-d14048d903c8",
+      "asset": {
+        "id": "stone-wall-block-small",
+        "revision": "9f82dbdd15bdc7fd9d0e965d0c9093ccd1f5b8efe4d8bb2839ac840b4f21855d"
+      },
+      "position": [
+        -3.95325,
+        4.942,
+        -0.302
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "group_id": "14a984fe-f79a-4201-a384-096df12e2c74"
+    },
+    {
+      "id": "18dcaf1d-55b2-40e8-b4ab-cc4bd6a07f9b",
+      "asset": {
+        "id": "stone-wall-block-medium",
+        "revision": "b645d312cc05f7363aad1e3d8f2f14c119941234f54a37ad696bac56f666e347"
+      },
+      "position": [
+        -2.96365,
+        4.942,
+        -0.302
+      ],
+      "rotation": [
+        0,
+        3.14159,
+        0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "group_id": "14a984fe-f79a-4201-a384-096df12e2c74"
+    },
+    {
+      "id": "5f847d6b-7fa6-450f-af86-6f7d01783f0a",
+      "asset": {
+        "id": "stone-wall-block-medium",
+        "revision": "b645d312cc05f7363aad1e3d8f2f14c119941234f54a37ad696bac56f666e347"
+      },
+      "position": [
+        -1.74415,
+        4.942,
+        -0.302
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "group_id": "14a984fe-f79a-4201-a384-096df12e2c74"
+    },
+    {
+      "id": "fd77435b-4270-4990-b411-af6a6aa5f98e",
+      "asset": {
+        "id": "stone-wall-block-large",
+        "revision": "43db3056b1754e50e4d498087b7e8792635de43b56926a88d6a8552f7d9e7557"
+      },
+      "position": [
+        -0.22345,
+        4.942,
+        -0.302
+      ],
+      "rotation": [
+        0,
+        3.14159,
+        0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "group_id": "14a984fe-f79a-4201-a384-096df12e2c74"
+    },
+    {
+      "id": "c1865e4d-be33-4d0d-894c-3b683516e8aa",
+      "asset": {
+        "id": "stone-wall-block-large",
+        "revision": "43db3056b1754e50e4d498087b7e8792635de43b56926a88d6a8552f7d9e7557"
+      },
+      "position": [
+        1.59845,
+        4.942,
+        -0.302
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "group_id": "14a984fe-f79a-4201-a384-096df12e2c74"
+    },
+    {
+      "id": "e535dc1b-7575-4ada-a80a-5e7600462365",
+      "asset": {
+        "id": "stone-wall-block-small",
+        "revision": "9f82dbdd15bdc7fd9d0e965d0c9093ccd1f5b8efe4d8bb2839ac840b4f21855d"
+      },
+      "position": [
+        2.88925,
+        4.942,
+        -0.302
+      ],
+      "rotation": [
+        0,
+        3.14159,
+        0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "group_id": "14a984fe-f79a-4201-a384-096df12e2c74"
+    },
+    {
+      "id": "2314ae88-288b-4973-b849-b2f7e97fa719",
+      "asset": {
+        "id": "stone-wall-block-medium",
+        "revision": "b645d312cc05f7363aad1e3d8f2f14c119941234f54a37ad696bac56f666e347"
+      },
+      "position": [
+        3.87885,
+        4.942,
+        -0.302
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "group_id": "14a984fe-f79a-4201-a384-096df12e2c74"
+    },
+    {
+      "id": "2eaec9bb-c8ca-4d7c-801a-63ea423caf9e",
+      "asset": {
+        "id": "stone-wall-block-medium",
+        "revision": "b645d312cc05f7363aad1e3d8f2f14c119941234f54a37ad696bac56f666e347"
+      },
+      "position": [
+        5.09835,
+        4.942,
+        -0.302
+      ],
+      "rotation": [
+        0,
+        3.14159,
+        0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "group_id": "14a984fe-f79a-4201-a384-096df12e2c74"
+    },
+    {
+      "id": "2b9b2ca8-8e9c-419f-904e-764de8957724",
+      "asset": {
+        "id": "stone-wall-block-small",
+        "revision": "9f82dbdd15bdc7fd9d0e965d0c9093ccd1f5b8efe4d8bb2839ac840b4f21855d"
+      },
+      "position": [
+        6.08795,
+        4.942,
+        -0.302
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "group_id": "14a984fe-f79a-4201-a384-096df12e2c74"
+    },
+    {
+      "id": "4e999a22-213f-458c-a07b-7f2f9ed514af",
+      "asset": {
+        "id": "fire-torch",
+        "revision": "e4f4bc7176d1082b78922f5c86f6cff5b85db3280a7e8b9a9909fe623b2d9482"
+      },
+      "position": [
+        -4.6008,
+        2.59883,
+        0
+      ],
+      "rotation": [
+        0,
+        0,
+        0.5236
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "group_id": "9d3aea05-6880-4ff7-a226-ff996cad8403",
+      "flame_cardinality": 1
+    },
+    {
+      "id": "266eebb7-4b88-4ec1-bff0-295144686064",
+      "asset": {
+        "id": "fire-torch",
+        "revision": "e4f4bc7176d1082b78922f5c86f6cff5b85db3280a7e8b9a9909fe623b2d9482"
+      },
+      "position": [
+        -3.30369,
+        3.04767,
+        0
+      ],
+      "rotation": [
+        0,
+        0,
+        0.374
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "group_id": "9d3aea05-6880-4ff7-a226-ff996cad8403",
+      "flame_cardinality": 3
+    },
+    {
+      "id": "2c5eec1c-f3e4-4916-923d-7aac3e39f34c",
+      "asset": {
+        "id": "fire-torch",
+        "revision": "e4f4bc7176d1082b78922f5c86f6cff5b85db3280a7e8b9a9909fe623b2d9482"
+      },
+      "position": [
+        -1.96937,
+        3.25836,
+        0
+      ],
+      "rotation": [
+        0,
+        0,
+        0.2244
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "group_id": "9d3aea05-6880-4ff7-a226-ff996cad8403",
+      "flame_cardinality": 5
+    },
+    {
+      "id": "f07ffddb-5092-4ebc-af87-53b285ec54f2",
+      "asset": {
+        "id": "fire-torch",
+        "revision": "e4f4bc7176d1082b78922f5c86f6cff5b85db3280a7e8b9a9909fe623b2d9482"
+      },
+      "position": [
+        -0.65337,
+        3.34868,
+        0
+      ],
+      "rotation": [
+        0,
+        0,
+        0.0748
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "group_id": "9d3aea05-6880-4ff7-a226-ff996cad8403",
+      "flame_cardinality": 7
+    },
+    {
+      "id": "f6d17b59-2d7f-42c5-99f1-d4050ac1111d",
+      "asset": {
+        "id": "fire-torch",
+        "revision": "e4f4bc7176d1082b78922f5c86f6cff5b85db3280a7e8b9a9909fe623b2d9482"
+      },
+      "position": [
+        0.65337,
+        3.34868,
+        0
+      ],
+      "rotation": [
+        0,
+        0,
+        -0.0748
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "group_id": "9d3aea05-6880-4ff7-a226-ff996cad8403",
+      "flame_cardinality": 9
+    },
+    {
+      "id": "5fc06f2d-9e5f-45d3-b99b-f49937b777d4",
+      "asset": {
+        "id": "fire-torch",
+        "revision": "e4f4bc7176d1082b78922f5c86f6cff5b85db3280a7e8b9a9909fe623b2d9482"
+      },
+      "position": [
+        1.96937,
+        3.25836,
+        0
+      ],
+      "rotation": [
+        0,
+        0,
+        -0.2244
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "group_id": "9d3aea05-6880-4ff7-a226-ff996cad8403",
+      "flame_cardinality": 11
+    },
+    {
+      "id": "c7b209f4-d228-4615-b254-570d9b620b16",
+      "asset": {
+        "id": "fire-torch",
+        "revision": "e4f4bc7176d1082b78922f5c86f6cff5b85db3280a7e8b9a9909fe623b2d9482"
+      },
+      "position": [
+        3.30369,
+        3.04767,
+        0
+      ],
+      "rotation": [
+        0,
+        0,
+        -0.374
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "group_id": "9d3aea05-6880-4ff7-a226-ff996cad8403",
+      "flame_cardinality": 13
+    },
+    {
+      "id": "f67cef8a-8e8a-405b-9948-e605c5ac54e5",
+      "asset": {
+        "id": "fire-torch",
+        "revision": "e4f4bc7176d1082b78922f5c86f6cff5b85db3280a7e8b9a9909fe623b2d9482"
+      },
+      "position": [
+        4.6008,
+        2.59883,
+        0
+      ],
+      "rotation": [
+        0,
+        0,
+        -0.5236
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "group_id": "9d3aea05-6880-4ff7-a226-ff996cad8403",
+      "flame_cardinality": 15
+    }
+  ],
+  "groups": [
+    {
+      "id": "478c1bfd-3a29-4524-a9f8-fd2a44c32907",
+      "name": "doorway frame"
+    },
+    {
+      "id": "14a984fe-f79a-4201-a384-096df12e2c74",
+      "name": "wall courses"
+    },
+    {
+      "id": "9d3aea05-6880-4ff7-a226-ff996cad8403",
+      "name": "torches"
+    }
+  ],
+  "scatters": [],
+  "lighting": {
+    "direction_degrees": 45,
+    "intensity": 0.4,
+    "ambient": 0.3
+  },
+  "construction_description": "# Component: torch_wall\n\nBlueprint key `torch-wall`, revision 4. Component name `torch_wall`, folder\n`interiors`. Units meters, right-handed, Y up. The wall face is the plane z = 0;\nthe viewer stands on the +z side, so the viewer's left is −x.\n\n## Identity and intent\n\nA ceremonial stone doorway set into an ashlar wall, lit by a bow of eight torches\nabove the lintel (based on the user's reference image, with corrected torch spacing).\nIt reads as correct when: the pale limestone frame (two pillars and a lintel) stands\nout clearly from the darker granite wall; the torches form one even, symmetrical fan\nabove the lintel reaching well beyond its ends; every flame burns straight up; and\nthe flame colors run through the orbital pattern colors 1, 3, 5 … 15 from left to right.\n\nUser requirements: torch tilt at most 30° either way; torches aimed at one common\npoint below the floor with exactly equal angles between neighbours; bow close to\nthe lintel; flame colors in pattern order left to right; frame lighter than the wall.\nAdjustable defaults: wall width and height, block pattern, bow size, torch count.\n\n## Material roles\n\n- **pillar** — `stone-pillar` (pale limestone, about 1.0 × 2.5 × 0.8 m, slightly\n  tapered). Two, one each side of the opening, projecting in front of the wall face.\n- **lintel** — `stone-lintel` (pale limestone, about 5.2 × 0.55 × 0.95 m). Rests on the\n  pillars and projects further than they do.\n- **wall blocks** — `stone-wall-block-large/-medium/-small` (weathered granite,\n  1.8/1.2/0.75 × 0.7 × 0.6 m). Stacked in 0.706 m courses behind the frame.\n- **torch** — `fire-torch` (about 1.0 m, centimetre model; anchor at the back of the\n  bracket at foot height, front facing +z). Its material carries the fire effect;\n  each placement sets `flame_cardinality`.\n\nThe stone materials are generated placeholders (see the deployment checklist); a\nreplacement must keep the frame clearly lighter than the wall.\n\n## Construction rules and dependency order\n\n1. **Frame.** Pillars at x = ±1.27, centred 0.15 m in front of the wall face; the\n   opening between them is about 1.54 m wide. The lintel sits on the pillars\n   (bottom 2.504 m, top 3.059 m), centred at z = 0.2.\n2. **Wall.** Eight courses of blocks centred 0.302 m behind the wall face (front faces\n   at z ≈ 0). Courses whose top is below the lintel top fill outward from the opening\n   to ±6.6 m; higher courses run the full width, alternate courses offset 0.45 m.\n   Three repeating length patterns stagger the joints, and each row ends with the\n   largest block that still fits inside ±6.6 m; blocks alternate 180° yaw for\n   surface variety. 10 mm joints.\n3. **Torches.** Eight torches on the wall face (z = 0). Their axes all pass through a\n   common point 5.37 m below the floor (x = 0). Angles from vertical are\n   −30° + k × 60°/7 (k = 0 … 7), so neighbours differ by exactly 8.571°. Each mounting\n   point is where its axis meets an elliptical bow (half-width 5.0 m, rise 1.25 m) whose\n   apex is 0.3 m above the lintel top. Resulting mounts: x ≈ ±0.65, ±1.97, ±3.30, ±4.60;\n   y ≈ 3.34, 3.25, 3.04, 2.60. Tops lean outward. Flame cardinality 1, 3, 5, 7, 9, 11,\n   13, 15 from left (−x) to right (+x).\n\nThe frame depends on the opening width; the bow depends on the lintel top.\n\n## Lighting\n\nAn interior lit by its torches: stage sun 0.4 and ambient (sky) light 0.3, so the\nfirelight dominates the wall and the torches' shadows read clearly.\n\n## Animation and behavior\n\nNo clips or motion. Each torch's fire is live (material effect): noise flames,\nsparks and a flickering, slightly drifting light that casts the torch's crown and\nhandle shadow onto the wall behind it, always rising along world up regardless of the\ntorch's tilt; light range scales with the world size.\n\n## Material substitution\n\nReplacement stones keep the role sizes or the generator's dimensions must change\nwith them. A replacement torch needs construction metadata with the anchor at its\nmounting point and a fire effect on its material.\n\n## Acceptance and evidence\n\nRendered in the browser pane before saving: frame distinct from the wall; eight\nevenly spaced torches (neighbour gaps 1.31–1.37 m along the bow), symmetrical,\ntops leaning outward, flames vertical, colors in pattern order.\n\n## Safe minor edits\n\nChange parameters in `torch-wall.construction.json` and re-run\n`generate_torch_wall.js`; object IDs are derived from role keys, so unchanged roles\nkeep their IDs. Read the saved revision and save with `expected_revision`.\n\n## Decision log\n\n- Rev 4: interior lighting (sun 0.4, ambient 0.3) so the torch shadows are strong;\n  fire shadow bias raised to remove square artifacts on the uneven stone.\n\n- Rev 3: torch fire light casts shadows from 30 units up and 35 out from the wall, so\n  each torch throws a dancing shadow on the wall; torch pin updated.\n\n- Rev 2: torch fire made much taller and fuller in the `fire-torch` material (size 100,\n  width 60, intensity 0.7); torch pin updated to that material revision.\n\n- Rev 1: torches arranged as a radial fan with equal angles (supersedes evenly spaced\n  angles around the ellipse, which crowded the outer torches); bow lowered close to the\n  lintel; pale limestone frame distinct from the granite wall.\n"
+}

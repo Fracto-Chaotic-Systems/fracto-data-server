@@ -1,0 +1,63 @@
+{
+  "format": "fracto.component-construction",
+  "format_version": 1,
+  "blueprint_key": "torch-wall",
+  "blueprint_revision": 4,
+  "description_document": "torch-wall.md",
+  "status": "component_associated_description",
+  "authoring_mode": "collaborative",
+  "description": "A stone doorway in an ashlar wall: two pale limestone pillars and a lintel framing the opening, darker granite courses around it, and eight fire torches fanned in a bow above the lintel with flames in the orbital pattern colors 1, 3, 5 ... 15.",
+  "component": {
+    "name": "torch_wall",
+    "folder_path": "interiors",
+    "id": "6d9ef545-91e9-47c1-8c56-a9f885276f4c"
+  },
+  "frame": {
+    "units": "m",
+    "coordinates": "right-handed-y-up",
+    "wall_face_z_m": 0,
+    "viewer_side": "+z",
+    "viewer_left": "-x",
+    "logical_ground_y_m": 0
+  },
+  "material_roles": {
+    "pillar": { "id": "stone-pillar", "revision": "39af194846964d3e2ec0def4f0b22a8461ed95f96a58f4ded303c1709ed9b489" },
+    "lintel": { "id": "stone-lintel", "revision": "23ed2278e4609c266d9b277e75abcaa9c00b4fa7215707587382d263986ede49" },
+    "wall_block_large": { "id": "stone-wall-block-large", "revision": "43db3056b1754e50e4d498087b7e8792635de43b56926a88d6a8552f7d9e7557", "length_m": 1.8119 },
+    "wall_block_medium": { "id": "stone-wall-block-medium", "revision": "b645d312cc05f7363aad1e3d8f2f14c119941234f54a37ad696bac56f666e347", "length_m": 1.2095 },
+    "wall_block_small": { "id": "stone-wall-block-small", "revision": "9f82dbdd15bdc7fd9d0e965d0c9093ccd1f5b8efe4d8bb2839ac840b4f21855d", "length_m": 0.7497 },
+    "torch": { "id": "fire-torch", "revision": "e4f4bc7176d1082b78922f5c86f6cff5b85db3280a7e8b9a9909fe623b2d9482" }
+  },
+  "doorway": {
+    "opening_half_width_m": 0.77,
+    "pillar_center_x_m": 1.27,
+    "pillar_center_z_m": 0.15,
+    "pillar_height_m": 2.5044,
+    "lintel_center_z_m": 0.2,
+    "lintel_bottom_y_m": 2.5044,
+    "lintel_top_y_m": 3.0594
+  },
+  "wall": {
+    "half_width_m": 6.6,
+    "courses": 8,
+    "course_height_m": 0.706,
+    "center_z_m": -0.302,
+    "joint_m": 0.01,
+    "course_patterns": [
+      ["wall_block_large", "wall_block_medium", "wall_block_small", "wall_block_large", "wall_block_medium"],
+      ["wall_block_medium", "wall_block_large", "wall_block_large", "wall_block_small", "wall_block_medium"],
+      ["wall_block_small", "wall_block_large", "wall_block_medium", "wall_block_large", "wall_block_large"]
+    ],
+    "rule": "Courses whose top is below the lintel top fill outward from the opening on both sides; higher courses run the full width, alternate courses offset by 0.45 m so joints stagger. Each row ends with the largest block that still fits inside the half-width."
+  },
+  "torches": {
+    "count": 8,
+    "common_point_m": [0, -5.37],
+    "outer_angle_deg": 30,
+    "angle_step_deg": 8.571428571428571,
+    "bow": { "half_width_m": 5.0, "rise_m": 1.25, "apex_above_lintel_top_m": 0.3 },
+    "cardinalities_left_to_right": [1, 3, 5, 7, 9, 11, 13, 15],
+    "rule": "Each torch axis points at the common point below the floor; neighbours differ by exactly the same angle; each mounting point is where its axis meets the elliptical bow; tops lean outward; flames stay vertical (fire effect)."
+  },
+  "lighting": { "direction_degrees": 45, "intensity": 0.4, "ambient": 0.3 }
+}

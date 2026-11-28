@@ -50,6 +50,12 @@ storage needs no migration. Deploy matching SDK/UI/data code together. Persisten
 validates structure; live calibrated asset/resource checks belong to construction
 operations and rendering, not SQL storage.
 
+Objects may carry an optional `flame_cardinality` (1, 3, 5, 7, 9, 11, 13 or 15):
+the orbital pattern color for every fire effect on that object's material,
+overriding the material's saved color. Omitted keeps the material's color; legacy
+documents and hashes are unchanged and no migration is needed. Deploy the SDK
+with the data service before saving documents that use it.
+
 The optional v1 `animation_speed` property is persisted in the same component
 JSON: finite 0–10, omitted meaning 1×, zero pausing clips. Legacy documents keep
 their original fields and hashes; no backfill or table migration is needed.

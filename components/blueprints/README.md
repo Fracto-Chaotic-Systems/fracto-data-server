@@ -17,6 +17,8 @@ Each component has two complementary records:
   accepted realization exactly. Its database revision is separate from the
   blueprint's own revision.
 
+The [torch wall folder](torch-wall/README.md) holds a doorway with a pattern-colored
+torch fan, realized by its own generator from structured parameters.
 The [grass strip folder](grass-strip/README.md) contains its readable description,
 structured parameters and accepted scene snapshot. The JSON convention is
 `fracto.component-construction`, format version **1**. It is not the SDK scene
